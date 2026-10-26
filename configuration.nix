@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ config, pkgs, inputs, ... }:
 
 let
   system = pkgs.stdenv.hostPlatform.system;
@@ -139,11 +139,15 @@ in
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.systemd-boot.configurationLimit = 10; # keep /boot from filling up
 
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"
   ];
+  nix.settings.auto-optimise-store = true; # hardlink identical store files
+
+  zramSwap.enable = true; # compressed in-RAM swap
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
@@ -163,6 +167,9 @@ in
   services.blueman.enable = true;
 
   time.timeZone = "Africa/Nairobi";
+  i18n.defaultLocale = "en_US.UTF-8";
+
+  services.fwupd.enable = true; # firmware updates via fwupdmgr
 
   users.users.Zaion = {
     isNormalUser = true;
@@ -197,6 +204,8 @@ in
     open = true;
     powerManagement.enable = true;
     nvidiaSettings = true;
+    # "latest" = newest driver branch; switch back to .stable if anything breaks
+    package = config.boot.kernelPackages.nvidiaPackages.latest;
 
     prime = {
       offload = {
@@ -273,6 +282,9 @@ in
     yazi
     tmux
     nvd
+    nix-output-monitor # readable build progress (nom)
+    jq
+    file
     nix-index
     comma
     nixfmt
@@ -322,6 +334,9 @@ in
     # Themes and icons
     adwaita-icon-theme
     papirus-icon-theme
+
+    #Cli and other ai tools
+    claude-code
   ];
 
   # --------------------------------------------------
@@ -669,12 +684,19 @@ in
   # Audio and power management
   # --------------------------------------------------
 
+  security.rtkit.enable = true; # realtime scheduling for pipewire
+
   services.pipewire = {
     enable = true;
     pulse.enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true; # 32-bit games (Steam)
   };
 
   services.upower.enable = true;
   services.power-profiles-daemon.enable = true;
+
+  # Release this system was first installed with. Do not bump on upgrades.
+  system.stateVersion = "26.05";
 }
 

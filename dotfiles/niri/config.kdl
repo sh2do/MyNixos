@@ -1,0 +1,9 @@
+include "common.kdl"
+
+spawn-at-startup "noctalia"
+
+include "dms-theme-sync.kdl"
+
+// DMS Include Configs
+include "dms/layout.kdl"
+include "dms/cursor.kdl"

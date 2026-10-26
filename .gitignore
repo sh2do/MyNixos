@@ -1,0 +1,13 @@
+# Nix build outputs
+result
+result-*
+
+# Editor / OS junk
+*.swp
+*~
+.direnv/
+.DS_Store
+
+# Backup files left behind by tools (niri, home-manager, etc.)
+*.bak
+*.backup*
