@@ -1,0 +1,6 @@
+# Remove the GTK title/header bar (tab button, title, menu, close)
+window-decoration = none
+gtk-titlebar = false
+
+# Rose Pine Moon colours
+theme = Rose Pine Moon

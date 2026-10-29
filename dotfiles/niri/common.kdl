@@ -2,7 +2,7 @@
 // "/-" comments out the following node.
 // Check the wiki for a full description of the configuration:
 // https://niri-wm.github.io/niri/Configuration:-Introduction
-spawn-at-startup "mpvpaper" "-o" "no-audio loop panscan=1.0" "*" "/home/Zaion/Videos/live-wallpaper-hd-dreamy-landscape.mp4"
+spawn-at-startup "mpvpaper" "-o" "no-audio loop panscan=1.0" "*" "/home/Zaion/Videos/blue-scenery-live-wallpaper.mp4"
 // Input device configuration.
 // Find the full list of options on the wiki:
 // https://niri-wm.github.io/niri/Configuration:-Input
@@ -283,7 +283,7 @@ hotkey-overlay {
 // Additionally, clients will be informed that they are tiled, removing some client-side rounded corners.
 // This option will also fix border/focus ring drawing behind some semitransparent windows.
 // After enabling or disabling this, you need to restart the apps for this to take effect.
-// prefer-no-csd
+prefer-no-csd
 
 // You can change the path where screenshots are saved.
 // A ~ at the front will be expanded to the home directory.

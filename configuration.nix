@@ -117,6 +117,49 @@ in
     fuzzyCompletion = true;
   };
 
+  programs.tmux = {
+    enable = true;
+    clock24 = true;
+    baseIndex = 1; # windows/panes start at 1
+    escapeTime = 0; # no Esc delay in nvim
+    historyLimit = 50000;
+    keyMode = "vi";
+    terminal = "tmux-256color";
+    aggressiveResize = true;
+    plugins = with pkgs.tmuxPlugins; [
+      sensible
+      vim-tmux-navigator # Ctrl-h/j/k/l moves between nvim splits and tmux panes
+      yank # copy to the system clipboard
+      resurrect # prefix + Ctrl-s saves the session, prefix + Ctrl-r restores it
+      continuum # autosaves the session and restores it on start
+    ];
+    extraConfig = ''
+      set -g default-shell ${pkgs.fish}/bin/fish
+      set -g mouse on
+      set -g renumber-windows on
+      set -g set-clipboard on
+      set -ag terminal-overrides ",xterm-ghostty:RGB,xterm-256color:RGB"
+      set -g @continuum-restore 'on'
+
+      # Split panes in the current directory with | and -
+      bind | split-window -h -c "#{pane_current_path}"
+      bind - split-window -v -c "#{pane_current_path}"
+      bind c new-window -c "#{pane_current_path}"
+      bind r source-file /etc/tmux.conf \; display "tmux config reloaded"
+
+      # vi-style copy mode
+      bind -T copy-mode-vi v send -X begin-selection
+      bind -T copy-mode-vi y send -X copy-selection-and-cancel
+
+      # Simple status bar
+      set -g status-position top
+      set -g status-style "bg=default,fg=white"
+      set -g status-left "#[bold] #S  "
+      set -g status-right "%H:%M "
+      set -g window-status-current-style "fg=cyan,bold"
+    '';
+  };
+
   programs.nh = {
     enable = true;
     flake = "/etc/nixos";
@@ -277,10 +320,9 @@ in
     inputs.umbriel.packages.${system}.default
 
     # Shell and development tools
-    # (fish, zoxide and nh come from their programs.* options above)
+    # (fish, zoxide, nh and tmux come from their programs.* options above)
     lazygit
     yazi
-    tmux
     nvd
     nix-output-monitor # readable build progress (nom)
     jq
@@ -636,12 +678,15 @@ in
     enable = true;
     theme = "catppuccin-mocha";
 
-    backgrounds.wallpaper = ./greeter.mp4;
+    backgrounds = {
+      wallpaper = ./greeter.mp4;
+      lockscreen = ./lockscreen.mp4; # Sekiro landscape
+    };
 
     settings = {
       "General".enable-animations = true;
 
-      "LockScreen".background = "greeter.mp4";
+      "LockScreen".background = "lockscreen.mp4";
       "LockScreen".use-background-color = false;
 
       "LoginScreen".background = "greeter.mp4";
