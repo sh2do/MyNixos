@@ -1,7 +1,8 @@
 # The lock screen: the Quickshell config "rice-lock" (Tokyo rain video), the
-# rice-lock command, and swayidle, which locks after 5 min idle and before sleep.
+# rice-lock command, and swayidle, which locks after 5 min idle and before sleep
+# and turns the monitors off after 10 min (rice-dpms, niri or Umbriel).
 # PAM service "rice-lock" lives on the NixOS side (modules/desktop.nix).
-{ pkgs, lib, ... }:
+{ pkgs, lib, osConfig, ... }:
 
 let
   qtmultimedia = pkgs.kdePackages.qtmultimedia;
@@ -19,9 +20,16 @@ let
     text = builtins.readFile ./rice-lock.sh;
   };
   lock = "${rice-lock}/bin/rice-lock";
+
+  # Monitors off/on in either session (niri or Umbriel).
+  rice-dpms = pkgs.writeShellApplication {
+    name = "rice-dpms";
+    runtimeInputs = [ pkgs.niri osConfig.programs.umbriel.package ];
+    text = builtins.readFile ./rice-dpms.sh;
+  };
 in
 {
-  home.packages = [ rice-lock ];
+  home.packages = [ rice-lock rice-dpms ];
 
   xdg.configFile."quickshell/rice-lock".source = lib.cleanSourceWith {
     src = ./.;
@@ -33,7 +41,7 @@ in
     enable = true;
     timeouts = [
       { timeout = 300; command = lock; }
-      { timeout = 600; command = "${pkgs.niri}/bin/niri msg action power-off-monitors"; }
+      { timeout = 600; command = "${rice-dpms}/bin/rice-dpms off"; }
     ];
     events = {
       before-sleep = lock;

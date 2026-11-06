@@ -8,5 +8,6 @@
     ./shell
     ./lock
     ./look
+    ./umbriel
   ];
 }

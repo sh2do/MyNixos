@@ -1,11 +1,23 @@
 {
-  description = "NixOS configuration: niri with a custom Quickshell rice";
+  description = "NixOS configuration: niri with a custom Quickshell rice, plus an Umbriel session";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     antigravity-nix = {
       url = "github:jacopone/antigravity-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Umbriel compositor: the second login session next to niri.
+    umbriel = {
+      url = "github:noctalia-dev/umbriel";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Screen sharing / screenshots through xdg-desktop-portal for Umbriel.
+    xdg-desktop-portal-umbriel = {
+      url = "github:noctalia-dev/xdg-desktop-portal-umbriel";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

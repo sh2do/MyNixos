@@ -1,5 +1,8 @@
 # Wallpapers and colours. rice-wall shows a wallpaper with awww and runs
 # matugen, which rewrites every themed file listed in matugen.toml.
+# The awww daemon, the restore and the rotation belong to the niri session
+# only, so they hang off niri.service rather than graphical-session.target
+# (which Umbriel starts too).
 { config, lib, pkgs, ... }:
 
 let
@@ -59,14 +62,14 @@ in
   systemd.user.services.awww = {
     Unit = {
       Description = "awww wallpaper daemon";
-      PartOf = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
+      PartOf = [ "niri.service" ];
+      After = [ "niri.service" ];
     };
     Service = {
       ExecStart = "${pkgs.awww}/bin/awww-daemon";
       Restart = "on-failure";
     };
-    Install.WantedBy = [ "graphical-session.target" ];
+    Install.WantedBy = [ "niri.service" ];
   };
 
   # Put the last wallpaper back after login.
@@ -75,14 +78,14 @@ in
       Description = "Restore the current wallpaper";
       Requires = [ "awww.service" ];
       After = [ "awww.service" ];
-      PartOf = [ "graphical-session.target" ];
+      PartOf = [ "niri.service" ];
     };
     Service = {
       Type = "oneshot";
       ExecStartPre = "${waitForAwww}";
       ExecStart = "${pkgs.bash}/bin/bash -c '${rice-wall}/bin/rice-wall init && ${rice-wall}/bin/rice-wall set \"$(${rice-wall}/bin/rice-wall current)\"'";
     };
-    Install.WantedBy = [ "graphical-session.target" ];
+    Install.WantedBy = [ "niri.service" ];
   };
 
   systemd.user.services.rice-wall-rotate = {
@@ -94,12 +97,16 @@ in
   };
 
   systemd.user.timers.rice-wall-rotate = {
-    Unit.Description = "Rotate the wallpaper every 45 minutes";
+    Unit = {
+      Description = "Rotate the wallpaper every 45 minutes";
+      PartOf = [ "niri.service" ];
+      After = [ "niri.service" ];
+    };
     Timer = {
-      OnStartupSec = "45min";
+      OnActiveSec = "45min"; # from niri start, not user-manager start
       OnUnitActiveSec = "45min";
     };
-    Install.WantedBy = [ "timers.target" ];
+    Install.WantedBy = [ "niri.service" ];
   };
 
   # Generate colours on the first switch so everything starts themed.

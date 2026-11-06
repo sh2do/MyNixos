@@ -9,6 +9,7 @@ in
     ./modules/desktop.nix
     ./modules/sddm
     inputs.home-manager.nixosModules.default
+    inputs.umbriel.nixosModules.default
   ];
 
   # --------------------------------------------------
@@ -16,6 +17,13 @@ in
   # --------------------------------------------------
 
   programs.niri.enable = true;
+
+  # Second session (Home Manager side: modules/umbriel).
+  programs.umbriel = {
+    enable = true;
+    # Required for screen sharing / screenshots through xdg-desktop-portal.
+    portalPackage = inputs.xdg-desktop-portal-umbriel.packages.${system}.default;
+  };
 
   # --------------------------------------------------
   # Shell and command-line tools

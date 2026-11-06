@@ -1,6 +1,7 @@
 // SDDM greeter for the rice: the train landscape video, a big clock, the last
-// user's avatar and a password field. Only niri is installed, so there is no
-// session picker. Colours and the video file come from theme.conf.
+// user's avatar, a password field and a quiet session picker under it (niri
+// or Umbriel; click it or press Left/Right to cycle). Colours and the video
+// file come from theme.conf.
 import QtQuick
 import QtQuick.Effects
 import QtMultimedia
@@ -25,6 +26,31 @@ Item {
     property string realName: ""
     property string avatar: ""
     property bool busy: false
+    property int sessionIndex: sessionModel.lastIndex >= 0 ? sessionModel.lastIndex : 0
+    property var sessionNames: []
+
+    // Collect the session names, in model order, for the picker.
+    Repeater {
+        id: sessions
+        model: sessionModel
+
+        Item {
+            required property int index
+            required property string name
+
+            Component.onCompleted: {
+                const names = root.sessionNames.slice();
+                names[index] = name;
+                root.sessionNames = names;
+            }
+        }
+    }
+
+    function cycleSession(step) {
+        if (busy || sessions.count < 2)
+            return;
+        sessionIndex = (sessionIndex + step + sessions.count) % sessions.count;
+    }
 
     // Pick up the last user's display name and avatar from the user model.
     Repeater {
@@ -51,7 +77,7 @@ Item {
             return;
         busy = true;
         message.text = "";
-        sddm.login(userName, password.text, sessionModel.lastIndex >= 0 ? sessionModel.lastIndex : 0);
+        sddm.login(userName, password.text, sessionIndex);
     }
 
     Connections {
@@ -222,6 +248,9 @@ Item {
                 enabled: !root.busy
                 Component.onCompleted: forceActiveFocus()
                 onAccepted: root.login()
+                // The password is hidden, so the arrows pick the session instead.
+                Keys.onLeftPressed: root.cycleSession(-1)
+                Keys.onRightPressed: root.cycleSession(1)
             }
 
             Text {
@@ -231,6 +260,30 @@ Item {
                 color: Qt.alpha(root.textMuted, 0.6)
                 font.family: root.fontFamily
                 font.pixelSize: 15
+            }
+        }
+
+        // Session picker: "‹ niri ›", muted until hovered.
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: sessions.count > 1
+            text: "‹  " + (root.sessionNames[root.sessionIndex] || "").toLowerCase() + "  ›"
+            color: Qt.alpha(root.textMuted, sessionHover.hovered ? 0.95 : 0.6)
+            font.family: root.fontFamily
+            font.pixelSize: 14
+
+            Behavior on color {
+                ColorAnimation { duration: 140 }
+            }
+
+            HoverHandler {
+                id: sessionHover
+                cursorShape: Qt.PointingHandCursor
+            }
+
+            TapHandler {
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onTapped: (point, button) => root.cycleSession(button === Qt.RightButton ? -1 : 1)
             }
         }
 
