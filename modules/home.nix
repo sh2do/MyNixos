@@ -6,5 +6,6 @@
     ./terminal
     ./rofi
     ./shell
+    ./lock
   ];
 }

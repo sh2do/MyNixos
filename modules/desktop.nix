@@ -4,4 +4,7 @@
 {
   environment.systemPackages = with pkgs; [
   ];
+
+  # Password check for the lock screen (modules/lock).
+  security.pam.services.rice-lock = { };
 }
