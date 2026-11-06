@@ -49,6 +49,31 @@ const tests = {
     assert.strictEqual(Cover.covered([left], out, rain), false);
     assert.strictEqual(Cover.covered([left, right], out, rain), true);
   },
+  gap_between_columns_keeps_running() {
+    // A 1/3 + 2/3 split: the 16 px gap at local x 640-656 falls between grid lines.
+    const left = win({ x: 1290, y: 10, w: 630, h: 1180 });
+    const right = win({ x: 1280 + 656, y: 10, w: 1254, h: 1180 });
+    assert.strictEqual(Cover.covered([left, right], out, rain), false);
+  },
+  gap_between_stacked_windows_keeps_running() {
+    const top = win({ x: 1290, y: 10, w: 1900, h: 517 });
+    const bottom = win({ x: 1290, y: 537, w: 1900, h: 653 });
+    assert.strictEqual(Cover.covered([top, bottom], out, rain), false);
+  },
+  two_columns_touching_cover() {
+    const left = win({ x: 1290, y: 10, w: 630, h: 1180 });
+    const right = win({ x: 1280 + 640, y: 10, w: 1270, h: 1180 });
+    assert.strictEqual(Cover.covered([left, right], out, rain), true);
+  },
+  powered_off_output_is_off() {
+    const outputs = [{ name: "WL-1", powered: true }, { name: "eDP-2", powered: false }];
+    assert.strictEqual(Cover.outputOff(outputs, "eDP-2"), true);
+    assert.strictEqual(Cover.outputOff(outputs, "WL-1"), false);
+  },
+  unknown_output_is_not_off() {
+    // Before the first outputs event, or outside Umbriel.
+    assert.strictEqual(Cover.outputOff([], "eDP-2"), false);
+  },
   other_output_ignored() {
     assert.strictEqual(Cover.covered([win({ output: "WL-1", fullscreen: true })], out, whole), false);
   },

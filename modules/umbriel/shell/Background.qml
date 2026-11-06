@@ -1,8 +1,8 @@
 // The wallpaper: a still image cover-cropped to the screen, on the Background
 // layer. Two are live (walls.json `live`): "rain" adds RainFrame over the
 // picture, "storm" swaps the still for StormSky. Their one clock ticks at
-// 30 Hz (15 for the storm) and stops while `paused`, so a hidden wallpaper
-// costs no frames.
+// 30 Hz (15 for the storm) and stops while `paused` (covered, locked or
+// screen off), so a hidden wallpaper costs no frames.
 //
 // The current id is umbriel-wall's state file; the picker writes it and this
 // reloads when it changes. Task 7's eyes read `wallId` (and `walls`).
@@ -29,13 +29,22 @@ PanelWindow {
 
     // The part that moves, as screen fractions: the rain's frame, or all of it.
     readonly property var liveArea: live === "rain" ? wall.rainRect : ({ x: 0, y: 0, w: 1, h: 1 })
-    readonly property bool paused: live !== "" && Cover.covered(UmbrielIpc.windows, {
+    // Nothing to see: the session is locked, the screen is off (DPMS), or
+    // windows hide the moving part.
+    readonly property bool paused: live !== "" && (locked || Cover.outputOff(UmbrielIpc.outputs, screen?.name ?? "") || Cover.covered(UmbrielIpc.windows, {
         name: screen?.name ?? "",
         x: screen?.x ?? 0,
         y: screen?.y ?? 0,
         w: screen?.width ?? 0,
         h: screen?.height ?? 0
-    }, liveArea)
+    }, liveArea))
+
+    // Umbriel's IPC doesn't report the session lock, but the rice-lock locker
+    // keeps this file while the lock is secure (modules/lock/shell.qml).
+    // FileView can't watch a file that comes and goes, so look every 2 s,
+    // only while a live wallpaper could be running.
+    property bool locked: false
+    readonly property string lockMarker: Quickshell.env("XDG_RUNTIME_DIR") + "/rice-lock.secure"
 
     // Seconds, wrapped hourly (a multiple of every period used) to keep the
     // shader's floats precise.
@@ -81,6 +90,21 @@ PanelWindow {
         property bool tried: false
         command: ["umbriel-wall", "set", bg.defaultId]
         onExited: state.reload()
+    }
+
+    FileView {
+        id: lockFile
+        path: bg.lockMarker
+        printErrors: false
+        onLoaded: bg.locked = true
+        onLoadFailed: bg.locked = false
+    }
+
+    Timer {
+        interval: 2000
+        repeat: true
+        running: bg.live !== ""
+        onTriggered: lockFile.reload()
     }
 
     // Rain needs 30 Hz to read as falling; the storm's slow drift is smooth at 15.

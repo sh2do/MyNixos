@@ -1,7 +1,7 @@
 .pragma library
 
-// Is a live wallpaper's moving part hidden by windows? Pure geometry, no QML,
-// so tests/wall-cover-test.js can run it under node.
+// Is a live wallpaper's moving part hidden? Pure geometry, no QML, so
+// tests/wall-cover-test.js can run it under node.
 //
 // windows: Umbriel's `windows` snapshot (layout coordinates).
 // out:     the output, {name, x, y, w, h} in layout coordinates.
@@ -9,12 +9,16 @@
 //
 // A fullscreen or maximized window over the output's centre hides everything
 // (a maximized column can be scrolled off and still be "visible"). Otherwise
-// the area counts as hidden when every point of a grid over it (edges
-// included, so gaps between windows count) is under some window; two tiled
-// columns side by side can hide it together.
+// the area counts as hidden only when the windows cover all of it: the area's
+// edges and every window edge inside it cut it into cells, each cell lies
+// wholly inside or outside each window, so testing one point per cell is
+// exact. A gap of any width between windows keeps the wallpaper running.
 
-const GRID_X = 17;
-const GRID_Y = 11;
+// The cut positions along one axis, sorted, clipped to [lo, hi].
+function cuts(lo, hi, edges) {
+    const inside = edges.filter(e => e > lo && e < hi);
+    return [lo, hi].concat(inside).sort((a, b) => a - b);
+}
 
 function covered(windows, out, area) {
     const shown = windows.filter(w => w.output === out.name && w.visible && !w.minimized);
@@ -23,16 +27,33 @@ function covered(windows, out, area) {
         return true;
     if (!shown.length)
         return false;
-    // Half a pixel in from the area's edges.
-    const ax = out.x + area.x * out.w + 0.5, ay = out.y + area.y * out.h + 0.5;
-    const aw = area.w * out.w - 1, ah = area.h * out.h - 1;
-    for (let i = 0; i < GRID_X; i++) {
-        const px = ax + i * aw / (GRID_X - 1);
-        for (let j = 0; j < GRID_Y; j++) {
-            const py = ay + j * ah / (GRID_Y - 1);
+    const x0 = out.x + area.x * out.w, x1 = x0 + area.w * out.w;
+    const y0 = out.y + area.y * out.h, y1 = y0 + area.h * out.h;
+    // (No Array.flatMap: Qt's JS engine lacks it.)
+    const ex = [], ey = [];
+    for (const w of shown) {
+        ex.push(w.x, w.x + w.w);
+        ey.push(w.y, w.y + w.h);
+    }
+    const xs = cuts(x0, x1, ex);
+    const ys = cuts(y0, y1, ey);
+    for (let i = 0; i + 1 < xs.length; i++) {
+        if (xs[i + 1] === xs[i])
+            continue;
+        const px = (xs[i] + xs[i + 1]) / 2;
+        for (let j = 0; j + 1 < ys.length; j++) {
+            if (ys[j + 1] === ys[j])
+                continue;
+            const py = (ys[j] + ys[j + 1]) / 2;
             if (!shown.some(w => px >= w.x && px < w.x + w.w && py >= w.y && py < w.y + w.h))
                 return false;
         }
     }
     return true;
+}
+
+// Is the output switched off (DPMS)? outputs: Umbriel's `outputs` snapshot.
+// Unknown outputs count as on, so nothing pauses before the first event.
+function outputOff(outputs, name) {
+    return outputs.some(o => o.name === name && o.powered === false);
 }
