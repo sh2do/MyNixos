@@ -26,7 +26,12 @@ in
     theme = "rice";
     # The theme plays a video.
     extraPackages = [ pkgs.kdePackages.qtmultimedia ];
+    # Same cursor as the desktop (modules/look).
+    settings.Theme = {
+      CursorTheme = "Bibata-Modern-Classic";
+      CursorSize = 24;
+    };
   };
 
-  environment.systemPackages = [ rice-sddm-theme ];
+  environment.systemPackages = [ rice-sddm-theme pkgs.bibata-cursors ];
 }

@@ -280,7 +280,6 @@ in
 
     # Config management: appearance and settings
     dconf-editor # GTK/GNOME settings editor
-    nwg-look # GTK theme, icon and cursor picker
     matugen # wallpaper-based colour themes
 
     # File manager (replaces Thunar)

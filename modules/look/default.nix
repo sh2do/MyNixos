@@ -16,4 +16,32 @@
     };
     Install.WantedBy = [ "graphical-session.target" ];
   };
+
+  # One cursor for GTK, Xwayland and the compositors (niri sets it too, in misc.kdl).
+  home.pointerCursor = {
+    name = "Bibata-Modern-Classic";
+    package = pkgs.bibata-cursors;
+    size = 24;
+    gtk.enable = true;
+    x11.enable = true;
+  };
+
+  # Colours come from matugen (modules/theme/templates/gtk.css), not from here,
+  # so no extraCss: that would make Home Manager own gtk.css.
+  gtk = {
+    enable = true;
+    theme = {
+      name = "adw-gtk3-dark";
+      package = pkgs.adw-gtk3;
+    };
+    iconTheme = {
+      name = "Papirus-Dark";
+      package = pkgs.papirus-icon-theme;
+    };
+    font = {
+      name = "Rubik";
+      package = pkgs.rubik;
+      size = 11;
+    };
+  };
 }
