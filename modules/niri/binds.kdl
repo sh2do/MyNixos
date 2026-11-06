@@ -14,11 +14,11 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     // Suggested binds for running programs: terminal, app launcher, screen locker.
-    Mod+T hotkey-overlay-title="Open a Terminal: alacritty" { spawn "ghostty"; }
-    Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "firefox"; }
+    Mod+T hotkey-overlay-title="Open a Terminal: foot" { spawn "foot"; }
+    Mod+D hotkey-overlay-title="Open Firefox" { spawn "firefox"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }
     Super+S {spawn "steam";}
-    Super+E {spawn "thunar";}
+    Super+E hotkey-overlay-title="Open Files" { spawn "nautilus"; }
     Super+Z {spawn "discord";}
     Super+X {spawn "kate";}
     Super+A {spawn "antigravity";}

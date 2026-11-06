@@ -25,7 +25,7 @@ in
 
     interactiveShellInit = ''
       set fish_greeting
-      fastfetch
+      rice_first_fetch
       ${pkgs.nix-your-shell}/bin/nix-your-shell fish | source
     '';
 
@@ -38,6 +38,7 @@ in
       gp = "git push";
       lg = "lazygit";
       v = "nvim";
+      ff = "fastfetch";
     };
   };
 
