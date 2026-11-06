@@ -5,6 +5,6 @@
 {
   xdg.configFile."quickshell/rice".source = lib.cleanSourceWith {
     src = ./.;
-    filter = path: type: type == "directory" || lib.hasSuffix ".qml" path || lib.hasSuffix ".svg" path;
+    filter = path: type: type == "directory" || lib.any (ext: lib.hasSuffix ext path) [ ".qml" ".svg" ".js" ];
   };
 }
