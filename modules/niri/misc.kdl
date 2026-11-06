@@ -29,7 +29,7 @@ animations {
     // slowdown 3.0
 }
 
-// Cursor (previously in the DMS include files)
+// Cursor
 environment {
     XCURSOR_SIZE "24"
 }

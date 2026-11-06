@@ -38,7 +38,7 @@ window-rule {
     opacity 0.95
 }
 
-// Rounded windows everywhere (previously dms/layout.kdl)
+// Rounded windows everywhere
 window-rule {
     geometry-corner-radius 14
     clip-to-geometry true
