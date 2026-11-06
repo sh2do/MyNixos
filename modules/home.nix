@@ -7,5 +7,6 @@
     ./rofi
     ./shell
     ./lock
+    ./look
   ];
 }
