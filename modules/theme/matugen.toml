@@ -34,3 +34,12 @@ post_hook = "niri msg action load-config-file || true"
 input_path = "~/.config/matugen/templates/cobra.svg"
 output_path = "~/.cache/rice/cobra.svg"
 post_hook = "rsvg-convert -w 512 \"$HOME/.cache/rice/cobra.svg\" -o \"$HOME/.cache/rice/cobra.png\""
+
+# GTK 3 and 4 (libadwaita named colours); Home Manager leaves gtk.css to us.
+[templates.gtk3]
+input_path = "~/.config/matugen/templates/gtk.css"
+output_path = "~/.config/gtk-3.0/gtk.css"
+
+[templates.gtk4]
+input_path = "~/.config/matugen/templates/gtk.css"
+output_path = "~/.config/gtk-4.0/gtk.css"
