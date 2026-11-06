@@ -32,7 +32,13 @@ test_look_is_declared() {
   fi
 }
 
-for t in test_polkit_agent_runs_in_every_graphical_session test_look_is_declared; do
+test_leftovers_are_gone() {
+  assert_eq "$(sys_eval environment.systemPackages --apply 'ps: builtins.any (p: builtins.elem (p.pname or "") [ "zsh" "fetch" ]) ps')" 'false'
+  assert_eq "$(git -C "$FLAKE" ls-files Configs)" ''
+  [ ! -e "$FLAKE/dotfiles/ghostty/themes/dankcolors" ]
+}
+
+for t in test_polkit_agent_runs_in_every_graphical_session test_look_is_declared test_leftovers_are_gone; do
   run_test "$t"
 done
 finish

@@ -237,12 +237,10 @@ in
     ghostty
     foot
     git
-    zsh
     kitty
     bat
     neovim
     xwayland-satellite
-    fetch
     fastfetch
     myx
     eza

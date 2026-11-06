@@ -14,3 +14,6 @@ result-*
 
 # Superpowers scratch state
 .superpowers/
+
+# Old config copy, a separate git repo; kept on disk only
+Configs/
