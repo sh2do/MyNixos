@@ -2,6 +2,10 @@ pragma Singleton
 
 // The Umbriel slate palette: one cold grey ramp and a single accent, `bright`,
 // which is only ever used with a glow. No hue anywhere.
+//
+// QtQuick has a `Palette` type of its own that wins over this one, so use it
+// through a qualified import of this directory: `import "." as U`, then
+// `U.Palette.bg`.
 import QtQuick
 import Quickshell
 
