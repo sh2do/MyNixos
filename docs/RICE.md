@@ -14,7 +14,7 @@ A from-scratch niri desktop on NixOS: rotating rainy wallpapers that recolour th
 | Wallpapers and colours | a curated rainy/purple rotation that changes every 45 min, with a fade; every colour in the desktop follows it | `modules/theme/` |
 | Bar | a top pill (the playing song, or the focused window title) and an auto-hide bottom bar (workspaces, toggles, clock, power), with koi in it | `modules/shell/` |
 | Menus | a rofi launcher with a wallpaper image panel, plus wifi, bluetooth, audio, power-profile, power and clipboard menus | `modules/rofi/` |
-| Terminal | foot, starship two-line prompt, fastfetch (coiled python logo) only in the first terminal | `modules/terminal/` |
+| Terminal | foot, starship two-line prompt, fastfetch (a koi pond logo) only in the first terminal | `modules/terminal/` |
 | OSD and notifications | Quickshell volume and brightness OSD, toasts (critical ones stay) | `modules/shell/` |
 | Lock | Quickshell lock with a Tokyo-rain video, locks after 5 min idle and before sleep | `modules/lock/` |
 | Login | SDDM with a custom Qt6 theme: train landscape video, big clock, avatar | `modules/sddm/` |
@@ -32,7 +32,7 @@ A from-scratch niri desktop on NixOS: rotating rainy wallpapers that recolour th
                         │ writes
      ┌──────────┬───────┴──────┬───────────┬────────────┬─────────────┐
      ▼          ▼              ▼           ▼            ▼             ▼
- niri colors  rofi colors   foot colors  starship    colors.json  python logo
+ niri colors  rofi colors   foot colors  starship    colors.json   koi logo
    .kdl         .rasi          .ini        .toml     (bar, lock)  (fastfetch)
 ```
 
@@ -146,6 +146,7 @@ nix build .#nixosConfigurations.nixos.config.system.build.toplevel --no-link   #
 for t in tests/*-test.sh; do bash "$t"; done  # script and config tests
 nix run nixpkgs#nodejs -- tests/python-geometry-test.js   # python coil geometry
 nix run nixpkgs#nodejs -- tests/koi-motion-test.js        # koi swimming
+python3 modules/theme/make-koi-svg.py                    # regenerate the fastfetch koi logo template
 niri validate -c ~/.config/niri/config.kdl    # niri config check
 ```
 

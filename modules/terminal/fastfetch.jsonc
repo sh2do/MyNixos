@@ -1,11 +1,11 @@
 // fastfetch, shown in the first terminal of a session (and with `ff`).
-// The logo is the bar's python coiled into a ball, re-rendered in the wallpaper's colours by rice-wall.
+// The logo is the bar's koi in a pond, re-rendered in the wallpaper's colours by rice-wall.
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
   "logo": {
     "type": "sixel",
-    "source": "~/.cache/rice/python.png",
-    "width": 22,
+    "source": "~/.cache/rice/koi.png",
+    "width": 24,
     "padding": { "top": 1, "right": 3 }
   },
   "display": {

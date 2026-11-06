@@ -30,6 +30,11 @@ input_path = "~/.config/matugen/templates/niri-colors.kdl"
 output_path = "~/.config/niri/colors.kdl"
 post_hook = "niri msg action load-config-file || true"
 
+[templates.koi]
+input_path = "~/.config/matugen/templates/koi.svg"
+output_path = "~/.cache/rice/koi.svg"
+post_hook = "rsvg-convert -w 512 \"$HOME/.cache/rice/koi.svg\" -o \"$HOME/.cache/rice/koi.png\""
+
 [templates.python]
 input_path = "~/.config/matugen/templates/python.svg"
 output_path = "~/.cache/rice/python.svg"
