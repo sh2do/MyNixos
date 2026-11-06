@@ -1,0 +1,45 @@
+# Monochrome two-line prompt for the Umbriel session (slate ramp, no hue).
+add_newline = true
+format = """
+$directory$git_branch$git_status$nix_shell$python$rust$nodejs$cmd_duration
+$character"""
+
+[directory]
+style = "bold #d6dbe3"
+truncation_length = 3
+truncate_to_repo = true
+read_only = " 󰌾"
+
+[git_branch]
+format = "on [$symbol$branch]($style) "
+symbol = " "
+style = "#7d8796"
+
+[git_status]
+format = '([\[$all_status$ahead_behind\]]($style) )'
+style = "#8b94a3"
+
+[nix_shell]
+format = 'via [❄ $state( \($name\))]($style) '
+style = "#4a4f58"
+
+[python]
+format = "via [$symbol$version]($style) "
+symbol = " "
+style = "#4a4f58"
+
+[rust]
+format = "via [$symbol$version]($style) "
+style = "#4a4f58"
+
+[nodejs]
+format = "via [$symbol$version]($style) "
+style = "#4a4f58"
+
+[cmd_duration]
+format = "took [$duration]($style) "
+style = "#7d8796"
+
+[character]
+success_symbol = "[❯](bold #eef1f5)"
+error_symbol = "[❯](bold #7d8796)"

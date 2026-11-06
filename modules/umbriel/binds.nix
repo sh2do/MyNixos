@@ -5,7 +5,7 @@
 # Left out, with no Umbriel equivalent: Mod+Alt+W (rice-wall next is niri's
 # awww), Mod+Ctrl+R (reset window height), Mod+Ctrl+F (expand column to the
 # free width), Mod+Ctrl+C (centre all visible columns), Alt+Print (window shot).
-{ lib }:
+{ lib, term }:  # term: ~/.config/umbriel-term, expanded
 
 let
   once = action: { inherit action; repeat = false; };
@@ -32,7 +32,7 @@ workspaces // {
   "Mod+Ctrl+W" = once "spawn qs -c umbriel ipc call picker toggle";
 
   # Programs
-  "Mod+T" = once "spawn foot";
+  "Mod+T" = once "spawn foot --config ${term}/foot.ini";
   "Mod+D" = once "spawn firefox";
   "Super+Alt+L" = once "spawn rice-lock";
   "Super+S" = once "spawn steam";
