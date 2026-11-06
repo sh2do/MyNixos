@@ -53,6 +53,7 @@ PanelWindow {
         side: "back"
         t: front.t
         slide: front.slide
+        squeeze: front.squeeze
     }
 
     Rectangle {

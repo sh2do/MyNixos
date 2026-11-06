@@ -83,6 +83,24 @@ const tests = {
     assert.ok(lowest <= 38 + 15 + 1, `lowest point ${lowest} below the raised gap`);
   },
 
+  test_bounds_cover_tail_tip() {
+    // Python.qml draws a tapered tip bodyW * 1.3 left of where the path starts.
+    const r = Geo.layout(400, 38, [{ x: 6, w: 30 }, { x: 260, w: 40 }, { x: 350, w: 28 }], 15);
+    assert.ok(r.bounds.x <= r.path[0].x0 - 15 * 1.3, `bounds start at ${r.bounds.x}, tip at ${r.path[0].x0 - 19.5}`);
+  },
+
+  test_head_aim_follows_pointer() {
+    const rest = -105;
+    const left = Geo.headAim(rest, 20, 800), mid = Geo.headAim(rest, 400, 800), right = Geo.headAim(rest, 780, 800);
+    assert.ok(left < mid && mid < right, `aim should sweep left to right: ${left}, ${mid}, ${right}`);
+    for (const a of [left, mid, right])
+      assert.ok(a >= rest - 45 && a <= rest + 20, `aim ${a} outside rest-45..rest+20`);
+  },
+
+  test_head_aim_rests_without_pointer() {
+    assert.strictEqual(Geo.headAim(-105, NaN, 800), -105);
+  },
+
   test_bounds_cover_head() {
     const r = Geo.layout(400, 38, [{ x: 6, w: 30 }, { x: 260, w: 40 }, { x: 350, w: 28 }], 15);
     const b = r.bounds;

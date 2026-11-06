@@ -23,7 +23,7 @@ Item {
     readonly property var geo: Geo.layout(pill.width, pill.height, gaps, bodyW)
     // Breathing: the coils loosen and tighten a little every 5 s. A scale of
     // the finished image, so the body isn't redrawn every tick.
-    readonly property real breath: 1 + 0.025 * Math.sin(2 * Math.PI * t / 5000)
+    readonly property real breath: 1 + 0.025 * Math.sin(2 * Math.PI * t / 5000) - 0.04 * squeeze
     readonly property var box: geo.bounds
 
     // The python's own frame is the pill's, shifted so the bounds start at 0, 0.
@@ -50,7 +50,7 @@ Item {
     readonly property var flecks: [[0.93, 1.03], [1.92, 2.0], [2.12, 2.2], [3.38, 3.48]]
     readonly property real period: 3.6 * bodyW
     // Px the pattern has crept along the body: every 20-40 s it shifts its grip,
-    // moving one pattern length over a second.
+    // moving one pattern length over 1.4 s while the coils squeeze.
     property real slide: 0
 
     // dashPattern for spans (in body widths, shrunk by `inset` px at each end)
@@ -200,38 +200,117 @@ Item {
 
     // The head, front layer only: a long wedge with a dark crown line, small
     // eyes and a forked tongue. Drawn pointing +x, then turned.
-    // It turns toward the widget under the pointer, at most 35 deg off its rest.
+    //
+    // Motion comes in two speeds. Anything that moves the body (breathing, the
+    // grip shift) and the head's slow sway and bob follow `t`, ticked at 30 fps:
+    // redrawing the dashed body is the expensive part. The head's quick moves
+    // (turning, waking, probing, tongue flicks) are Qt animations of small
+    // shapes, which run at the display's refresh rate only while moving.
+
+    // It leans along the bar toward the widget under the pointer; otherwise it
+    // now and then looks around.
     readonly property real restAngle: geo.head.angle
-    property real headAngle: restAngle
-    readonly property real targetAngle: {
-        if (isNaN(hoverX))
-            return restAngle;
-        const h = geo.head;
-        const a = Math.atan2(pill.height / 2 - h.y, hoverX - h.x) * 180 / Math.PI;
-        let d = a - restAngle;
-        d = ((d + 540) % 360) - 180;
-        return restAngle + Math.max(-35, Math.min(35, d));
+    property real idleLook: 0
+    readonly property real aim: isNaN(hoverX) ? restAngle + idleLook : Geo.headAim(restAngle, hoverX, pill.width)
+    property real headAngle: aim
+    Behavior on headAngle {
+        SpringAnimation { spring: 2.4; damping: 0.3; epsilon: 0.05 }
+    }
+
+    // 0 = tucked in, 1 = raised. It rises with a small overshoot when the bar appears.
+    property real lift: 0
+    // A short forward jab when the pointer arrives, as if tasting the air.
+    property real probe: 0
+    // Coils tighten while the snake shifts its grip.
+    property real squeeze: 0
+    // Tongue: how far out, and how far the fork tips spread.
+    property real tongueOut: 0
+    property real fork: 0
+
+    onRunningChanged: {
+        if (side !== "front")
+            return;
+        if (running) {
+            wake.restart();
+        } else {
+            wake.stop();
+            lift = 0;
+        }
+    }
+    onHoverXChanged: {
+        const arrived = !isNaN(hoverX) && !hovering;
+        hovering = !isNaN(hoverX);
+        if (arrived && running && side === "front") {
+            probeAnim.restart();
+            if (Math.random() < 0.5)
+                flickBurst(1 + Math.round(Math.random()));
+        }
+    }
+    property bool hovering: false
+
+    function flickBurst(n) {
+        if (flick.running)
+            return;
+        flick.loops = n;
+        flick.restart();
+    }
+
+    SequentialAnimation {
+        id: wake
+        PauseAnimation { duration: 160 }
+        NumberAnimation { target: root; property: "lift"; from: 0; to: 1; duration: 560; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+    }
+
+    SequentialAnimation {
+        id: probeAnim
+        NumberAnimation { target: root; property: "probe"; to: 1; duration: 120; easing.type: Easing.OutQuad }
+        NumberAnimation { target: root; property: "probe"; to: 0; duration: 320; easing.type: Easing.InOutSine }
+    }
+
+    SequentialAnimation {
+        id: flick
+        NumberAnimation { target: root; property: "tongueOut"; from: 0; to: 1; duration: 85; easing.type: Easing.OutQuad }
+        NumberAnimation { target: root; property: "fork"; from: 0.2; to: 1; duration: 55 }
+        NumberAnimation { target: root; property: "fork"; to: 0.35; duration: 55 }
+        NumberAnimation { target: root; property: "fork"; to: 1; duration: 55 }
+        NumberAnimation { target: root; property: "tongueOut"; to: 0; duration: 95; easing.type: Easing.InQuad }
+        PauseAnimation { duration: 70 }
     }
 
     Item {
         visible: root.side === "front"
-        x: root.geo.head.x - root.box.x
-        y: root.geo.head.y - root.box.y
-        rotation: root.headAngle
-        scale: 1.4
+        // Slow sway and a bob in time with the breathing.
+        readonly property real sway: 2.5 * Math.sin(2 * Math.PI * root.t / 1900) + 1.2 * Math.sin(2 * Math.PI * root.t / 730)
+        readonly property real bob: 1.2 * Math.sin(2 * Math.PI * root.t / 5000 + 0.6)
+        // Tucked back along its own axis until it rises; the probe pushes it forward.
+        readonly property real reach: -9 * (1 - root.lift) + 4 * root.probe
+        readonly property real dir: (root.headAngle + sway) * Math.PI / 180
+
+        x: root.geo.head.x - root.box.x + reach * Math.cos(dir)
+        y: root.geo.head.y - root.box.y + reach * Math.sin(dir) + bob
+        rotation: root.headAngle + sway
+        scale: 1.4 * (0.78 + 0.22 * root.lift)
         transformOrigin: Item.TopLeft
 
         Shape {
             id: tongue
-            visible: root.flickPhase > 0
-            transform: Scale { origin.x: 17; xScale: root.flickPhase }
+            visible: root.tongueOut > 0.01
             preferredRendererType: Shape.CurveRenderer
+            readonly property real tip: 16 + 8 * root.tongueOut
+            readonly property real len: 4.5 * root.tongueOut
+            readonly property real spread: (14 + 22 * root.fork) * Math.PI / 180
             ShapePath {
                 fillColor: "transparent"
                 strokeColor: Theme.tertiary
                 strokeWidth: 1.2
                 capStyle: ShapePath.RoundCap
-                PathSvg { path: "M 16 0 L 24 0 M 24 0 L 28 -2.5 M 24 0 L 28 2.5" }
+                joinStyle: ShapePath.RoundJoin
+                PathSvg {
+                    path: {
+                        const t = tongue, ex = t.len * Math.cos(t.spread), ey = t.len * Math.sin(t.spread);
+                        return `M 16 0 L ${t.tip} 0 L ${t.tip + ex} ${-ey} M ${t.tip} 0 L ${t.tip + ex} ${ey}`;
+                    }
+                }
             }
         }
 
@@ -251,6 +330,14 @@ Item {
                 capStyle: ShapePath.RoundCap
                 PathSvg { path: "M -2 0 L 14 0" }
             }
+            // The dark stripe behind each eye, and the nostrils.
+            ShapePath {
+                fillColor: "transparent"
+                strokeColor: Qt.alpha(Theme.surface, 0.85)
+                strokeWidth: 1
+                capStyle: ShapePath.RoundCap
+                PathSvg { path: "M 9 -4.4 L 0 -5.4 M 9 4.4 L 0 5.4 M 15.2 -1.6 L 15.6 -1.4 M 15.2 1.6 L 15.6 1.4" }
+            }
             ShapePath {
                 fillColor: Theme.tertiary
                 strokeColor: "transparent"
@@ -259,35 +346,42 @@ Item {
         }
     }
 
-    // Tongue: out and back over 300 ms, every 8-15 s.
-    property real nextFlick: 8000
-    readonly property real flickPhase: {
-        const p = (t - nextFlick) / 300;
-        return p > 0 && p < 1 ? Math.sin(Math.PI * p) : 0;
-    }
-
-    property real slideFrom: 0
+    property real nextFlick: 6000
     property real nextSlide: 20000 + Math.random() * 20000
+    property real slideFrom: 0
+    property real nextLook: 5000
+    property real lookUntil: 0
 
-    // One 25 fps tick drives everything, in the front instance only; the back
-    // one binds t and slide from it. Stops while the bar is hidden.
+    // The slow tick, in the front instance only; the back one binds t, slide
+    // and squeeze from it. It also schedules the quick events. Stops while the
+    // bar is hidden.
     Timer {
         running: root.running && root.side === "front"
         repeat: true
-        interval: 40
+        interval: 33
         onTriggered: {
-            root.t += interval;
-            if (root.t > root.nextFlick + 300)
-                root.nextFlick = root.t + 8000 + Math.random() * 7000;
-            const p = (root.t - root.nextSlide) / 1000;
+            const t = root.t += interval;
+            if (t > root.nextFlick) {
+                root.flickBurst(2 + Math.round(Math.random()));
+                root.nextFlick = t + 8000 + Math.random() * 7000;
+            }
+            const p = (t - root.nextSlide) / 1400;
             if (p >= 1) {
                 root.slideFrom += root.period;
                 root.slide = root.slideFrom;
-                root.nextSlide = root.t + 20000 + Math.random() * 20000;
+                root.squeeze = 0;
+                root.nextSlide = t + 20000 + Math.random() * 20000;
             } else if (p > 0) {
                 root.slide = root.slideFrom + root.period * (1 - Math.cos(Math.PI * p)) / 2;
+                root.squeeze = Math.sin(Math.PI * Math.min(1, p < 0.36 ? p / 0.72 : 0.5 + (p - 0.36) / 1.28));
             }
-            root.headAngle += (root.targetAngle - root.headAngle) * 0.25;
+            if (root.idleLook !== 0 && t > root.lookUntil)
+                root.idleLook = 0;
+            if (t > root.nextLook) {
+                root.idleLook = Math.random() < 0.5 ? -(10 + Math.random() * 14) : 8 + Math.random() * 12;
+                root.lookUntil = t + 1200 + Math.random() * 1500;
+                root.nextLook = t + 6000 + Math.random() * 6000;
+            }
         }
     }
 }

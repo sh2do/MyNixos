@@ -62,9 +62,9 @@ function layout(pillW, pillH, gaps, bodyW) {
     head.angle = Math.atan2(n.y1 - n.c2y, n.x1 - n.c2x) * 180 / Math.PI;
 
     // Box around every control point (the curve stays inside its control hull)
-    // plus the stroke, and around the head with its tongue.
+    // plus the stroke, around the tapered tail tip, and around the head with its tongue.
     const reach = 40;
-    let x0 = head.x - reach, x1 = head.x + reach, y0 = head.y - reach, y1 = head.y + reach;
+    let x0 = Math.min(head.x - reach, tailX - bodyW * 1.3 - 2), x1 = head.x + reach, y0 = head.y - reach, y1 = head.y + reach;
     for (const s of path)
         for (const [px, py] of [[s.x0, s.y0], [s.c1x, s.c1y], [s.c2x, s.c2y], [s.x1, s.y1]]) {
             x0 = Math.min(x0, px - half - 2);
@@ -74,4 +74,14 @@ function layout(pillW, pillH, gaps, bodyW) {
         }
 
     return { path, crossings: fronts.map(f => f.span), head, bounds: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } };
+}
+
+// Where the head points (degrees, 0 = +x) with the pointer at hoverX on a pill
+// pillW wide: it leans out over the bar toward the left end and straightens up
+// toward the right end. At rest without a pointer.
+function headAim(restAngle, hoverX, pillW) {
+    if (isNaN(hoverX) || !(pillW > 0))
+        return restAngle;
+    const f = Math.max(0, Math.min(1, hoverX / pillW));
+    return restAngle - 45 + 65 * f;
 }
