@@ -194,6 +194,11 @@ in
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # Patched hp-wmi with Omen keyboard/lightbar RGB LEDs (for omen-rgb-linux)
+  boot.extraModulePackages = [
+    (config.boot.kernelPackages.callPackage ./hp-wmi-omen.nix { })
+  ];
+
   nixpkgs.config.allowUnfree = true;
 
   # --------------------------------------------------
@@ -379,7 +384,29 @@ in
 
     #Cli and other ai tools
     claude-code
+
+    # Python development (used by the LazyVim python extra)
+    (python3.withPackages (ps: with ps; [
+      pip
+      debugpy # provides debugpy-adapter for nvim-dap-python
+      pytest
+      tkinter # needed by omen-rgb-gui
+    ]))
+    uv # fast venv / package manager
+    pyright # Python language server
+    ruff # Python linter + formatter (also an LSP)
+
+    # Neovim build/runtime deps (treesitter parsers, Mason)
+    gcc
+    gnumake
+    tree-sitter
+    nodejs
+    unzip
+    curl
   ];
+
+  # Lets prebuilt binaries (e.g. ones Mason downloads) run on NixOS
+  programs.nix-ld.enable = true;
 
   # --------------------------------------------------
   # Home Manager
