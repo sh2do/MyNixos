@@ -65,7 +65,7 @@ function layout(pillW, pillH, gaps, bodyW, amp) {
 
     // Box around every control point (the curve stays inside its control hull)
     // plus the stroke, and around the head with its tongue.
-    const reach = 28;
+    const reach = 40;
     let x0 = head.x - reach, x1 = head.x + reach, y0 = head.y - reach, y1 = head.y + reach;
     for (const s of path)
         for (const [px, py] of [[s.x0, s.y0], [s.c1x, s.c1y], [s.c2x, s.c2y], [s.x1, s.y1]]) {

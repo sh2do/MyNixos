@@ -22,7 +22,11 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "rice-bar"
     color: "transparent"
-    implicitHeight: Theme.barHeight + 16
+    // Room for the python: the pill rests higher (lower loops below it) and the
+    // head rises above it.
+    readonly property int bodyW: Math.round(Theme.barHeight * 0.4)
+    readonly property int restGap: 8 + bodyW + 1
+    implicitHeight: Theme.barHeight + restGap + 64
 
     // Only the visible part takes input; the rest passes clicks through.
     mask: Region {
@@ -43,12 +47,21 @@ PanelWindow {
         }
     }
 
+    Python {
+        pill: bar
+        gaps: root.gaps
+        side: "back"
+        t: front.t
+        amp: front.amp
+        slide: front.slide
+    }
+
     Rectangle {
         id: bar
 
         anchors.horizontalCenter: parent.horizontalCenter
-        y: root.shown ? parent.height - height - 8 : parent.height + 4
-        width: content.implicitWidth + 24
+        y: root.shown ? parent.height - height - root.restGap : parent.height + 4
+        width: content.implicitWidth + root.leftPad + 12
         height: Theme.barHeight
         radius: Theme.radius
         color: Qt.alpha(Theme.surface, 0.82)
@@ -69,29 +82,27 @@ PanelWindow {
 
         Row {
             id: content
-            anchors.centerIn: parent
+            x: root.leftPad
+            anchors.verticalCenter: parent.verticalCenter
             spacing: 10
 
-            Cobra {
-                id: cobra
-                running: root.shown
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
             Workspaces {
+                id: workspaces
                 output: root.modelData.name
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            Separator {}
+            CoilGap {}
 
             Toggles {
+                id: toggles
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            Separator {}
+            CoilGap {}
 
             Clock {
+                id: clock
                 anchors.verticalCenter: parent.verticalCenter
             }
 
@@ -103,16 +114,33 @@ PanelWindow {
         }
     }
 
+    Python {
+        id: front
+        pill: bar
+        gaps: root.gaps
+        side: "front"
+        running: root.shown
+    }
+
     Timer {
         id: hideTimer
         interval: 600
         onTriggered: root.shown = root.pinned
     }
 
-    component Separator: Rectangle {
-        width: 1
-        height: 18
-        color: Qt.alpha(Theme.outline, 0.5)
-        anchors.verticalCenter: parent.verticalCenter
+    // The python's front crossings go in the gaps between widget groups (never
+    // over a widget): one at the left end, and one in each CoilGap, which takes
+    // the place of a separator line.
+    readonly property int leftPad: bodyW + 19
+    component CoilGap: Item {
+        width: root.bodyW + 6
+        height: 1
     }
+
+    // Free spans in pill coordinates; they follow the widgets as they resize.
+    readonly property var gaps: [
+        { x: 8, w: leftPad - 10 },
+        { x: content.x + workspaces.x + workspaces.width + 2, w: toggles.x - workspaces.x - workspaces.width - 4 },
+        { x: content.x + toggles.x + toggles.width + 2, w: clock.x - toggles.x - toggles.width - 4 }
+    ]
 }
