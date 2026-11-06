@@ -166,7 +166,7 @@ const tests = {
           const d = Math.hypot(p.x - q.x, p.y - q.y);
           if (d < best) { best = d; at = q; }
         }
-        assert.ok(best <= Geo.widthAt(at.s, len, bw) / 2 + 1.5, `blotch point ${best.toFixed(1)} from spine`);
+        assert.ok(best <= Geo.widthAt(at.s, len, bw, false) / 2 + 1.5, `blotch point ${best.toFixed(1)} from spine`);
       }
   },
 
@@ -177,6 +177,60 @@ const tests = {
     const a = Geo.blotches(pts, bw, 0), b = Geo.blotches(pts, bw, 7);
     const moved = a.some((poly, i) => b[i] && Math.hypot(poly[0].x - b[i][0].x, poly[0].y - b[i][0].y) > 3);
     assert.ok(moved, "a slide of 7 px should move the blotches");
+  },
+
+  test_neck_is_separate_from_body() {
+    const bw = 19;
+    const r = Geo.layout(800, 38, [{ x: 6, w: 30 }, { x: 400, w: 40 }, { x: 700, w: 28 }], bw);
+    const last = r.path[r.path.length - 1];
+    // The body ends behind the bar's right end, where the neck starts.
+    assert.ok(Math.abs(last.x1 - r.neck.x) < 1e-9 && Math.abs(last.y1 - r.neck.y) < 1e-9, "body should end at the neck");
+    assert.ok(r.neck.x > 800, "neck starts off the right end");
+  },
+
+  test_neck_follows_head_angle() {
+    const bw = 19;
+    const r = Geo.layout(800, 38, [{ x: 6, w: 30 }], bw);
+    for (const ang of [120, 165, 190]) {
+      const seg = Geo.neckSegment(r.neck, r.head, ang, bw);
+      assert.strictEqual(seg.x0, r.neck.x);
+      assert.strictEqual(seg.x1, r.head.x);
+      const t = Math.atan2(seg.y1 - seg.c2y, seg.x1 - seg.c2x) * 180 / Math.PI;
+      assert.ok(Math.abs(((t - ang + 540) % 360) - 180) < 1e-6, `neck arrives at ${t}, head at ${ang}`);
+    }
+  },
+
+  test_body_width_without_neck_taper() {
+    const bw = 19, len = 1000;
+    assert.strictEqual(Geo.widthAt(len, len, bw, false), bw, "body end stays full width when the neck is separate");
+    assert.ok(Geo.widthAt(0, len, bw, false) < 0.3 * bw, "tail still tapers");
+  },
+
+  test_saddles_are_pointed_diamonds() {
+    const bw = 19;
+    const r = Geo.layout(600, 38, [{ x: 6, w: 30 }, { x: 260, w: 40 }], bw);
+    const pts = Geo.samples(r.path, 2);
+    for (const poly of Geo.blotches(pts, bw, 0)) {
+      // Straight sides: a quarter of the way along, about half the middle width
+      // (a rounded lens would be over 0.8).
+      const n = poly.length / 2, width = j => Math.hypot(poly[j].x - poly[2 * n - 1 - j].x, poly[j].y - poly[2 * n - 1 - j].y);
+      const ratio = width(Math.round((n - 1) / 4)) / width((n - 1) / 2);
+      assert.ok(ratio > 0.35 && ratio < 0.65, `quarter/middle width ${ratio.toFixed(2)}`);
+    }
+  },
+
+  test_eyespots_sit_on_flanks() {
+    const bw = 19;
+    const r = Geo.layout(600, 38, [{ x: 6, w: 30 }, { x: 260, w: 40 }], bw);
+    const pts = Geo.samples(r.path, 2), len = pts[pts.length - 1].s;
+    const spots = Geo.flecks(pts, bw, 0);
+    assert.ok(spots.length > 8, "eyespots along the body");
+    for (const sp of spots) {
+      let best = Infinity, at = null;
+      for (const q of pts) { const d = Math.hypot(sp.x - q.x, sp.y - q.y); if (d < best) { best = d; at = q; } }
+      const w = Geo.widthAt(at.s, len, bw, false);
+      assert.ok(best > 0.2 * w && best + sp.r <= w / 2 + 1, `eyespot ${best.toFixed(1)} off spine, width ${w.toFixed(1)}`);
+    }
   },
 };
 

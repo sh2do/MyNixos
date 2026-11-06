@@ -11,6 +11,9 @@ Row {
     id: root
     spacing: 6
 
+    // A value on one of the chips changed (the python looks at it).
+    signal poked(Item chip)
+
     function menu(name) {
         Quickshell.execDetached(["rice-menu", name]);
     }
@@ -47,6 +50,8 @@ Row {
     Chip {
         readonly property real volume: root.sink?.audio?.volume ?? 0
         readonly property bool muted: root.sink?.audio?.muted ?? true
+        onVolumeChanged: root.poked(this)
+        onMutedChanged: root.poked(this)
         icon: muted ? "󰝟" : (volume > 0.5 ? "󰕾" : "󰖀")
         label: muted ? "muted" : Math.round(volume * 100) + "%"
         onClicked: if (root.sink?.audio) root.sink.audio.muted = !root.sink.audio.muted
@@ -60,6 +65,8 @@ Row {
     // ---- brightness
     Chip {
         visible: Brightness.available
+        readonly property real level: Brightness.value
+        onLevelChanged: root.poked(this)
         icon: "󰃠"
         label: Math.round(Brightness.value * 100) + "%"
         onScrolled: dir => Brightness.change(dir)

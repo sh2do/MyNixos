@@ -54,6 +54,7 @@ PanelWindow {
         t: front.t
         slide: front.slide
         squeeze: front.squeeze
+        flinch: front.flinch
         texture: front.texture
     }
 
@@ -123,6 +124,21 @@ PanelWindow {
         side: "front"
         running: root.shown
         hoverX: barHover.hovered ? barHover.point.position.x : NaN
+    }
+
+    // The python reacts to the bar: it looks at a workspace you switch to, or a
+    // volume or brightness change, and flinches.
+    Connections {
+        target: workspaces
+        function onActiveIdxChanged() {
+            front.notice(content.x + workspaces.x + workspaces.activeCenter());
+        }
+    }
+    Connections {
+        target: toggles
+        function onPoked(chip) {
+            front.notice(content.x + toggles.x + chip.x + chip.width / 2);
+        }
     }
 
     Timer {

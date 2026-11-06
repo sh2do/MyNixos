@@ -5,11 +5,20 @@ Row {
     id: root
 
     property string output: ""
+    readonly property var list: Niri.workspacesOn(root.output)
+    readonly property int activeIdx: list.find(w => w.isActive)?.idx ?? -1
+
+    // Centre of the active pill, in this row's coordinates.
+    function activeCenter() {
+        const i = list.findIndex(w => w.isActive), item = i >= 0 ? pills.itemAt(i) : null;
+        return item ? item.x + item.width / 2 : width / 2;
+    }
 
     spacing: 6
 
     Repeater {
-        model: Niri.workspacesOn(root.output)
+        id: pills
+        model: root.list
 
         Rectangle {
             required property var modelData

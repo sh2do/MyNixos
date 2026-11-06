@@ -52,21 +52,20 @@ function layout(pillW, pillH, gaps, bodyW) {
         path.push(sweep(x, y, pillW / 2, top));
 
     // Neck: behind the pill past its right end, then up and back over it, so the
-    // head rests low above the bar's right end looking left along it.
+    // head rests low above the bar's right end looking left along it. The body
+    // path ends where the neck starts; the neck is drawn with the head, bending
+    // as the head turns (neckSegment).
     const last = path[path.length - 1];
-    const neckX = pillW + bodyW;
-    path.push(sweep(last.x1, last.y1, neckX, pillH / 2));
-    const a = 165 * Math.PI / 180;
+    const neck = { x: pillW + bodyW, y: pillH / 2 };
+    path.push(sweep(last.x1, last.y1, neck.x, neck.y));
     const head = { x: pillW + bodyW * 0.5, y: -bodyW * 2, angle: 165 };
-    path.push({ x0: neckX, y0: pillH / 2, c1x: neckX + bodyW * 1.4, c1y: pillH / 2,
-                c2x: head.x - bodyW * 1.4 * Math.cos(a), c2y: head.y - bodyW * 1.4 * Math.sin(a),
-                x1: head.x, y1: head.y });
+    const restNeck = neckSegment(neck, head, head.angle, bodyW);
 
     // Box around every control point (the curve stays inside its control hull)
     // plus the stroke, and around the head with its tongue.
     const reach = bodyW * 3.6;
     let x0 = head.x - reach, x1 = head.x + reach, y0 = head.y - reach, y1 = head.y + reach;
-    for (const s of path)
+    for (const s of path.concat([restNeck]))
         for (const [px, py] of [[s.x0, s.y0], [s.c1x, s.c1y], [s.c2x, s.c2y], [s.x1, s.y1]]) {
             x0 = Math.min(x0, px - half - 2);
             x1 = Math.max(x1, px + half + 2);
@@ -74,7 +73,16 @@ function layout(pillW, pillH, gaps, bodyW) {
             y1 = Math.max(y1, py + half + 2);
         }
 
-    return { path, crossings: fronts.map(f => f.span), head, bounds: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } };
+    return { path, crossings: fronts.map(f => f.span), neck, head, bounds: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } };
+}
+
+// The neck from where the body ends to the head at (head.x, head.y), arriving
+// along angleDeg so it stays joined to the head as it turns.
+function neckSegment(neck, head, angleDeg, bodyW) {
+    const a = angleDeg * Math.PI / 180;
+    return { x0: neck.x, y0: neck.y, c1x: neck.x + bodyW * 1.4, c1y: neck.y,
+             c2x: head.x - bodyW * 1.4 * Math.cos(a), c2y: head.y - bodyW * 1.4 * Math.sin(a),
+             x1: head.x, y1: head.y };
 }
 
 // Where the head points (degrees, 0 = +x, y down): at the pointer, seen at
@@ -96,11 +104,12 @@ function smooth(u) {
 }
 
 // Body width at arc length s along a spine len long: thin at the tail tip,
-// full through the coils, narrowing into the neck.
-function widthAt(s, len, bodyW) {
+// full through the coils, narrowing into the neck (unless the neck is drawn
+// separately: neckTaper false).
+function widthAt(s, len, bodyW, neckTaper) {
     let f = 0.2 + 0.8 * smooth(s / (bodyW * 5));
     const neck = bodyW * 3;
-    if (s > len - neck)
+    if (neckTaper !== false && s > len - neck)
         f *= 1 - 0.3 * smooth((s - (len - neck)) / neck);
     return bodyW * f;
 }
@@ -145,8 +154,8 @@ function at(pts, s) {
     return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, tx: tx / d, ty: ty / d };
 }
 
-// Reticulated saddles: lens-shaped blotches along the back, uneven in length and
-// nudged to alternate sides, so they read as a net rather than a chain. `slide`
+// Reticulated saddles: diamonds along the back, uneven in length and nudged to
+// alternate sides; with their dark outlines they read as the python's net. `slide`
 // moves them along the body (px). Returns polygons as arrays of {x, y}.
 const blotchLengths = [1.3, 0.95, 1.5, 1.1, 1.25, 0.9];
 function blotches(pts, bodyW, slide) {
@@ -159,8 +168,8 @@ function blotches(pts, bodyW, slide) {
             continue;
         const side = (k & 1 ? 0.06 : -0.06), top = [], bottom = [];
         for (let j = 0; j <= 8; j++) {
-            const u = j / 8, s = c + (u - 0.5) * bl, p = at(pts, s), w = widthAt(s, len, bodyW);
-            const half = 0.38 * w * Math.sqrt(Math.sin(Math.PI * u)), off = side * w;
+            const u = j / 8, s = c + (u - 0.5) * bl, p = at(pts, s), w = widthAt(s, len, bodyW, false);
+            const half = 0.4 * w * (1 - Math.abs(2 * u - 1)), off = side * w;
             top.push({ x: p.x - p.ty * (off + half), y: p.y + p.tx * (off + half) });
             bottom.push({ x: p.x - p.ty * (off - half), y: p.y + p.tx * (off - half) });
         }
@@ -169,7 +178,7 @@ function blotches(pts, bodyW, slide) {
     return out;
 }
 
-// Pale flecks on the flanks between saddles: {x, y, r}.
+// Eyespots on the flanks between saddles: {x, y, r}.
 function flecks(pts, bodyW, slide) {
     const len = pts[pts.length - 1].s, period = bodyW * 2.4, out = [];
     const first = Math.floor((bodyW * 2 - slide) / period) - 1;
@@ -177,9 +186,9 @@ function flecks(pts, bodyW, slide) {
         const s = k * period + slide + period / 2;
         if (s < bodyW * 2.5 || s > len - bodyW * 1.5)
             continue;
-        const p = at(pts, s), w = widthAt(s, len, bodyW);
-        for (const side of k & 1 ? [0.34] : [-0.34, 0.3])
-            out.push({ x: p.x - p.ty * side * w, y: p.y + p.tx * side * w, r: bodyW * 0.075 });
+        const p = at(pts, s), w = widthAt(s, len, bodyW, false);
+        for (const side of k & 1 ? [0.33] : [-0.33, 0.3])
+            out.push({ x: p.x - p.ty * side * w, y: p.y + p.tx * side * w, r: bodyW * 0.1 });
     }
     return out;
 }
@@ -188,20 +197,24 @@ function flecks(pts, bodyW, slide) {
 function outlineSvg(pts, bodyW, ox, oy) {
     const len = pts[pts.length - 1].s, left = [], right = [];
     for (const p of pts) {
-        const h = widthAt(p.s, len, bodyW) / 2;
+        const h = widthAt(p.s, len, bodyW, false) / 2;
         left.push(`${(p.x - p.ty * h - ox).toFixed(1)} ${(p.y + p.tx * h - oy).toFixed(1)}`);
         right.push(`${(p.x + p.ty * h - ox).toFixed(1)} ${(p.y - p.tx * h - oy).toFixed(1)}`);
     }
-    const t = pts[0], r = widthAt(0, len, bodyW) / 2;
+    // Rounded ends: the tail tip, and the end the neck covers (so the outline's
+    // stroke doesn't cross the joint).
+    const t = pts[0], r = widthAt(0, len, bodyW, false) / 2;
     const tip = `${(t.x - t.tx * r - ox).toFixed(1)} ${(t.y - t.ty * r - oy).toFixed(1)}`;
-    return `M ${tip} L ${left.join(" L ")} L ${right.reverse().join(" L ")} Z`;
+    const e = pts[pts.length - 1], R = widthAt(len, len, bodyW, false) / 2;
+    const end = `${(e.x + e.tx * R - ox).toFixed(1)} ${(e.y + e.ty * R - oy).toFixed(1)}`;
+    return `M ${tip} L ${left.join(" L ")} L ${end} L ${right.reverse().join(" L ")} Z`;
 }
 
 // A line along the body at `k` body widths off the spine (negative = left side).
 function edgeSvg(pts, bodyW, k, ox, oy) {
     const len = pts[pts.length - 1].s;
     return "M " + pts.map(p => {
-        const o = k * widthAt(p.s, len, bodyW);
+        const o = k * widthAt(p.s, len, bodyW, false);
         return `${(p.x - p.ty * o - ox).toFixed(1)} ${(p.y + p.tx * o - oy).toFixed(1)}`;
     }).join(" L ");
 }
@@ -210,6 +223,39 @@ function polysSvg(polys, ox, oy) {
     return polys.map(poly => "M " + poly.map(p => `${(p.x - ox).toFixed(1)} ${(p.y - oy).toFixed(1)}`).join(" L ") + " Z").join(" ");
 }
 
-function dotsSvg(dots, ox, oy) {
-    return dots.map(d => `M ${(d.x - ox - d.r).toFixed(1)} ${(d.y - oy).toFixed(1)} a ${d.r} ${d.r} 0 1 0 ${2 * d.r} 0 a ${d.r} ${d.r} 0 1 0 ${-2 * d.r} 0`).join(" ");
+// Circles, at `scale` times their radius.
+function dotsSvg(dots, ox, oy, scale) {
+    const k = scale || 1;
+    return dots.map(d => {
+        const r = d.r * k;
+        return `M ${(d.x - ox - r).toFixed(1)} ${(d.y - oy).toFixed(1)} a ${r} ${r} 0 1 0 ${2 * r} 0 a ${r} ${r} 0 1 0 ${-2 * r} 0`;
+    }).join(" ");
+}
+
+// Polygons shrunk toward their centroids by factor f.
+function shrink(polys, f) {
+    return polys.map(poly => {
+        const cx = poly.reduce((a, p) => a + p.x, 0) / poly.length, cy = poly.reduce((a, p) => a + p.y, 0) / poly.length;
+        return poly.map(p => ({ x: cx + (p.x - cx) * f, y: cy + (p.y - cy) * f }));
+    });
+}
+
+// The neck as SVG: a fill from full body width down to 0.7 of it at the head,
+// its two side edges (no edge across the start, where it joins the body), and
+// the same spine line, belly shadow and sheen as the body (edgeSvg's k).
+function neckSvg(seg, bodyW, ox, oy) {
+    const pts = samples([seg], 2), len = pts[pts.length - 1].s;
+    const w = p => bodyW * (1 - 0.3 * smooth(p.s / len));
+    const line = k => "M " + pts.map(p => {
+        const o = k * w(p);
+        return `${(p.x - p.ty * o - ox).toFixed(1)} ${(p.y + p.tx * o - oy).toFixed(1)}`;
+    }).join(" L ");
+    const left = line(0.5), right = line(-0.5);
+    return {
+        fill: `${left} L ${right.slice(2).split(" L ").reverse().join(" L ")} Z`,
+        edges: `${left} ${right}`,
+        spine: line(0),
+        belly: line(0.3),
+        sheen: line(-0.26)
+    };
 }

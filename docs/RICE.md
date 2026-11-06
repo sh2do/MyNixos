@@ -113,9 +113,9 @@ All menus share the wallpaper-coloured rofi theme. Escape always does nothing.
 
 ## Bar
 
-- **Top pill:** the playing song while music plays, otherwise the focused window's title. Fullscreen windows hide it.
+- **Top pill:** the playing song while music plays, otherwise the focused window's title. It stays tucked above the screen edge and drops in for a few seconds when a song starts or changes, or when you switch workspace; the pointer over it keeps it down. Fullscreen windows hide it.
 - **Bottom bar:** auto-hides into a 3 px strip at the screen edge. Touch the edge to slide it up. `RICE_BAR_PINNED=1 qs -c rice` keeps it up while you restyle it.
-- **The python** spirals three times around the bottom bar, crossing in front only in the gaps between widget groups, so it never covers a button. Its body is click-through. Its body tapers from a thin tail to a narrower neck, under a broad wedge head resting over the right end. It breathes, now and then shifts its grip and flicks its tongue, and its head looks at the widget under the pointer.
+- **The python** spirals three times around the bottom bar, crossing in front only in the gaps between widget groups, so it never covers a button. Its body is click-through. Its body tapers from a thin tail to a narrower neck, patterned with a dark-edged diamond net and flank eyespots, and casts a soft shadow. The broad wedge head (amber eyes, barred lips) rests over the right end on a neck that bends as it turns. It breathes, now and then shifts its grip and flicks its tongue, looks at the widget under the pointer, and looks and flinches when you switch workspace or change volume or brightness. Hidden for a few minutes, it wakes slowly when the bar comes back.
 - It animates only while the bar is visible: about 0.3% CPU hidden. Shown, slow motion ticks at 48 Hz and quick moves run every frame.
 - **Hot reload:** the bar runs as `qs -c rice` (started by niri). `nh os switch` restarts it when its QML changed, because a running bar keeps watching the old store path.
 

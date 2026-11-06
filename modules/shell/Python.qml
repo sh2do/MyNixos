@@ -23,7 +23,7 @@ Item {
     readonly property var geo: Geo.layout(pill.width, pill.height, gaps, bodyW)
     // Breathing: the coils loosen and tighten a little every 5 s. A scale of
     // the finished image, so the body isn't redrawn for it.
-    readonly property real breath: 1 + 0.025 * Math.sin(2 * Math.PI * t / 5000) - 0.04 * squeeze
+    readonly property real breath: 1 + 0.025 * Math.sin(2 * Math.PI * t / 5000) - 0.04 * squeeze - 0.05 * flinch
     readonly property var box: geo.bounds
 
     // The python's own frame is the pill's, shifted so the bounds start at 0, 0.
@@ -62,12 +62,37 @@ Item {
         sourceComponent: Item {
             id: skinItem
             readonly property Item texture: artTex
-            readonly property string saddleSvg: Geo.polysSvg(Geo.blotches(root.spine, root.bodyW, root.slide), root.box.x, root.box.y)
-            readonly property string fleckSvg: Geo.dotsSvg(Geo.flecks(root.spine, root.bodyW, root.slide), root.box.x, root.box.y)
+            readonly property var saddles: Geo.blotches(root.spine, root.bodyW, root.slide)
+            readonly property var spots: Geo.flecks(root.spine, root.bodyW, root.slide)
 
             Item {
                 id: art
                 anchors.fill: parent
+
+                // A soft shadow, baked into the texture so it costs nothing per
+                // tick: on the pill under the front crossings, on the wallpaper
+                // under the rest.
+                Item {
+                    x: 1
+                    y: 2.5
+                    width: parent.width
+                    height: parent.height
+                    opacity: 0.5
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        blurEnabled: true
+                        blur: 0.35
+                        blurMax: 12
+                    }
+                    Shape {
+                        anchors.fill: parent
+                        preferredRendererType: Shape.CurveRenderer
+                        Fill {
+                            fillColor: "black"
+                            PathSvg { path: Geo.outlineSvg(root.spine, root.bodyW, root.box.x, root.box.y) }
+                        }
+                    }
+                }
 
                 // The outline never changes after layout. The curve renderer picks
                 // up colour changes even inside a hidden source; the default one
@@ -92,6 +117,12 @@ Item {
                         strokeWidth: root.bodyW * 0.12
                         PathSvg { path: Geo.edgeSvg(root.spine, root.bodyW, -0.26, root.box.x, root.box.y) }
                     }
+                    // The dark line down the spine that links the saddles into a net.
+                    Line {
+                        strokeColor: Qt.alpha(Theme.surface, 0.7)
+                        strokeWidth: root.bodyW * 0.09
+                        PathSvg { path: Geo.edgeSvg(root.spine, root.bodyW, 0, root.box.x, root.box.y) }
+                    }
                 }
                 // The pattern in its own Shape, so a grip shift only rebuilds this
                 // one, with the default renderer: cheaper to rebuild every step.
@@ -101,15 +132,25 @@ Item {
                     model: [Theme.colours]
                     Shape {
                         anchors.fill: parent
+                        // Saddles: dark-edged diamonds with a paler heart.
                         Fill {
                             fillColor: Theme.primaryContainer
                             strokeColor: Theme.surface
-                            strokeWidth: 1.3
-                            PathSvg { path: skinItem.saddleSvg }
+                            strokeWidth: 1.6
+                            PathSvg { path: Geo.polysSvg(skinItem.saddles, root.box.x, root.box.y) }
+                        }
+                        Fill {
+                            fillColor: Qt.lighter(Theme.primaryContainer, 1.3)
+                            PathSvg { path: Geo.polysSvg(Geo.shrink(skinItem.saddles, 0.45), root.box.x, root.box.y) }
+                        }
+                        // Eyespots: a dark ring around a pale centre.
+                        Fill {
+                            fillColor: Theme.surface
+                            PathSvg { path: Geo.dotsSvg(skinItem.spots, root.box.x, root.box.y) }
                         }
                         Fill {
                             fillColor: Theme.tertiary
-                            PathSvg { path: skinItem.fleckSvg }
+                            PathSvg { path: Geo.dotsSvg(skinItem.spots, root.box.x, root.box.y, 0.5) }
                         }
                     }
                 }
@@ -176,51 +217,87 @@ Item {
         }
     }
 
-    // The head, front layer only: a broad, flat wedge in the saddle colour with
-    // a dark midline, eye stripes and a forked tongue, sized from the body.
-    // Drawn pointing +x from the neck joint, then turned.
+    // The head and neck, front layer only. The head is a broad, flat wedge in
+    // the saddle colour: dark midline and eye stripes, pale barred lips with
+    // heat pits, amber eyes with slit pupils, and a forked tongue, sized from
+    // the body. Drawn pointing +x from the neck joint, then turned; the neck is
+    // redrawn to meet it.
     //
     // Motion comes in two speeds. The slow, small motions (breathing, the grip
     // shift, the head's sway and bob) follow `t`, ticked every 21 ms: every
     // third frame at 144 Hz, so the steps stay even, and each is under a pixel.
     // A per-frame clock keeps the bar redrawing at the full refresh rate and
     // costs several times the CPU. The quick moves (turning, waking, probing,
-    // tongue flicks) are Qt animations, which run every frame while they last.
+    // flinching, tongue flicks) are Qt animations, which run every frame while
+    // they last.
 
-    // It looks at the widget under the pointer; otherwise it now and then
-    // looks around.
+    // Where it looks, most urgent first: something that just changed on the bar
+    // (notice), the widget under the pointer, then now and then around.
     readonly property real restAngle: geo.head.angle
     property real idleLook: 0
-    readonly property real aim: isNaN(hoverX) ? restAngle + idleLook : Geo.headAim(restAngle, geo.head, hoverX, pill.height)
+    property real noticeX: NaN
+    readonly property real lookX: !isNaN(noticeX) ? noticeX : hoverX
+    readonly property real aim: isNaN(lookX) ? restAngle + idleLook : Geo.headAim(restAngle, geo.head, lookX, pill.height)
     property real headAngle: aim
     Behavior on headAngle {
         SpringAnimation { spring: 2.2; damping: 0.32; epsilon: 0.05 }
     }
 
-    // 0 = tucked in, 1 = raised. It rises with a small overshoot when the bar appears.
+    // 0 = resting, head down on the coils; 1 = raised.
     property real lift: 0
     // A short forward jab when the pointer arrives, as if tasting the air.
     property real probe: 0
-    // Coils tighten while the snake shifts its grip.
+    // Leaning in while the pointer is over the bar.
+    property real attention: hovering ? 1 : 0
+    Behavior on attention {
+        NumberAnimation { duration: 450; easing.type: Easing.InOutSine }
+    }
+    // Coils tighten while the snake shifts its grip, and flinch when something
+    // on the bar changes.
     property real squeeze: 0
+    property real flinch: 0
     // Tongue: how far out, and how far the fork tips spread.
     property real tongueOut: 0
     property real fork: 0
 
+    // Something changed at x on the bar (pill coordinates): look at it, flinch,
+    // taste the air.
+    function notice(x) {
+        if (!running || side !== "front")
+            return;
+        noticeX = x;
+        noticeTimer.restart();
+        flinchAnim.restart();
+        flickBurst(1);
+    }
+    Timer {
+        id: noticeTimer
+        interval: 1600
+        onTriggered: root.noticeX = NaN
+    }
+
+    // Hidden for a while, it has settled: it wakes slowly, lifting, looking
+    // along the bar and tasting the air. Back soon, it just pops up.
+    property real hiddenAt: 0
     onRunningChanged: {
         if (side !== "front")
             return;
         if (running) {
-            wake.restart();
+            if (Date.now() - hiddenAt > 180000)
+                slowWake.restart();
+            else
+                wake.restart();
         } else {
             wake.stop();
+            slowWake.stop();
             lift = 0;
+            hiddenAt = Date.now();
         }
     }
     onHoverXChanged: {
         const arrived = !isNaN(hoverX) && !hovering;
         hovering = !isNaN(hoverX);
-        if (arrived && running && side === "front") {
+        if (arrived && running && side === "front" && !slowWake.running) {
             probeAnim.restart();
             if (Math.random() < 0.5)
                 flickBurst(1 + Math.round(Math.random()));
@@ -242,38 +319,139 @@ Item {
     }
 
     SequentialAnimation {
+        id: slowWake
+        PauseAnimation { duration: 450 }
+        NumberAnimation { target: root; property: "lift"; from: 0; to: 1; duration: 1400; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "idleLook"; to: -22; duration: 700; easing.type: Easing.InOutSine }
+        ScriptAction { script: root.flickBurst(2) }
+        NumberAnimation { target: root; property: "idleLook"; to: 10; duration: 900; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "idleLook"; to: 0; duration: 600; easing.type: Easing.InOutSine }
+    }
+
+    SequentialAnimation {
         id: probeAnim
         NumberAnimation { target: root; property: "probe"; to: 1; duration: 140; easing.type: Easing.OutCubic }
         NumberAnimation { target: root; property: "probe"; to: 0; duration: 420; easing.type: Easing.InOutSine }
     }
 
     SequentialAnimation {
+        id: flinchAnim
+        NumberAnimation { target: root; property: "flinch"; to: 1; duration: 90; easing.type: Easing.OutQuad }
+        NumberAnimation { target: root; property: "flinch"; to: 0; duration: 650; easing.type: Easing.OutElastic; easing.amplitude: 1; easing.period: 0.5 }
+    }
+
+    // Real tongues flutter: a fast flicker of the tips inside a slower in and out,
+    // sagging a little at full reach.
+    SequentialAnimation {
         id: flick
         NumberAnimation { target: root; property: "tongueOut"; from: 0; to: 1; duration: 90; easing.type: Easing.OutQuad }
-        NumberAnimation { target: root; property: "fork"; from: 0.2; to: 1; duration: 60; easing.type: Easing.InOutSine }
-        NumberAnimation { target: root; property: "fork"; to: 0.35; duration: 60; easing.type: Easing.InOutSine }
-        NumberAnimation { target: root; property: "fork"; to: 1; duration: 60; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "fork"; from: 0.2; to: 1; duration: 45; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "fork"; to: 0.3; duration: 45; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "fork"; to: 1; duration: 45; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "fork"; to: 0.4; duration: 45; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "fork"; to: 1; duration: 45; easing.type: Easing.InOutSine }
         NumberAnimation { target: root; property: "tongueOut"; to: 0; duration: 110; easing.type: Easing.InQuad }
         PauseAnimation { duration: 80 }
+    }
+
+    // The head's pose, in this item's frame. The neck follows the main pose
+    // (turning, lifting, leaning, flinching), so it's only rebuilt while the
+    // head really moves; the slow sway, bob and breathing ride on the head
+    // alone (under 2 px, hidden by the neck joint).
+    readonly property real poseDir: headAngle * Math.PI / 180
+    // Out along its axis: tucked back at rest, forward for the probe and while
+    // the pointer is over the bar, jerked back by a flinch.
+    readonly property real headReach: bodyW * (-0.5 * (1 - lift) + 0.25 * probe + 0.12 * attention - 0.2 * flinch)
+    readonly property real poseX: geo.head.x - box.x + headReach * Math.cos(poseDir)
+    readonly property real poseY: geo.head.y - box.y + headReach * Math.sin(poseDir) + 0.5 * bodyW * (1 - lift)
+    // Sampled on the slow tick (and on layout changes), not every frame: a turn
+    // runs at the full refresh rate and rebuilding the neck that often is the
+    // costliest thing here. The joint hides the lag.
+    property var neckPose: ({ x: poseX, y: poseY, angle: headAngle })
+    function updateNeck() {
+        const p = neckPose;
+        if (Math.abs(p.x - poseX) + Math.abs(p.y - poseY) > 0.2 || Math.abs(p.angle - headAngle) > 0.2)
+            neckPose = { x: poseX, y: poseY, angle: headAngle };
+    }
+    onGeoChanged: neckPose = { x: poseX, y: poseY, angle: headAngle }
+    readonly property var neckShape: side !== "front" ? ({ fill: "", edges: "", spine: "", belly: "", sheen: "" })
+        : Geo.neckSvg(Geo.neckSegment({ x: geo.neck.x - box.x, y: geo.neck.y - box.y }, neckPose, neckPose.angle, bodyW), bodyW, 0, 0)
+
+    readonly property real headRot: headAngle + 2.5 * Math.sin(2 * Math.PI * t / 2300) + 1 * Math.sin(2 * Math.PI * t / 890)
+    readonly property real breathOriginY: pill.height / 2 - box.y
+    readonly property real headX: poseX
+    readonly property real headY: poseY + (geo.head.y - box.y - breathOriginY) * (breath - 1)
+        + 0.06 * bodyW * Math.sin(2 * Math.PI * t / 5000 + 0.6)
+
+    // An offset copy under the neck and head, matching the body's shadow. Not
+    // blurred: a blurred layer would be redrawn on every tick as the head sways.
+    Item {
+        visible: root.side === "front"
+        anchors.fill: parent
+        opacity: 0.3
+
+        Shape {
+            x: 1
+            y: 2.5
+            preferredRendererType: Shape.CurveRenderer
+            Fill {
+                fillColor: "black"
+                PathSvg { path: root.neckShape.fill }
+            }
+        }
+        Item {
+            x: root.headX + 1
+            y: root.headY + 2.5
+            rotation: root.headRot
+            scale: 0.88 + 0.12 * root.lift
+            transformOrigin: Item.TopLeft
+            Shape {
+                preferredRendererType: Shape.CurveRenderer
+                Fill {
+                    fillColor: "black"
+                    PathSvg { path: head.outline }
+                }
+            }
+        }
+    }
+
+    Shape {
+        visible: root.side === "front"
+        preferredRendererType: Shape.CurveRenderer
+        Fill {
+            fillColor: Theme.surfaceContainer
+            PathSvg { path: root.neckShape.fill }
+        }
+        Line {
+            strokeColor: Qt.alpha(Theme.surface, 0.35)
+            strokeWidth: root.bodyW * 0.22
+            PathSvg { path: root.neckShape.belly }
+        }
+        Line {
+            strokeColor: Qt.rgba(1, 1, 1, 0.1)
+            strokeWidth: root.bodyW * 0.12
+            PathSvg { path: root.neckShape.sheen }
+        }
+        Line {
+            strokeColor: Qt.alpha(Theme.surface, 0.7)
+            strokeWidth: root.bodyW * 0.09
+            PathSvg { path: root.neckShape.spine }
+        }
+        Line {
+            strokeColor: Theme.surface
+            strokeWidth: 1.6
+            PathSvg { path: root.neckShape.edges }
+        }
     }
 
     Item {
         id: head
         visible: root.side === "front"
         readonly property real b: root.bodyW
-        // Slow sway and a bob in time with the breathing.
-        readonly property real sway: 2.5 * Math.sin(2 * Math.PI * root.t / 2300) + 1 * Math.sin(2 * Math.PI * root.t / 890)
-        readonly property real bob: 0.06 * b * Math.sin(2 * Math.PI * root.t / 5000 + 0.6)
-        // Tucked back along its own axis until it rises; the probe pushes it forward.
-        readonly property real reach: -0.5 * b * (1 - root.lift) + 0.25 * b * root.probe
-        readonly property real dir: (root.headAngle + sway) * Math.PI / 180
-        // Follow the body's breathing scale, so the neck stays joined.
-        readonly property real originY: root.pill.height / 2 - root.box.y
-        readonly property real restY: root.geo.head.y - root.box.y
 
-        x: root.geo.head.x - root.box.x + reach * Math.cos(dir)
-        y: originY + (restY - originY) * root.breath + reach * Math.sin(dir) + bob
-        rotation: root.headAngle + sway
+        x: root.headX
+        y: root.headY
+        rotation: root.headRot
         scale: 0.88 + 0.12 * root.lift
         transformOrigin: Item.TopLeft
 
@@ -282,22 +460,39 @@ Item {
             const R = r * b;
             return pts.map(p => `M ${p[0] * b - R} ${p[1] * b} a ${R} ${R} 0 1 0 ${2 * R} 0 a ${R} ${R} 0 1 0 ${-2 * R} 0`).join(" ");
         }
+        // Ellipses (slit pupils), rx by ry body widths.
+        function slits(pts, rx, ry) {
+            const X = rx * b, Y = ry * b;
+            return pts.map(p => `M ${p[0] * b - X} ${p[1] * b} a ${X} ${Y} 0 1 0 ${2 * X} 0 a ${X} ${Y} 0 1 0 ${-2 * X} 0`).join(" ");
+        }
+        // Wide at the jaw, a slight brow over each eye, narrowing to the snout.
+        readonly property string outline: {
+            return `M ${-0.2 * b} ${-0.36 * b} C ${0.05 * b} ${-0.7 * b} ${0.35 * b} ${-0.8 * b} ${0.7 * b} ${-0.78 * b}`
+                + ` C ${1.15 * b} ${-0.74 * b} ${1.45 * b} ${-0.66 * b} ${1.6 * b} ${-0.6 * b}`
+                + ` C ${1.95 * b} ${-0.46 * b} ${2.2 * b} ${-0.3 * b} ${2.32 * b} ${-0.2 * b}`
+                + ` Q ${2.46 * b} ${-0.08 * b} ${2.46 * b} 0 Q ${2.46 * b} ${0.08 * b} ${2.32 * b} ${0.2 * b}`
+                + ` C ${2.2 * b} ${0.3 * b} ${1.95 * b} ${0.46 * b} ${1.6 * b} ${0.6 * b}`
+                + ` C ${1.45 * b} ${0.66 * b} ${1.15 * b} ${0.74 * b} ${0.7 * b} ${0.78 * b}`
+                + ` C ${0.35 * b} ${0.8 * b} ${0.05 * b} ${0.7 * b} ${-0.2 * b} ${0.36 * b} Z`;
+        }
 
         Shape {
             id: tongue
             visible: root.tongueOut > 0.01
             preferredRendererType: Shape.CurveRenderer
             readonly property real base: 2.42 * head.b
-            readonly property real tip: base + 0.6 * head.b * root.tongueOut
-            readonly property real len: 0.28 * head.b * root.tongueOut
-            readonly property real spread: (14 + 22 * root.fork) * Math.PI / 180
+            readonly property real tip: base + 0.75 * head.b * root.tongueOut
+            readonly property real sag: 0.08 * head.b * root.tongueOut
+            readonly property real len: 0.3 * head.b * root.tongueOut
+            readonly property real spread: (12 + 26 * root.fork) * Math.PI / 180
             Line {
                 strokeColor: Theme.tertiary
                 strokeWidth: Math.max(1.1, 0.07 * head.b)
                 PathSvg {
                     path: {
                         const t = tongue, ex = t.len * Math.cos(t.spread), ey = t.len * Math.sin(t.spread);
-                        return `M ${t.base} 0 L ${t.tip} 0 L ${t.tip + ex} ${-ey} M ${t.tip} 0 L ${t.tip + ex} ${ey}`;
+                        return `M ${t.base} 0 Q ${(t.base + t.tip) / 2} ${t.sag * 1.6} ${t.tip} ${t.sag}`
+                            + ` L ${t.tip + ex} ${t.sag - ey} M ${t.tip} ${t.sag} L ${t.tip + ex} ${t.sag + ey}`;
                     }
                 }
             }
@@ -305,7 +500,7 @@ Item {
 
         Shape {
             preferredRendererType: Shape.CurveRenderer
-            // Neck joint: covers the seam with the body as the head turns.
+            // Neck joint: covers the seam with the neck as the head turns.
             Fill {
                 fillColor: Theme.surfaceContainer
                 PathSvg { path: head.dots([[0, 0]], 0.36) }
@@ -314,14 +509,29 @@ Item {
                 fillColor: Theme.primaryContainer
                 strokeColor: Theme.surface
                 strokeWidth: 1.5
+                PathSvg { path: head.outline }
+            }
+            // Pale lips along the snout's edges, barred dark, with heat pits.
+            Line {
+                strokeColor: Qt.lighter(Theme.primaryContainer, 1.4)
+                strokeWidth: 0.12 * head.b
                 PathSvg {
                     path: {
                         const b = head.b;
-                        return `M ${-0.2 * b} ${-0.36 * b} C ${0.05 * b} ${-0.7 * b} ${0.35 * b} ${-0.8 * b} ${0.65 * b} ${-0.78 * b}`
-                            + ` C ${1.2 * b} ${-0.72 * b} ${1.95 * b} ${-0.48 * b} ${2.28 * b} ${-0.24 * b}`
-                            + ` Q ${2.45 * b} ${-0.1 * b} ${2.45 * b} 0 Q ${2.45 * b} ${0.1 * b} ${2.28 * b} ${0.24 * b}`
-                            + ` C ${1.95 * b} ${0.48 * b} ${1.2 * b} ${0.72 * b} ${0.65 * b} ${0.78 * b}`
-                            + ` C ${0.35 * b} ${0.8 * b} ${0.05 * b} ${0.7 * b} ${-0.2 * b} ${0.36 * b} Z`;
+                        return `M ${1.0 * b} ${-0.66 * b} C ${1.5 * b} ${-0.56 * b} ${1.95 * b} ${-0.38 * b} ${2.28 * b} ${-0.14 * b}`
+                            + ` M ${1.0 * b} ${0.66 * b} C ${1.5 * b} ${0.56 * b} ${1.95 * b} ${0.38 * b} ${2.28 * b} ${0.14 * b}`;
+                    }
+                }
+            }
+            Line {
+                strokeColor: Qt.alpha(Theme.surface, 0.8)
+                strokeWidth: Math.max(0.8, 0.05 * head.b)
+                PathSvg {
+                    path: {
+                        const b = head.b;
+                        return [[1.2, 0.63], [1.55, 0.53], [1.9, 0.38], [2.15, 0.22]].map(p =>
+                            `M ${p[0] * b} ${-(p[1] + 0.07) * b} L ${(p[0] + 0.03) * b} ${-(p[1] - 0.07) * b}`
+                            + ` M ${p[0] * b} ${(p[1] + 0.07) * b} L ${(p[0] + 0.03) * b} ${(p[1] - 0.07) * b}`).join(" ");
                     }
                 }
             }
@@ -338,16 +548,16 @@ Item {
                     }
                 }
             }
-            // Eyes, set into the stripes, then pupils and nostrils.
+            // Amber eyes with slit pupils, then the nostrils.
             Fill {
-                fillColor: Theme.tertiary
+                fillColor: Qt.tint(Theme.tertiary, Qt.rgba(0.85, 0.55, 0.15, 0.6))
                 strokeColor: Theme.surface
                 strokeWidth: 1
-                PathSvg { path: head.dots([[1.55, -0.38], [1.55, 0.38]], 0.13) }
+                PathSvg { path: head.dots([[1.55, -0.38], [1.55, 0.38]], 0.14) }
             }
             Fill {
                 fillColor: Theme.surface
-                PathSvg { path: head.dots([[1.58, -0.38], [1.58, 0.38]], 0.05) + " " + head.dots([[2.3, -0.13], [2.3, 0.13]], 0.04) }
+                PathSvg { path: head.slits([[1.56, -0.38], [1.56, 0.38]], 0.11, 0.035) + " " + head.dots([[2.32, -0.12], [2.32, 0.12]], 0.04) }
             }
         }
     }
@@ -367,6 +577,7 @@ Item {
         interval: 21
         onTriggered: {
             const t = root.t += interval;
+            root.updateNeck();
             if (t > root.nextFlick) {
                 root.flickBurst(2 + Math.round(Math.random()));
                 root.nextFlick = t + 8000 + Math.random() * 7000;
@@ -381,6 +592,8 @@ Item {
                 root.slide = root.slideFrom + root.period * (1 - Math.cos(Math.PI * p)) / 2;
                 root.squeeze = Math.sin(Math.PI * Math.min(1, p < 0.36 ? p / 0.72 : 0.5 + (p - 0.36) / 1.28));
             }
+            if (slowWake.running)
+                return;
             if (root.idleLook !== 0 && t > root.lookUntil)
                 root.idleLook = 0;
             if (t > root.nextLook) {

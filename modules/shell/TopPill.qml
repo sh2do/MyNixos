@@ -1,5 +1,8 @@
 // The small pill at the top: the song while music plays, otherwise the
-// focused window's title. Lives on the Top layer, so fullscreen windows hide it.
+// focused window's title. It stays tucked away above the screen edge and
+// drops in for a few seconds when a song starts or changes, or when you
+// switch workspace; the pointer over it keeps it down. Lives on the Top
+// layer, so fullscreen windows hide it.
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
@@ -17,19 +20,42 @@ PanelWindow {
         ? [player.trackArtist, player.trackTitle].filter(s => s && s.length).join(" — ")
         : Niri.focusedTitle
 
+    // What changes bring it down.
+    readonly property string track: player ? [player.trackArtist, player.trackTitle].join("\n") : ""
+    readonly property int workspace: Niri.workspaces.find(w => w.isFocused)?.id ?? -1
+    onTrackChanged: if (playing) peek()
+    onPlayingChanged: if (playing) peek()
+    onWorkspaceChanged: peek()
+
+    property bool shown: false
+    function peek() {
+        shown = true;
+        hideTimer.restart();
+    }
+    Timer {
+        id: hideTimer
+        interval: 3500
+        onTriggered: if (!hover.hovered) root.shown = false
+    }
+
     anchors.top: true
-    margins.top: 6
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "rice-pill"
     color: "transparent"
     implicitWidth: pill.width
-    implicitHeight: 28
+    implicitHeight: 34
     visible: text.length > 0
+    // Only the pill takes input, and only while it's down.
+    mask: Region {
+        item: root.shown ? pill : null
+    }
 
     Rectangle {
         id: pill
-        height: parent.height
+        y: root.shown ? 6 : -height - 2
+        opacity: root.shown ? 1 : 0
+        height: 28
         width: Math.min(row.implicitWidth + 28, 520)
         radius: height / 2
         color: Qt.alpha(Theme.surface, 0.82)
@@ -38,6 +64,17 @@ PanelWindow {
 
         Behavior on width {
             NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+        }
+        Behavior on y {
+            NumberAnimation { duration: 420; easing.type: root.shown ? Easing.OutBack : Easing.InCubic; easing.overshoot: 1.4 }
+        }
+        Behavior on opacity {
+            NumberAnimation { duration: 260 }
+        }
+
+        HoverHandler {
+            id: hover
+            onHoveredChanged: if (!hovered) hideTimer.restart()
         }
 
         Row {
