@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- two coils, back halves first so the front halves overlap them -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M10 54 A22 7 0 0 1 54 54" stroke="#fff" stroke-width="7"/>
+    <path d="M17 45 A15 5.5 0 0 1 47 45" stroke="#fff" stroke-width="6.5"/>
+    <path d="M54 54 A22 7 0 0 1 10 54" stroke="#000" stroke-width="8.6"/>
+    <path d="M54 54 A22 7 0 0 1 10 54" stroke="#fff" stroke-width="7"/>
+    <path d="M47 45 A15 5.5 0 0 1 17 45" stroke="#000" stroke-width="8"/>
+    <path d="M47 45 A15 5.5 0 0 1 17 45" stroke="#fff" stroke-width="6.5"/>
+    <!-- the neck rises from the front of the upper coil -->
+    <path d="M24 49 C30 47 34 42 33 34" stroke="#000" stroke-width="7.6"/>
+    <path d="M24 49 C30 47 34 42 33 34" stroke="#fff" stroke-width="6"/>
+  </g>
+  <!-- tail tip -->
+  <path d="M10 54 C6 57 4 55 3 52" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+</svg>

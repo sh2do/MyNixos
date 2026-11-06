@@ -35,7 +35,7 @@ let
 
   rice-wall = pkgs.writeShellApplication {
     name = "rice-wall";
-    runtimeInputs = with pkgs; [ awww matugen coreutils findutils ];
+    runtimeInputs = with pkgs; [ awww matugen coreutils findutils librsvg ];
     text = builtins.readFile ./rice-wall.sh;
   };
 
