@@ -52,7 +52,6 @@ PanelWindow {
         gaps: root.gaps
         side: "back"
         t: front.t
-        amp: front.amp
         slide: front.slide
     }
 
@@ -77,6 +76,7 @@ PanelWindow {
         }
 
         HoverHandler {
+            id: barHover
             onHoveredChanged: hovered ? hideTimer.stop() : hideTimer.restart()
         }
 
@@ -120,6 +120,7 @@ PanelWindow {
         gaps: root.gaps
         side: "front"
         running: root.shown
+        hoverX: barHover.hovered ? barHover.point.position.x : NaN
     }
 
     Timer {

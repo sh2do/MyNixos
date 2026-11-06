@@ -21,12 +21,10 @@ function sweep(x0, y0, x1, y1) {
     return { x0, y0, c1x: x0 + k, c1y: y0, c2x: x1 - k, c2y: y1, x1, y1 };
 }
 
-// amp scales how far the body sits beyond the pill's edges (breathing).
-function layout(pillW, pillH, gaps, bodyW, amp) {
-    const a = amp === undefined ? 1 : amp;
+function layout(pillW, pillH, gaps, bodyW) {
     const half = bodyW / 2;
-    const top = -half * a;
-    const bottom = pillH + half * a;
+    const top = -half;
+    const bottom = pillH + half;
 
     // Each front crossing slants from top-left to bottom-right inside its gap,
     // keeping the whole stroke within the gap while it is over the pill.

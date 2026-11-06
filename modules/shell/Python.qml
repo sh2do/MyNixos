@@ -20,8 +20,10 @@ Item {
     property real hoverX: NaN
 
     readonly property int bodyW: Math.round(Theme.barHeight * 0.4)
-    property real amp: 1
-    readonly property var geo: Geo.layout(pill.width, pill.height, gaps, bodyW, amp)
+    readonly property var geo: Geo.layout(pill.width, pill.height, gaps, bodyW)
+    // Breathing: the coils loosen and tighten a little every 5 s. A scale of
+    // the finished image, so the body isn't redrawn every tick.
+    readonly property real breath: 1 + 0.025 * Math.sin(2 * Math.PI * t / 5000)
     readonly property var box: geo.bounds
 
     // The python's own frame is the pill's, shifted so the bounds start at 0, 0.
@@ -47,7 +49,8 @@ Item {
     readonly property var saddles: [[0, 0.75], [1.2, 1.75], [2.35, 3.25]]
     readonly property var flecks: [[0.93, 1.03], [1.92, 2.0], [2.12, 2.2], [3.38, 3.48]]
     readonly property real period: 3.6 * bodyW
-    // Px the pattern has crept along the body (Task 3 animates it).
+    // Px the pattern has crept along the body: every 20-40 s it shifts its grip,
+    // moving one pattern length over a second.
     property real slide: 0
 
     // dashPattern for spans (in body widths, shrunk by `inset` px at each end)
@@ -189,11 +192,26 @@ Item {
         maskInverted: root.side === "back"
         maskThresholdMin: 0.5
         maskSpreadAtMin: 1
+        transform: Scale {
+            origin.y: root.pill.height / 2 - root.box.y
+            yScale: root.breath
+        }
     }
 
     // The head, front layer only: a long wedge with a dark crown line, small
     // eyes and a forked tongue. Drawn pointing +x, then turned.
-    property real headAngle: geo.head.angle
+    // It turns toward the widget under the pointer, at most 35 deg off its rest.
+    readonly property real restAngle: geo.head.angle
+    property real headAngle: restAngle
+    readonly property real targetAngle: {
+        if (isNaN(hoverX))
+            return restAngle;
+        const h = geo.head;
+        const a = Math.atan2(pill.height / 2 - h.y, hoverX - h.x) * 180 / Math.PI;
+        let d = a - restAngle;
+        d = ((d + 540) % 360) - 180;
+        return restAngle + Math.max(-35, Math.min(35, d));
+    }
 
     Item {
         visible: root.side === "front"
@@ -241,6 +259,35 @@ Item {
         }
     }
 
-    // Tongue flick progress, 0 at rest (Task 3 drives it).
-    property real flickPhase: 0
+    // Tongue: out and back over 300 ms, every 8-15 s.
+    property real nextFlick: 8000
+    readonly property real flickPhase: {
+        const p = (t - nextFlick) / 300;
+        return p > 0 && p < 1 ? Math.sin(Math.PI * p) : 0;
+    }
+
+    property real slideFrom: 0
+    property real nextSlide: 20000 + Math.random() * 20000
+
+    // One 25 fps tick drives everything, in the front instance only; the back
+    // one binds t and slide from it. Stops while the bar is hidden.
+    Timer {
+        running: root.running && root.side === "front"
+        repeat: true
+        interval: 40
+        onTriggered: {
+            root.t += interval;
+            if (root.t > root.nextFlick + 300)
+                root.nextFlick = root.t + 8000 + Math.random() * 7000;
+            const p = (root.t - root.nextSlide) / 1000;
+            if (p >= 1) {
+                root.slideFrom += root.period;
+                root.slide = root.slideFrom;
+                root.nextSlide = root.t + 20000 + Math.random() * 20000;
+            } else if (p > 0) {
+                root.slide = root.slideFrom + root.period * (1 - Math.cos(Math.PI * p)) / 2;
+            }
+            root.headAngle += (root.targetAngle - root.headAngle) * 0.25;
+        }
+    }
 }
