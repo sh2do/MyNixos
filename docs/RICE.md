@@ -183,9 +183,9 @@ docs/superpowers/    design specs and implementation plans
 
 ## Roadmap
 
-These are designed and planned, not built yet. Each has a spec in `docs/superpowers/specs/` and a plan in `docs/superpowers/plans/`.
+Each item has a spec in `docs/superpowers/specs/` and a plan in `docs/superpowers/plans/`.
 
-1. **The Umbriel desktop:** a second session you pick at login, on the Umbriel compositor. It's dark, quiet and slate-grey:
+1. **The Umbriel desktop** (built; how to pick it, its keys and `umbriel-wall` are in the [README](../README.md#umbriel-desktop)): a second session you pick at login, on the Umbriel compositor. It's dark, quiet and slate-grey:
    - chain-link workspaces
    - a morphing island for the clock, music, notifications and OSD
    - a launcher that drops from the island with a horned viper coiled around it

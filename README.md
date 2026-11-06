@@ -1,6 +1,6 @@
 # MyNixos
 
-NixOS flake config: niri with a hand-built rice (Quickshell bar, rofi menus, matugen colours from rotating wallpapers, video lock and login screens), NVIDIA, Home Manager.
+NixOS flake config: niri with a hand-built rice (Quickshell bar, rofi menus, matugen colours from rotating wallpapers, video lock and login screens), a second dark session on the Umbriel compositor, NVIDIA, Home Manager.
 
 ## Layout
 
@@ -20,7 +20,10 @@ modules/
   lock/                       Quickshell video lock screen, rice-lock, swayidle
   sddm/                       SDDM video login theme
   look/                       polkit agent, cursor, icon and GTK themes (every session)
-tests/                        bash tests for the rice scripts (bash tests/<name>-test.sh)
+  umbriel/                    the Umbriel session: config, keybinds, effect shaders, umbriel-wall,
+                              slate terminal stack, shell/ (Quickshell "umbriel": island, chain,
+                              launcher, live wallpapers)
+tests/                        bash and node tests for the rice scripts (bash tests/<name>-test.sh)
 docs/superpowers/             design spec and implementation plan
 dotfiles/                     older ghostty, niri, nvim configs (reference only)
 ```
@@ -41,6 +44,27 @@ For the full guide (theming flow, every key, menus, lock and recovery, adding wa
 | `Mod+Alt+W` / `Mod+Ctrl+W` | next wallpaper / wallpaper picker |
 | `Mod+T` | foot (floating) |
 | `Super+Alt+L` | lock (also after 5 min idle; screens off at 10 min) |
+
+## Umbriel desktop
+
+A second session next to niri, on the [Umbriel](https://github.com/noctalia-dev/umbriel) compositor: dark, quiet and slate-grey, with its own wallpapers and no matugen. niri is untouched; pick either one at login.
+
+- **Pick it at login:** on the login screen, the session name sits under the password field (`‹  niri  ›`). Press Left or Right (or click it) until it reads **Umbriel**, then type the password. It starts on the last session used, so pick **niri** the same way to go back.
+- **What's there:** chain-link workspaces top-left, an island top-centre (clock, music, volume and brightness OSD, notifications), faint status bottom-right, a launcher that drops out of the island, live rain and storm wallpapers, film grain over the screen (off while a fullscreen window is focused) and windows that open and close through smoke.
+- **Keys:** the same as niri wherever Umbriel has an equivalent (`modules/umbriel/binds.nix`). `Mod+Shift+/` shows them all.
+
+| Key | Action |
+| --- | --- |
+| `Mod+Space` | launcher |
+| `Mod+Ctrl+W` | wallpaper picker |
+| `Mod+Alt+V` / `Mod+Shift+Q` | clipboard history / power menu (the rofi menus) |
+| `Mod+T` | foot, with the slate theme |
+| `Mod+F` / `Mod+Shift+F` | maximise / fullscreen |
+| `Super+Alt+L` | lock (the shared `rice-lock`) |
+| `Mod+Shift+E` | quit the session |
+
+- **Wallpapers:** `umbriel-wall` remembers which of `~/.local/share/wallpapers/umbriel` the shell shows. There is no rotation. `umbriel-wall list` prints the ids, `umbriel-wall current` the one in use and `umbriel-wall set ID` switches (the picker calls this). `xe9223` (hydrangea in the rain) and `jeyo1m` (storm) are live.
+- **Check the config:** `umbriel config validate`.
 
 ## Rebuild
 

@@ -66,6 +66,9 @@ in
   xdg.configFile."umbriel-term/cava.conf".source = ./cava.conf;
   xdg.configFile."kew/themes/umbriel.theme".source = ./kew.conf;
 
+  # The effect shaders, next to config.toml so its relative paths resolve.
+  xdg.configFile."umbriel/effects".source = ./effects;
+
   programs.umbriel = {
     enable = true;
     settings = {
@@ -95,6 +98,24 @@ in
         };
       };
       keybinds = import ./binds.nix { inherit lib term; };
+
+      # Film grain over the screen (static, see grain.glsl), and windows that
+      # open and close through smoke. The shell switches the grain off on
+      # eDP-2 while a fullscreen window is focused (UmbrielIpc.qml). max_fps
+      # caps the frames an effect asks for on its own.
+      effects = {
+        preset = {
+          grain = { kind = "screen"; shader = "effects/grain.glsl"; };
+          smoke-in = { kind = "animation"; shader = "effects/smoke-in.glsl"; };
+          smoke-out = { kind = "animation"; shader = "effects/smoke-out.glsl"; };
+        };
+        screen = "grain";
+        max_fps = 24;
+      };
+      animation = {
+        windows_in = { effect = "smoke-in"; duration_ms = 280; curve = "easeout"; };
+        windows_out = { effect = "smoke-out"; duration_ms = 220; curve = "easeout"; };
+      };
     };
   };
 }

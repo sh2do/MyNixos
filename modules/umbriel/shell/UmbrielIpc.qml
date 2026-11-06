@@ -27,6 +27,12 @@ Singleton {
     readonly property var workspaces: State.workspacesFor(allWorkspaces, panel)
     readonly property bool fullscreen: State.fullscreenFocused(windows, panel)
 
+    // No film grain over a fullscreen window: suppress the panel's screen
+    // effect, then hand it back to the config (grain) when fullscreen ends.
+    onFullscreenChanged: Quickshell.execDetached(fullscreen
+        ? ["umbriel", "msg", "effect-screen-set", "off", "--output", panel]
+        : ["umbriel", "msg", "effect-screen-reset", panel])
+
     // Switch the panel to workspace `index`.
     function focusWorkspace(index) {
         Quickshell.execDetached(["umbriel", "msg", "workspace-switch", String(index), "--output", panel]);
