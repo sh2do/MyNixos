@@ -1,6 +1,6 @@
 # The Rice
 
-A from-scratch niri desktop on NixOS: rotating rainy wallpapers that recolour the whole desktop, a Quickshell bar with an animated snake, rofi menus, a floating foot terminal, and video lock and login screens. Everything is declared in this repo and deployed by Home Manager. Nothing is hand-edited in `~/.config`.
+A from-scratch niri desktop on NixOS: rotating rainy wallpapers that recolour the whole desktop, a Quickshell bar with a reticulated python coiled around it, rofi menus, a floating foot terminal, and video lock and login screens. Everything is declared in this repo and deployed by Home Manager. Nothing is hand-edited in `~/.config`.
 
 > Branch `niri-rice`. Designs and plans live in `docs/superpowers/` (see [Roadmap](#roadmap)).
 
@@ -12,9 +12,9 @@ A from-scratch niri desktop on NixOS: rotating rainy wallpapers that recolour th
 | --- | --- | --- |
 | Compositor | niri 26.04, scrolling columns, rounded floating terminals, eased open/close animations | `modules/niri/` |
 | Wallpapers and colours | a curated rainy/purple rotation that changes every 45 min, with a fade; every colour in the desktop follows it | `modules/theme/` |
-| Bar | a top pill (the playing song, or the focused window title) and an auto-hide bottom bar (workspaces, toggles, clock, power) with the snake | `modules/shell/` |
+| Bar | a top pill (the playing song, or the focused window title) and an auto-hide bottom bar (workspaces, toggles, clock, power), wrapped by the python | `modules/shell/` |
 | Menus | a rofi launcher with a wallpaper image panel, plus wifi, bluetooth, audio, power-profile, power and clipboard menus | `modules/rofi/` |
-| Terminal | foot, starship two-line prompt, fastfetch (snake logo) only in the first terminal | `modules/terminal/` |
+| Terminal | foot, starship two-line prompt, fastfetch (coiled python logo) only in the first terminal | `modules/terminal/` |
 | OSD and notifications | Quickshell volume and brightness OSD, toasts (critical ones stay) | `modules/shell/` |
 | Lock | Quickshell lock with a Tokyo-rain video, locks after 5 min idle and before sleep | `modules/lock/` |
 | Login | SDDM with a custom Qt6 theme: train landscape video, big clock, avatar | `modules/sddm/` |
@@ -32,7 +32,7 @@ A from-scratch niri desktop on NixOS: rotating rainy wallpapers that recolour th
                         │ writes
      ┌──────────┬───────┴──────┬───────────┬────────────┬─────────────┐
      ▼          ▼              ▼           ▼            ▼             ▼
- niri colors  rofi colors   foot colors  starship    colors.json   snake logo
+ niri colors  rofi colors   foot colors  starship    colors.json  python logo
    .kdl         .rasi          .ini        .toml     (bar, lock)  (fastfetch)
 ```
 
@@ -115,7 +115,8 @@ All menus share the wallpaper-coloured rofi theme. Escape always does nothing.
 
 - **Top pill:** the playing song while music plays, otherwise the focused window's title. Fullscreen windows hide it.
 - **Bottom bar:** auto-hides into a 3 px strip at the screen edge. Touch the edge to slide it up. `RICE_BAR_PINNED=1 qs -c rice` keeps it up while you restyle it.
-- **The snake** animates only while the bar is visible, so the hidden bar costs under 1% CPU.
+- **The python** spirals three times around the bottom bar, crossing in front only in the gaps between widget groups, so it never covers a button. Its body is click-through. It breathes, now and then shifts its grip and flicks its tongue, and its head turns toward the widget under the pointer.
+- It animates only while the bar is visible: about 0.3% CPU hidden, about 6% shown.
 - **Hot reload:** the bar runs as `qs -c rice` (started by niri), and Quickshell live-reloads its QML from `~/.config/quickshell/rice`.
 
 ## Lock, idle and login
@@ -141,7 +142,8 @@ All menus share the wallpaper-coloured rofi theme. Escape always does nothing.
 ```sh
 nh os switch                                  # rebuild and switch
 nix build .#nixosConfigurations.nixos.config.system.build.toplevel --no-link   # build check, no sudo
-for t in tests/*-test.sh; do bash "$t"; done  # script tests (rice-wall, rice-menu, rice-lock, first-fetch)
+for t in tests/*-test.sh; do bash "$t"; done  # script and config tests
+nix run nixpkgs#nodejs -- tests/python-geometry-test.js   # python coil geometry
 niri validate -c ~/.config/niri/config.kdl    # niri config check
 ```
 
@@ -168,7 +170,7 @@ modules/
   theme/             rice-wall, matugen config and templates, wallpaper list, 45-min timer
   terminal/          foot, fastfetch, first-terminal fish hook
   rofi/              theme + rice-menu
-  shell/             Quickshell: TopPill, BottomBar, snake, OSD, notifications, wallpaper picker
+  shell/             Quickshell: TopPill, BottomBar, Python (+ python-geometry.js), OSD, notifications, wallpaper picker
   lock/              Quickshell lock + rice-lock + swayidle
   sddm/              login theme (Qt6, video)
   look/              polkit agent, cursor, icon and GTK themes (GTK colours come from matugen)
@@ -180,8 +182,7 @@ docs/superpowers/    design specs and implementation plans
 
 These are designed and planned, not built yet. Each has a spec in `docs/superpowers/specs/` and a plan in `docs/superpowers/plans/`.
 
-1. **The python:** the cobra becomes a reticulated python that spirals around the bottom bar, three coils in front of and behind it, breathing and watching the pointer. A matching coiled python becomes the fastfetch logo.
-2. **The Umbriel desktop:** a second session you pick at login, on the Umbriel compositor. It's dark, quiet and slate-grey:
+1. **The Umbriel desktop:** a second session you pick at login, on the Umbriel compositor. It's dark, quiet and slate-grey:
    - chain-link workspaces
    - a morphing island for the clock, music, notifications and OSD
    - a launcher that drops from the island with a horned viper coiled around it

@@ -13,10 +13,10 @@ modules/
   desktop.nix                 packages and services for the rice
   home.nix                    Home Manager entry; imports the per-user modules
   niri/                       niri config split by block (KDL), deployed by HM
-  theme/                      rice-wall + matugen templates (niri, rofi, foot, starship, cobra)
+  theme/                      rice-wall + matugen templates (niri, rofi, foot, starship, python)
   terminal/                   foot, fastfetch, first-terminal fetch for fish
   rofi/                       launcher theme and rice-menu (apps, clipboard, power, wifi, ...)
-  shell/                      Quickshell bar: top pill, auto-hide bottom bar, cobra, OSD, notifications
+  shell/                      Quickshell bar: top pill, auto-hide bottom bar with the python, OSD, notifications
   lock/                       Quickshell video lock screen, rice-lock, swayidle
   sddm/                       SDDM video login theme
   look/                       polkit agent, cursor, icon and GTK themes (every session)
@@ -29,7 +29,7 @@ For the full guide (theming flow, every key, menus, lock and recovery, adding wa
 
 ## How the theming works
 
-`rice-wall` owns the wallpaper. It picks from `~/.local/share/wallpapers/rotation`, shows it with awww, and runs matugen, which rewrites the colour files in `~/.config` and `~/.cache/rice`. Everything else (niri borders, the bar, rofi, foot, starship, the cobra) reads those files. A systemd user timer runs `rice-wall next` every 45 minutes.
+`rice-wall` owns the wallpaper. It picks from `~/.local/share/wallpapers/rotation`, shows it with awww, and runs matugen, which rewrites the colour files in `~/.config` and `~/.cache/rice`. Everything else (niri borders, the bar, rofi, foot, starship, the python) reads those files. A systemd user timer runs `rice-wall next` every 45 minutes.
 
 ## Keys
 

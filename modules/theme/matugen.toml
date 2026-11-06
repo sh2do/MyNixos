@@ -30,10 +30,10 @@ input_path = "~/.config/matugen/templates/niri-colors.kdl"
 output_path = "~/.config/niri/colors.kdl"
 post_hook = "niri msg action load-config-file || true"
 
-[templates.cobra]
-input_path = "~/.config/matugen/templates/cobra.svg"
-output_path = "~/.cache/rice/cobra.svg"
-post_hook = "rsvg-convert -w 512 \"$HOME/.cache/rice/cobra.svg\" -o \"$HOME/.cache/rice/cobra.png\""
+[templates.python]
+input_path = "~/.config/matugen/templates/python.svg"
+output_path = "~/.cache/rice/python.svg"
+post_hook = "rsvg-convert -w 512 \"$HOME/.cache/rice/python.svg\" -o \"$HOME/.cache/rice/python.png\""
 
 # GTK 3 and 4 (libadwaita named colours); Home Manager leaves gtk.css to us.
 [templates.gtk3]
