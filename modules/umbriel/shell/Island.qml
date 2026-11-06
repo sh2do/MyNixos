@@ -10,7 +10,7 @@
 //
 // openLauncher() / closeLauncher() / expanded: the pill grows down into the
 // launcher's panel (Launcher.qml), with the viper wound around it, and takes
-// the keyboard while open. anchorBottom (Task 7) is the underside centre in
+// the keyboard while open. anchorBottom is the underside centre in
 // screen coordinates (the spider hangs from it).
 import QtQuick
 import Quickshell
@@ -469,6 +469,11 @@ PanelWindow {
                 }
             }
         }
+    }
+
+    // The hidden spider, hanging from the pill's underside now and then.
+    U.Spider {
+        island: root
     }
 
     // The crossings and head in front of the panel.

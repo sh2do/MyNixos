@@ -57,3 +57,10 @@ function covered(windows, out, area) {
 function outputOff(outputs, name) {
     return outputs.some(o => o.name === name && o.powered === false);
 }
+
+// Does a window hide the screen point (fractions of the output)? Same
+// "visible" windows as `covered`, so it means the active workspace.
+function pointCovered(windows, out, fx, fy) {
+    const px = out.x + fx * out.w, py = out.y + fy * out.h;
+    return windows.some(w => w.output === out.name && w.visible && !w.minimized && px >= w.x && px < w.x + w.w && py >= w.y && py < w.y + w.h);
+}

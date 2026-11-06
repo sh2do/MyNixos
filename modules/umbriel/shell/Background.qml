@@ -5,7 +5,7 @@
 // screen off), so a hidden wallpaper costs no frames.
 //
 // The current id is umbriel-wall's state file; the picker writes it and this
-// reloads when it changes. Task 7's eyes read `wallId` (and `walls`).
+// reloads when it changes. The eyes (Eyes.qml) read `wall` and `paused`.
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -150,6 +150,10 @@ PanelWindow {
                 paused: bg.paused
             }
         }
+    }
+
+    Eyes {
+        bg: bg
     }
 
     // Fade the new picture in from the background colour.

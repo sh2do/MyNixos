@@ -88,6 +88,16 @@ const tests = {
     // A "visible" scrolling-layout column that sits off the right edge.
     assert.strictEqual(Cover.covered([win({ x: 1280 + 1930, y: 10, w: 1900, h: 1180 })], out, rain), false);
   },
+  point_under_window() {
+    // win() spans x 1680..2380, y 100..800 on this output.
+    assert.strictEqual(Cover.pointCovered([win()], out, 0.3, 0.2), true);
+    assert.strictEqual(Cover.pointCovered([win()], out, 0.05, 0.9), false);
+  },
+  point_ignores_hidden_windows() {
+    assert.strictEqual(Cover.pointCovered([win({ visible: false })], out, 0.3, 0.2), false);
+    assert.strictEqual(Cover.pointCovered([win({ minimized: true })], out, 0.3, 0.2), false);
+    assert.strictEqual(Cover.pointCovered([win({ output: "WL-1" })], out, 0.3, 0.2), false);
+  },
 };
 
 let failed = 0;
