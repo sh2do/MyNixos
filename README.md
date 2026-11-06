@@ -19,6 +19,7 @@ modules/
   shell/                      Quickshell bar: top pill, auto-hide bottom bar, cobra, OSD, notifications
   lock/                       Quickshell video lock screen, rice-lock, swayidle
   sddm/                       SDDM video login theme
+  look/                       polkit agent, cursor, icon and GTK themes (every session)
 tests/                        bash tests for the rice scripts (bash tests/<name>-test.sh)
 docs/superpowers/             design spec and implementation plan
 dotfiles/                     older ghostty, niri, nvim configs (reference only)

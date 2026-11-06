@@ -171,6 +171,7 @@ modules/
   shell/             Quickshell: TopPill, BottomBar, snake, OSD, notifications, wallpaper picker
   lock/              Quickshell lock + rice-lock + swayidle
   sddm/              login theme (Qt6, video)
+  look/              polkit agent, cursor, icon and GTK themes (GTK colours come from matugen)
 tests/               bash tests with stubbed commands (tests/lib.sh)
 docs/superpowers/    design specs and implementation plans
 ```
@@ -179,9 +180,8 @@ docs/superpowers/    design specs and implementation plans
 
 These are designed and planned, not built yet. Each has a spec in `docs/superpowers/specs/` and a plan in `docs/superpowers/plans/`.
 
-1. **Cleanup:** a polkit agent, a declared cursor/icon/GTK theme, GTK colours that follow the wallpaper, and leftover removal.
-2. **The python:** the cobra becomes a reticulated python that spirals around the bottom bar, three coils in front of and behind it, breathing and watching the pointer. A matching coiled python becomes the fastfetch logo.
-3. **The Umbriel desktop:** a second session you pick at login, on the Umbriel compositor. It's dark, quiet and slate-grey:
+1. **The python:** the cobra becomes a reticulated python that spirals around the bottom bar, three coils in front of and behind it, breathing and watching the pointer. A matching coiled python becomes the fastfetch logo.
+2. **The Umbriel desktop:** a second session you pick at login, on the Umbriel compositor. It's dark, quiet and slate-grey:
    - chain-link workspaces
    - a morphing island for the clock, music, notifications and OSD
    - a launcher that drops from the island with a horned viper coiled around it

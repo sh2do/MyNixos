@@ -19,6 +19,7 @@
 
   # One cursor for GTK, Xwayland and the compositors (niri sets it too, in misc.kdl).
   home.pointerCursor = {
+    enable = true;
     name = "Bibata-Modern-Classic";
     package = pkgs.bibata-cursors;
     size = 24;
