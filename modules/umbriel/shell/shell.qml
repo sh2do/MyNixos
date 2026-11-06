@@ -1,5 +1,5 @@
 // Umbriel's shell ("qs -c umbriel"), started by Umbriel's autostart.
-// Later tasks add the corners, island and launcher here.
+// Later tasks add the island and launcher here.
 import QtQuick
 import Quickshell
 
@@ -11,6 +11,14 @@ ShellRoot {
 
     Background {
         id: wallpaper
+        screen: root.primary
+    }
+
+    Chain {
+        screen: root.primary
+    }
+
+    Status {
         screen: root.primary
     }
 
