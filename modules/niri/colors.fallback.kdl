@@ -1,0 +1,11 @@
+// Fallback palette (rain + hydrangea). Overwritten by rice-wall.
+layout {
+    focus-ring {
+        width 2
+        active-color "#dbbce5"
+        inactive-color "#978e97"
+    }
+    border {
+        off
+    }
+}

@@ -419,7 +419,10 @@ in
     backupFileExtension = "backup";
 
     users.Zaion = {
-      imports = [ inputs.umbriel.homeModules.default ];
+      imports = [
+        inputs.umbriel.homeModules.default
+        ./modules/home.nix
+      ];
 
       home.stateVersion = "26.05";
 
