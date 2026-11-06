@@ -4,6 +4,7 @@
 // click on the water, and startle when a workspace or the volume changes.
 // Motion comes from koi-motion.js; colours from the wallpaper (Theme).
 import QtQuick
+import QtQuick.Shapes
 import "koi-motion.js" as Koi
 
 Item {
@@ -35,16 +36,20 @@ Item {
         { len: 36, w: 11, speed: 13, base: Theme.text, eye: Theme.surface,
           spots: [{ s: 0.2, side: 0, l: 0.9, f: 0.55, c: hi },
                   { s: 1.9, side: -0.5, l: 1.9, f: 0.8, c: hi },
+                  { s: 2.7, side: 0.5, l: 0.8, f: 0.45, c: hi },
                   { s: 3.6, side: 0.6, l: 1.5, f: 0.7, c: hi },
+                  { s: 4.3, side: -0.6, l: 0.6, f: 0.35, c: hi },
                   { s: 5.0, side: -0.2, l: 1.0, f: 0.6, c: hi }] },
         { len: 31, w: 10, speed: 15, base: Theme.primary, eye: Theme.surface,
           spots: [{ s: 1.4, side: 0.4, l: 1.6, f: 0.75, c: hi },
+                  { s: 2.1, side: -0.3, l: 0.7, f: 0.4, c: hi },
                   { s: 3.3, side: -0.5, l: 1.2, f: 0.6, c: hi },
+                  { s: 3.9, side: 0.4, l: 0.6, f: 0.35, c: hi },
                   { s: 2.4, side: -0.7, l: 0.5, f: 0.3, c: Theme.surface },
                   { s: 4.4, side: 0.6, l: 0.6, f: 0.35, c: Theme.surface },
                   { s: 5.5, side: -0.3, l: 0.4, f: 0.3, c: Theme.surface }] },
         { len: 27, w: 9, speed: 17, base: Qt.tint("#e2a64a", Qt.alpha(Theme.primary, 0.2)), eye: Theme.surface,
-          spots: [] }
+          spots: [{ s: 1.2, side: 0, l: 3.2, f: 0.3, c: Qt.lighter("#e2a64a", 1.3) }] }
     ]
 
     property var fish: []
@@ -179,12 +184,14 @@ Item {
                 return 2;
             }
             k.mode = "wander";
-            k.target = Koi.wander(Math.random, pool);
+            k.target = Koi.cruise(k, Math.random, pool);
             k.until = t + 12000;
         }
         if (t > k.nextKiss) {
             // Up to the surface for a moment.
             ripple(k.x + Math.cos(k.a) * 4, k.y + Math.sin(k.a) * 4, 12);
+            bubble(k.x + Math.cos(k.a) * 5, k.y + Math.sin(k.a) * 5);
+            bubble(k.x + Math.cos(k.a) * 3 + 2, k.y + Math.sin(k.a) * 3 - 1);
             k.nextKiss = t + 12000 + Math.random() * 20000;
         }
         return k.kind.speed;
@@ -213,38 +220,220 @@ Item {
                 }
                 Koi.keepIn(k, root.pool);
                 Koi.follow(k);
+                // A darting koi leaves a wake.
+                if (k.v > 40 && root.t > (k.nextWake || 0)) {
+                    const tail = k.pts[k.pts.length - 1];
+                    root.ripple(tail.x, tail.y, 7 + k.v / 15);
+                    k.nextWake = root.t + 150;
+                }
             }
             root.poses = root.fish.map(Koi.pose);
+            // Rain dimpling the surface now and then.
+            if (root.t > root.nextDrop) {
+                root.ripple(root.pool.x + Math.random() * root.pool.w, 4 + Math.random() * (root.height - 8), 5 + Math.random() * 5);
+                root.nextDrop = root.t + 700 + Math.random() * 2600;
+            }
+        }
+    }
+    property real nextDrop: 0
+
+    // Caustics: light netted on the pond floor by the surface, two layers
+    // drifting against each other. Drawn once; only moved per tick.
+    Repeater {
+        model: [{ dx: 0.004, op: 0.035, seed: 1 }, { dx: -0.0027, op: 0.025, seed: 2 }]
+        Canvas {
+            id: caustic
+            required property var modelData
+            readonly property int period: 160
+            z: 0
+            width: root.width + period
+            height: root.height
+            x: -((root.t * modelData.dx % period + period) % period)
+            opacity: modelData.op
+            onWidthChanged: requestPaint()
+            Connections {
+                target: Theme
+                function onColoursChanged() { caustic.requestPaint(); }
+            }
+            onPaint: {
+                const ctx = getContext("2d");
+                ctx.reset();
+                ctx.strokeStyle = Theme.text;
+                ctx.lineWidth = 1.4;
+                ctx.lineCap = "round";
+                // Two families of wavy lines crossing at a slant make the net.
+                // Every wave fits a whole number of times in `period`, so the
+                // drift wraps without a seam.
+                const seed = modelData.seed;
+                for (const dir of [1, -1]) {
+                    // Spacing 8 and slope 0.35 shift a line by exactly 7
+                    // spacings over one period: the net repeats.
+                    const reach = Math.ceil(width * 0.35 / 8);
+                    for (let k = dir > 0 ? -1 : -reach; k < (dir > 0 ? reach : 0) + Math.ceil(height / 8) + 1; k++) {
+                        ctx.beginPath();
+                        for (let x = 0; x <= width; x += 3) {
+                            const y = k * 8 - dir * x * 0.35
+                                + 3 * Math.sin(2 * Math.PI * x / (period / 2) + k * 1.7 + seed)
+                                + 1.5 * Math.sin(2 * Math.PI * x / (period / 4) + k + seed * 2);
+                            if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                        }
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+    }
+
+    // A small lily pad drifting slowly along the bar; the koi swim under it.
+    Item {
+        id: pad
+        z: 2
+        readonly property real d: 13
+        width: d
+        height: d
+        x: root.width * (0.62 + 0.05 * Math.sin(root.t / 23000)) - d / 2
+        y: root.height / 2 - d / 2 + 4 * Math.sin(root.t / 17000)
+        rotation: 25 * Math.sin(root.t / 31000)
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -1
+            x: 1.5
+            radius: width / 2
+            color: Qt.alpha("black", 0.25)
+            transform: Translate { x: 1.5; y: 2 }
+        }
+        Shape {
+            anchors.fill: parent
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+                strokeColor: Qt.alpha(Theme.primary, 0.5)
+                strokeWidth: 0.6
+                fillColor: root.sunk(Theme.primaryContainer, 0.15)
+                // A disc with a notch cut to the middle.
+                startX: pad.d / 2
+                startY: pad.d / 2
+                PathLine { x: pad.d / 2 + pad.d / 2 * Math.cos(-0.25); y: pad.d / 2 + pad.d / 2 * Math.sin(-0.25) }
+                PathArc {
+                    x: pad.d / 2 + pad.d / 2 * Math.cos(0.25)
+                    y: pad.d / 2 + pad.d / 2 * Math.sin(0.25)
+                    radiusX: pad.d / 2
+                    radiusY: pad.d / 2
+                    useLargeArc: true
+                    direction: PathArc.Counterclockwise
+                }
+                PathLine { x: pad.d / 2; y: pad.d / 2 }
+            }
+            ShapePath {
+                strokeColor: Qt.alpha(Theme.primary, 0.3)
+                strokeWidth: 0.5
+                fillColor: "transparent"
+                startX: pad.d / 2; startY: pad.d / 2
+                PathLine { x: pad.d * 0.08; y: pad.d / 2 }
+                PathMove { x: pad.d / 2; y: pad.d / 2 }
+                PathLine { x: pad.d * 0.25; y: pad.d * 0.12 }
+                PathMove { x: pad.d / 2; y: pad.d / 2 }
+                PathLine { x: pad.d * 0.25; y: pad.d * 0.88 }
+            }
+        }
+        // A bud on the pad.
+        Repeater {
+            model: 5
+            Rectangle {
+                required property int index
+                width: 3.2
+                height: 1.6
+                radius: 0.8
+                x: pad.d * 0.3 + Math.cos(index * 1.2566) * 1.3 - width / 2
+                y: pad.d * 0.62 + Math.sin(index * 1.2566) * 1.3 - height / 2
+                rotation: index * 72
+                color: Qt.tint(Theme.tertiary, Qt.alpha("white", 0.3))
+            }
+        }
+        Rectangle {
+            width: 1.6; height: 1.6; radius: 0.8
+            x: pad.d * 0.3 - 0.8; y: pad.d * 0.62 - 0.8
+            color: "#e2a64a"
+        }
+    }
+
+    // Bubbles: up from a koi's mouth, a little drift, then they pop.
+    property int nextBubble: 0
+    function bubble(x, y) {
+        const b = bubbles.itemAt(nextBubble);
+        nextBubble = (nextBubble + 1) % bubbles.count;
+        b.go(x, y);
+    }
+    Repeater {
+        id: bubbles
+        model: 8
+        Rectangle {
+            id: bub
+            z: 3
+            property real born: -1e9
+            property real x0: 0
+            property real drift: 0
+            readonly property real age: (root.t - born) / 1000
+            function go(x, y) {
+                x0 = x - 1;
+                bub.y = y - 1;
+                drift = (Math.random() - 0.5) * 6;
+                born = root.t;
+            }
+            visible: age >= 0 && age < 1
+            x: x0 + drift * Math.sin(age * Math.PI / 2)
+            width: 2.2
+            height: 2.2
+            radius: 1.1
+            color: Qt.alpha(Theme.text, 0.15)
+            border.width: 0.6
+            border.color: Qt.alpha(Theme.text, 0.6)
+            // Fades in, rises (grows), and pops.
+            scale: 0.4 + 0.8 * Math.sin(age * Math.PI / 2)
+            opacity: age < 0.2 ? age / 0.2 * 0.9 : age < 0.88 ? 0.9 : (1 - age) / 0.12 * 0.9
+        }
+    }
+
+    // The glass: a faint sheen over the top of the water.
+    Rectangle {
+        z: 4
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: parent.height * 0.45
+        radius: Theme.radius
+        gradient: Gradient {
+            GradientStop { position: 0; color: Qt.alpha("white", 0.06) }
+            GradientStop { position: 1; color: Qt.alpha("white", 0) }
         }
     }
 
     Repeater {
         id: ripples
-        model: 6
+        model: 12
 
+        // Driven by the koi's clock rather than an animation, so it renders
+        // at the tick rate (48 Hz), not every display frame.
         Rectangle {
             id: ring
+            z: 3
             property real size: 20
+            property real born: -1e9
+            readonly property real age: (root.t - born) / 1100
             function go(x, y, s) {
                 size = s;
                 ring.x = x - s / 2;
                 ring.y = y - s / 2;
-                spread.restart();
+                born = root.t;
             }
+            visible: age >= 0 && age < 1
             width: size
             height: size
             radius: size / 2
             color: "transparent"
             border.width: 1
             border.color: Qt.alpha(Theme.text, 0.5)
-            opacity: 0
-            scale: 0.2
-
-            ParallelAnimation {
-                id: spread
-                NumberAnimation { target: ring; property: "scale"; from: 0.15; to: 1; duration: 1100; easing.type: Easing.OutQuad }
-                NumberAnimation { target: ring; property: "opacity"; from: 0.9; to: 0; duration: 1100; easing.type: Easing.InQuad }
-            }
+            scale: 0.15 + 0.85 * (1 - (1 - age) * (1 - age))
+            opacity: 0.9 * (1 - age * age)
         }
     }
 
@@ -253,6 +442,7 @@ Item {
 
         Item {
             id: koi
+            z: 1
             required property int index
             readonly property var kind: root.kinds[index]
             readonly property var p: root.poses[index] || []
@@ -290,15 +480,35 @@ Item {
                     required property int modelData
                     visible: koi.n > 0
                     readonly property var tip: koi.n ? koi.p[koi.n - 1] : { x: 0, y: 0, a: 0 }
-                    readonly property real ang: tip.a + Math.PI + modelData * (0.42 + 0.12 * koi.beat)
-                    width: koi.kind.len * 0.32
-                    height: koi.kind.w * 0.34
+                    readonly property real ang: tip.a + Math.PI + modelData * (0.38 + 0.14 * koi.beat) + 0.12 * koi.beat
+                    width: koi.kind.len * 0.3
+                    height: koi.kind.w * 0.5
                     radius: height / 2
                     // Rotated about its root at the tail tip.
                     x: tip.x + Math.cos(ang) * width / 2 - width / 2
                     y: tip.y + Math.sin(ang) * width / 2 - height / 2
                     rotation: ang * koi.deg
-                    color: Qt.alpha(koi.body, 0.6)
+                    color: Qt.alpha(koi.body, 0.55)
+                    border.width: 0.5
+                    border.color: Qt.alpha(koi.body, 0.8)
+                }
+            }
+
+            // Pelvic fins, small, further back.
+            Repeater {
+                model: [-1, 1]
+                Rectangle {
+                    required property int modelData
+                    visible: koi.n > 4
+                    readonly property var at: koi.n > 4 ? koi.p[4] : { x: 0, y: 0, a: 0 }
+                    readonly property real ang: at.a + Math.PI + modelData * (0.95 - 0.2 * koi.beat * modelData)
+                    width: koi.kind.w * 0.38
+                    height: koi.kind.w * 0.24
+                    radius: height / 2
+                    x: at.x + Math.cos(ang) * (koi.kind.w * 0.15 + width / 2) - width / 2
+                    y: at.y + Math.sin(ang) * (koi.kind.w * 0.15 + width / 2) - height / 2
+                    rotation: ang * koi.deg
+                    color: Qt.alpha(koi.body, 0.45)
                 }
             }
 
@@ -321,7 +531,7 @@ Item {
             }
 
             // The body: overlapping rounded segments along the spine, tail first
-            // so the head sits on top.
+            // so the head sits on top. A darker pass first rounds the flanks.
             Repeater {
                 model: Koi.SEGMENTS
                 Rectangle {
@@ -329,8 +539,25 @@ Item {
                     readonly property int i: Koi.SEGMENTS - 1 - index
                     visible: koi.n > i
                     readonly property var at: koi.n > i ? koi.p[i] : { x: 0, y: 0, a: 0 }
-                    width: koi.seg * (i === 0 ? 1.5 : 1.9)
-                    height: Koi.bodyWidth(i, Koi.SEGMENTS, koi.kind.w)
+                    width: koi.seg * (i === 0 ? 1.5 : 1.9) + 0.6
+                    height: Koi.bodyWidth(i, Koi.SEGMENTS, koi.kind.w) + 0.6
+                    radius: height / 2
+                    x: at.x - width / 2
+                    y: at.y - height / 2
+                    rotation: at.a * koi.deg
+                    color: Qt.darker(koi.body, 1.45)
+                    antialiasing: true
+                }
+            }
+            Repeater {
+                model: Koi.SEGMENTS
+                Rectangle {
+                    required property int index
+                    readonly property int i: Koi.SEGMENTS - 1 - index
+                    visible: koi.n > i
+                    readonly property var at: koi.n > i ? koi.p[i] : { x: 0, y: 0, a: 0 }
+                    width: koi.seg * (i === 0 ? 1.3 : 1.8)
+                    height: Koi.bodyWidth(i, Koi.SEGMENTS, koi.kind.w) * 0.78
                     radius: height / 2
                     x: at.x - width / 2
                     y: at.y - height / 2
@@ -374,6 +601,42 @@ Item {
                     y: at.y - height / 2
                     rotation: at.a * koi.deg
                     color: Qt.alpha("white", 0.18)
+                }
+            }
+
+            // The dorsal fin, folded down the back as a dark ridge.
+            Repeater {
+                model: 3
+                Rectangle {
+                    required property int index
+                    visible: koi.n > index + 3
+                    readonly property var at: koi.n > index + 3 ? koi.along(2.3 + index * 0.8) : { x: 0, y: 0, a: 0 }
+                    width: koi.seg * 1.0
+                    height: 1
+                    radius: 0.5
+                    x: at.x - width / 2
+                    y: at.y - height / 2
+                    rotation: at.a * koi.deg
+                    color: Qt.alpha(Qt.darker(koi.body, 1.8), 0.6)
+                }
+            }
+
+            // Whiskers at the mouth.
+            Repeater {
+                model: [-1, 1]
+                Rectangle {
+                    required property int modelData
+                    visible: koi.n > 0
+                    readonly property var h: koi.n ? koi.p[0] : { x: 0, y: 0, a: 0 }
+                    readonly property real ang: h.a + modelData * 2.2
+                    readonly property real len: 3.2
+                    width: len
+                    height: 0.6
+                    x: h.x + Math.cos(h.a) * koi.seg * 0.62 + Math.cos(ang) * len / 2 - len / 2
+                    y: h.y + Math.sin(h.a) * koi.seg * 0.62 + Math.sin(ang) * len / 2 - 0.3
+                    rotation: ang * koi.deg
+                    color: Qt.alpha(Theme.text, 0.55)
+                    antialiasing: true
                 }
             }
 

@@ -77,6 +77,28 @@ const tests = {
     }
   },
 
+  test_cruise_mostly_keeps_going_the_same_way() {
+    // The pool is a thin strip: a target behind means a tight U-turn, so
+    // most new targets lie ahead.
+    const rand = rng(11);
+    const k = Koi.create(30, pool.x + pool.w / 2, 19, 0);
+    let ahead = 0;
+    for (let i = 0; i < 200; i++) {
+      const p = Koi.cruise(k, rand, pool);
+      if (p.x > k.x) ahead++;
+      assert.ok(p.x >= pool.x && p.x <= pool.x + pool.w && p.y >= pool.y && p.y <= pool.y + pool.h);
+      assert.ok(Math.abs(p.x - k.x) >= 60, `target only ${Math.abs(p.x - k.x)} away`);
+    }
+    assert.ok(ahead > 140 && ahead < 200, `${ahead}/200 ahead`);
+  },
+
+  test_cruise_turns_back_at_a_wall() {
+    const rand = rng(12);
+    const k = Koi.create(30, pool.x + pool.w - 20, 19, 0);
+    for (let i = 0; i < 50; i++)
+      assert.ok(Koi.cruise(k, rand, pool).x < k.x - 59, "heading into the wall, it should turn back");
+  },
+
   test_body_follows_head_at_fixed_spacing() {
     const k = Koi.create(30, 100, 19, 0);
     for (let i = 0; i < 200; i++) {

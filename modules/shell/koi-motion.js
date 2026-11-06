@@ -93,6 +93,21 @@ function wander(rand, pool) {
     return { x: pool.x + rand() * pool.w, y: pool.y + rand() * pool.h };
 }
 
+// The next place to swim to: usually further on the way it is heading (the
+// pool is a thin strip, so a target behind means a tight U-turn), sometimes
+// back the other way, and always back when a wall is close ahead.
+function cruise(k, rand, pool) {
+    var dir = Math.cos(k.a) >= 0 ? 1 : -1;
+    if (rand() < 0.15)
+        dir = -dir;
+    var lo = pool.x, hi = pool.x + pool.w;
+    if ((dir > 0 ? hi - k.x : k.x - lo) < 60)
+        dir = -dir;
+    var room = dir > 0 ? hi - k.x : k.x - lo;
+    var d = 60 + rand() * Math.max(0, Math.min(room, 300) - 60);
+    return { x: k.x + dir * d, y: pool.y + rand() * pool.h };
+}
+
 // Somewhere to dart to, away from (px, py). The pool is a thin strip, so it
 // flees mostly sideways; if a wall is in the way it turns back past the point.
 function flee(k, px, py, pool) {
