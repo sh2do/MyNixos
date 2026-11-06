@@ -39,7 +39,13 @@ power() {
   case $choice in
     Lock) rice-lock ;;
     Suspend) systemctl suspend ;;
-    "Log out") niri msg action quit --skip-confirmation ;;
+    "Log out")
+      if [ -n "${UMBRIEL_SOCKET:-}" ]; then
+        umbriel msg session-quit skip-confirmation
+      else
+        niri msg action quit --skip-confirmation
+      fi
+      ;;
     Reboot) systemctl reboot ;;
     "Shut down") systemctl poweroff ;;
   esac

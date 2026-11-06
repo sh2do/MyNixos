@@ -13,6 +13,7 @@
     umbriel = {
       url = "github:noctalia-dev/umbriel";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.xdg-desktop-portal-umbriel.follows = "xdg-desktop-portal-umbriel";
     };
 
     # Screen sharing / screenshots through xdg-desktop-portal for Umbriel.

@@ -16,7 +16,7 @@ EOF
   chmod +x "$TMP/bin/rofi"
 }
 
-stubs() { stub_rofi; stub systemctl; stub powerprofilesctl; stub rice-wall; stub rice-lock; stub niri; }
+stubs() { stub_rofi; stub systemctl; stub powerprofilesctl; stub rice-wall; stub rice-lock; stub niri; stub umbriel; }
 
 test_power_shutdown() {
   stubs
@@ -28,6 +28,19 @@ test_power_lock() {
   stubs
   RICE_TEST_CHOICE="Lock" bash "$RICE_MENU" power
   grep -qx 'rice-lock' "$TMP/calls"
+}
+
+test_logout_niri() {
+  stubs
+  env -u UMBRIEL_SOCKET RICE_TEST_CHOICE="Log out" bash "$RICE_MENU" power
+  grep -qx 'niri msg action quit --skip-confirmation' "$TMP/calls"
+}
+
+test_logout_umbriel() {
+  stubs
+  UMBRIEL_SOCKET=/x RICE_TEST_CHOICE="Log out" bash "$RICE_MENU" power
+  grep -qx 'umbriel msg session-quit skip-confirmation' "$TMP/calls"
+  ! grep -q '^niri' "$TMP/calls"
 }
 
 test_profile_sets() {
@@ -58,7 +71,7 @@ test_unknown_mode() {
   assert_eq "$code" "2"
 }
 
-for t in test_power_shutdown test_power_lock test_profile_sets test_wallpaper_sets \
+for t in test_power_shutdown test_power_lock test_logout_niri test_logout_umbriel test_profile_sets test_wallpaper_sets \
   test_cancel_does_nothing test_unknown_mode; do
   run_test "$t"
 done
