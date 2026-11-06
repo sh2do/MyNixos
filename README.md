@@ -24,6 +24,8 @@ docs/superpowers/             design spec and implementation plan
 dotfiles/                     older ghostty, niri, nvim configs (reference only)
 ```
 
+For the full guide (theming flow, every key, menus, lock and recovery, adding wallpapers, tests and roadmap), see **[docs/RICE.md](docs/RICE.md)**.
+
 ## How the theming works
 
 `rice-wall` owns the wallpaper. It picks from `~/.local/share/wallpapers/rotation`, shows it with awww, and runs matugen, which rewrites the colour files in `~/.config` and `~/.cache/rice`. Everything else (niri borders, the bar, rofi, foot, starship, the cobra) reads those files. A systemd user timer runs `rice-wall next` every 45 minutes.
