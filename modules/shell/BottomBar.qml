@@ -13,6 +13,8 @@ PanelWindow {
 
     // RICE_BAR_PINNED=1 keeps the bar up (handy while restyling it).
     readonly property bool pinned: Quickshell.env("RICE_BAR_PINNED") === "1"
+    // Koi swim inside the bar; RICE_MASCOT=python wraps it in the python instead.
+    readonly property bool python: Quickshell.env("RICE_MASCOT") === "python"
     property bool shown: pinned
 
     anchors.bottom: true
@@ -25,8 +27,8 @@ PanelWindow {
     // Room for the python: the pill rests higher (lower loops below it) and the
     // head rises above it.
     readonly property int bodyW: Math.round(Theme.barHeight * 0.5)
-    readonly property int restGap: 8 + bodyW + 1
-    implicitHeight: Theme.barHeight + restGap + 64
+    readonly property int restGap: python ? 8 + bodyW + 1 : 8
+    implicitHeight: Theme.barHeight + restGap + (python ? 64 : 4)
 
     // Only the visible part takes input; the rest passes clicks through.
     mask: Region {
@@ -47,15 +49,18 @@ PanelWindow {
         }
     }
 
-    Python {
-        pill: bar
-        gaps: root.gaps
-        side: "back"
-        t: front.t
-        slide: front.slide
-        squeeze: front.squeeze
-        flinch: front.flinch
-        texture: front.texture
+    Loader {
+        active: root.python
+        sourceComponent: Python {
+            pill: bar
+            gaps: root.gaps
+            side: "back"
+            t: front.item ? front.item.t : 0
+            slide: front.item ? front.item.slide : 0
+            squeeze: front.item ? front.item.squeeze : 0
+            flinch: front.item ? front.item.flinch : 0
+            texture: front.item ? front.item.texture : null
+        }
     }
 
     Rectangle {
@@ -81,6 +86,27 @@ PanelWindow {
         HoverHandler {
             id: barHover
             onHoveredChanged: hovered ? hideTimer.stop() : hideTimer.restart()
+        }
+
+        Koi {
+            id: pond
+            visible: !root.python
+            anchors.fill: parent
+            anchors.margins: 1
+            running: root.shown && visible
+            hoverX: barHover.hovered ? barHover.point.position.x - 1 : NaN
+            hoverY: barHover.hovered ? barHover.point.position.y - 1 : NaN
+        }
+
+        // A click on open water (not on a widget) feeds the koi.
+        TapHandler {
+            enabled: pond.visible
+            onTapped: (point) => {
+                // Workspace pills have their own TapHandler; leave their clicks alone.
+                const p = content.mapFromItem(bar, point.position.x, point.position.y);
+                if (!content.childAt(p.x, p.y))
+                    pond.feed(point.position.x - 1, point.position.y - 1);
+            }
         }
 
         Row {
@@ -117,27 +143,36 @@ PanelWindow {
         }
     }
 
-    Python {
+    Loader {
         id: front
-        pill: bar
-        gaps: root.gaps
-        side: "front"
-        running: root.shown
-        hoverX: barHover.hovered ? barHover.point.position.x : NaN
+        active: root.python
+        sourceComponent: Python {
+            pill: bar
+            gaps: root.gaps
+            side: "front"
+            running: root.shown
+            hoverX: barHover.hovered ? barHover.point.position.x : NaN
+        }
     }
 
-    // The python reacts to the bar: it looks at a workspace you switch to, or a
-    // volume or brightness change, and flinches.
+    // The mascot reacts to the bar: a workspace you switch to, or a volume or
+    // brightness change, makes the python look and flinch, or the koi startle.
+    function notice(x) {
+        if (front.item)
+            front.item.notice(x);
+        else
+            pond.notice(x - 1);
+    }
     Connections {
         target: workspaces
         function onActiveIdxChanged() {
-            front.notice(content.x + workspaces.x + workspaces.activeCenter());
+            root.notice(content.x + workspaces.x + workspaces.activeCenter());
         }
     }
     Connections {
         target: toggles
         function onPoked(chip) {
-            front.notice(content.x + toggles.x + chip.x + chip.width / 2);
+            root.notice(content.x + toggles.x + chip.x + chip.width / 2);
         }
     }
 
@@ -150,9 +185,10 @@ PanelWindow {
     // The python's front crossings go in the gaps between widget groups (never
     // over a widget): one at the left end, and one in each CoilGap, which takes
     // the place of a separator line.
-    readonly property int leftPad: bodyW + 19
+    // Without the python they are plain spacing.
+    readonly property int leftPad: python ? bodyW + 19 : 14
     component CoilGap: Item {
-        width: root.bodyW + 6
+        width: root.python ? root.bodyW + 6 : 8
         height: 1
     }
 
