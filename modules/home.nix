@@ -5,5 +5,6 @@
     ./theme
     ./terminal
     ./rofi
+    ./shell
   ];
 }

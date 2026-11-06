@@ -146,7 +146,8 @@ layout {
     struts {
         // left 64
         // right 64
-        // top 64
+        // Room for the top pill (modules/shell/TopPill.qml).
+        top 28
         // bottom 64
     }
 }

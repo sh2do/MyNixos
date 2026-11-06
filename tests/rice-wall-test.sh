@@ -61,7 +61,14 @@ test_current_prints_path() {
   assert_eq "$(bash "$RICE_WALL" current)" "$RICE_WALL_DIR/x.jpg"
 }
 
-for t in test_next_wraps test_next_calls_awww_then_matugen test_set_missing_path_fails \
+test_set_grow_transition() {
+  stub awww; stub matugen
+  walls a.jpg
+  RICE_TRANSITION=grow bash "$RICE_WALL" set "$RICE_WALL_DIR/a.jpg"
+  assert_contains "$(sed -n 1p "$TMP/calls")" "--transition-type grow --transition-pos center"
+}
+
+for t in test_set_grow_transition test_next_wraps test_next_calls_awww_then_matugen test_set_missing_path_fails \
   test_matugen_failure_keeps_colours test_init_without_awww test_current_prints_path; do
   run_test "$t"
 done

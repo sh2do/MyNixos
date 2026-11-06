@@ -10,3 +10,6 @@ include "colors.kdl"
 
 // Keep clipboard history for rice-menu clipboard.
 spawn-sh-at-startup "wl-paste --watch cliphist store"
+
+// The bar, top pill and wallpaper picker (modules/shell).
+spawn-at-startup "qs" "-c" "rice"

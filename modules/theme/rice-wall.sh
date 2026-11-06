@@ -3,7 +3,7 @@ set -euo pipefail
 #
 #   rice-wall init        pick a wallpaper if none is set and generate colours (no awww)
 #   rice-wall next        show the next wallpaper in the rotation
-#   rice-wall set PATH    show PATH
+#   rice-wall set PATH    show PATH (RICE_TRANSITION=grow grows it in from the centre)
 #   rice-wall pick        choose one with rofi (rice-menu wallpaper)
 #   rice-wall current     print the current wallpaper path
 #
@@ -39,7 +39,11 @@ show() {
   [ -f "$wall" ] || die "no such wallpaper: $wall"
   mkdir -p "$state_dir"
   echo "$wall" > "$current_file"
-  awww img "$wall" --transition-type fade --transition-duration 1.2 --resize crop ||
+  local transition=(--transition-type fade --transition-duration 1.2)
+  if [ "${RICE_TRANSITION:-}" = grow ]; then
+    transition=(--transition-type grow --transition-pos center --transition-duration 1.4)
+  fi
+  awww img "$wall" "${transition[@]}" --resize crop ||
     echo "rice-wall: awww failed (is awww-daemon running?)" >&2
   recolour "$wall"
 }
