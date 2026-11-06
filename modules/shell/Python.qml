@@ -19,10 +19,10 @@ Item {
     // Pointer x in pill coordinates, or NaN when it isn't over the pill.
     property real hoverX: NaN
 
-    readonly property int bodyW: Math.round(Theme.barHeight * 0.4)
+    readonly property int bodyW: Math.round(Theme.barHeight * 0.5)
     readonly property var geo: Geo.layout(pill.width, pill.height, gaps, bodyW)
     // Breathing: the coils loosen and tighten a little every 5 s. A scale of
-    // the finished image, so the body isn't redrawn every tick.
+    // the finished image, so the body isn't redrawn for it.
     readonly property real breath: 1 + 0.025 * Math.sin(2 * Math.PI * t / 5000) - 0.04 * squeeze
     readonly property var box: geo.bounds
 
@@ -33,118 +33,96 @@ Item {
     height: box.h
     opacity: pill.opacity
 
-    readonly property string svgPath: {
-        let d = "";
-        for (const s of geo.path) {
-            if (d === "")
-                d = `M ${s.x0 - box.x} ${s.y0 - box.y}`;
-            d += ` C ${s.c1x - box.x} ${s.c1y - box.y} ${s.c2x - box.x} ${s.c2y - box.y} ${s.x1 - box.x} ${s.y1 - box.y}`;
-        }
-        return d;
-    }
-
-    // The reticulated pattern: three dark-outlined saddles of uneven length,
-    // with light flecks in the gaps between them, repeating every `period` px.
-    // Values are in body widths. Uneven saddles read as a net, not a chain.
-    readonly property var saddles: [[0, 0.75], [1.2, 1.75], [2.35, 3.25]]
-    readonly property var flecks: [[0.93, 1.03], [1.92, 2.0], [2.12, 2.2], [3.38, 3.48]]
-    readonly property real period: 3.6 * bodyW
+    // The spine, sampled every 2 px; the skin is built around it.
+    readonly property var spine: Geo.samples(geo.path, 2)
     // Px the pattern has crept along the body: every 20-40 s it shifts its grip,
-    // moving one pattern length over 1.4 s while the coils squeeze.
+    // moving one saddle along over 1.4 s while the coils squeeze.
     property real slide: 0
+    readonly property real period: bodyW * 2.4
+    // The body texture. The front instance draws it; the back one binds this
+    // to the front's, so the body is drawn once and shown through both masks.
+    property Item texture: skin.item ? skin.item.texture : null
 
-    // dashPattern for spans (in body widths, shrunk by `inset` px at each end)
-    // on a stroke `w` px wide.
-    function pattern(spans, inset, w) {
-        const out = [];
-        for (let i = 0; i < spans.length; i++) {
-            const a = spans[i][0] * bodyW + inset, b = spans[i][1] * bodyW - inset;
-            const next = (i + 1 < spans.length ? spans[i + 1][0] * bodyW : period + spans[0][0] * bodyW) + inset;
-            out.push((b - a) / w, (next - b) / w);
-        }
-        return out;
+    component Fill: ShapePath {
+        strokeColor: "transparent"
+        joinStyle: ShapePath.RoundJoin
     }
-    // dashOffset that starts the first span at its place, for a stroke `w` wide.
-    function offsetFor(spans, inset, w) {
-        const p = period, at = spans[0][0] * bodyW + inset;
-        return ((((p - at - slide) % p) + p) % p) / w;
-    }
-
-    component Stroke: ShapePath {
+    component Line: ShapePath {
         fillColor: "transparent"
         capStyle: ShapePath.RoundCap
         joinStyle: ShapePath.RoundJoin
-        PathSvg { path: root.svgPath }
     }
 
-    // All the body strokes, drawn once into a texture and shown through masks.
-    Item {
-        id: art
+    // The body, drawn into a texture and shown through masks: a tapered
+    // outline, a shadow along the belly side, the saddles, flecks and a sheen.
+    Loader {
+        id: skin
         anchors.fill: parent
-        visible: false
-        layer.enabled: true
-        layer.samples: 4
+        active: root.side === "front"
+        sourceComponent: Item {
+            id: skinItem
+            readonly property Item texture: artTex
+            readonly property string saddleSvg: Geo.polysSvg(Geo.blotches(root.spine, root.bodyW, root.slide), root.box.x, root.box.y)
+            readonly property string fleckSvg: Geo.dotsSvg(Geo.flecks(root.spine, root.bodyW, root.slide), root.box.x, root.box.y)
 
-        Shape {
-            anchors.fill: parent
+            Item {
+                id: art
+                anchors.fill: parent
 
-            Stroke { strokeColor: Theme.surface; strokeWidth: root.bodyW + 3 }
-            Stroke { strokeColor: Theme.surfaceContainer; strokeWidth: root.bodyW }
-            // Saddle outlines, then the saddles inside them: the net.
-            Stroke {
-                readonly property real w: root.bodyW - 3
-                strokeColor: Theme.surface
-                strokeWidth: w
-                capStyle: ShapePath.FlatCap
-                strokeStyle: ShapePath.DashLine
-                dashPattern: root.pattern(root.saddles, 0, w)
-                dashOffset: root.offsetFor(root.saddles, 0, w)
-            }
-            Stroke {
-                readonly property real w: root.bodyW - 7
-                strokeColor: Theme.primaryContainer
-                strokeWidth: w
-                capStyle: ShapePath.FlatCap
-                strokeStyle: ShapePath.DashLine
-                dashPattern: root.pattern(root.saddles, 2, w)
-                dashOffset: root.offsetFor(root.saddles, 2, w)
-            }
-            // Light flecks between the saddles.
-            Stroke {
-                readonly property real w: 3.5
-                strokeColor: Theme.tertiary
-                strokeWidth: w
-                strokeStyle: ShapePath.DashLine
-                dashPattern: root.pattern(root.flecks, 0, w)
-                dashOffset: root.offsetFor(root.flecks, 0, w)
-            }
-        }
+                // The outline never changes after layout. The curve renderer picks
+                // up colour changes even inside a hidden source; the default one
+                // doesn't.
+                Shape {
+                    anchors.fill: parent
+                    preferredRendererType: Shape.CurveRenderer
 
-        // A faint sheen along the top of the body.
-        Shape {
-            y: -3
-            width: parent.width
-            height: parent.height
-            ShapePath {
-                fillColor: "transparent"
-                strokeColor: Qt.rgba(1, 1, 1, 0.12)
-                strokeWidth: 2
-                capStyle: ShapePath.RoundCap
-                PathSvg { path: root.svgPath }
+                    Fill {
+                        fillColor: Theme.surfaceContainer
+                        strokeColor: Theme.surface
+                        strokeWidth: 1.6
+                        PathSvg { path: Geo.outlineSvg(root.spine, root.bodyW, root.box.x, root.box.y) }
+                    }
+                    Line {
+                        strokeColor: Qt.alpha(Theme.surface, 0.35)
+                        strokeWidth: root.bodyW * 0.22
+                        PathSvg { path: Geo.edgeSvg(root.spine, root.bodyW, 0.3, root.box.x, root.box.y) }
+                    }
+                    Line {
+                        strokeColor: Qt.rgba(1, 1, 1, 0.1)
+                        strokeWidth: root.bodyW * 0.12
+                        PathSvg { path: Geo.edgeSvg(root.spine, root.bodyW, -0.26, root.box.x, root.box.y) }
+                    }
+                }
+                // The pattern in its own Shape, so a grip shift only rebuilds this
+                // one, with the default renderer: cheaper to rebuild every step.
+                // It doesn't pick up colour-only changes inside a hidden source,
+                // so it's recreated when the colours change.
+                Repeater {
+                    model: [Theme.colours]
+                    Shape {
+                        anchors.fill: parent
+                        Fill {
+                            fillColor: Theme.primaryContainer
+                            strokeColor: Theme.surface
+                            strokeWidth: 1.3
+                            PathSvg { path: skinItem.saddleSvg }
+                        }
+                        Fill {
+                            fillColor: Theme.tertiary
+                            PathSvg { path: skinItem.fleckSvg }
+                        }
+                    }
+                }
             }
-        }
 
-        // Tapered tail tip: the path starts heading right, so the tip points left.
-        Shape {
-            readonly property var s: root.geo.path[0]
-            x: s.x0 - root.box.x
-            y: s.y0 - root.box.y
-            ShapePath {
-                fillColor: Theme.surfaceContainer
-                strokeColor: Theme.surface
-                strokeWidth: 1.5
-                joinStyle: ShapePath.RoundJoin
-                PathSvg { path: `M 1 ${-root.bodyW / 2} L ${-root.bodyW * 1.3} 2 L 1 ${root.bodyW / 2}` }
+            // A hidden source item, multisampled for the pattern's edges.
+            ShaderEffectSource {
+                id: artTex
+                anchors.fill: parent
+                sourceItem: art
+                hideSource: true
+                visible: false
+                samples: 4
             }
         }
     }
@@ -186,7 +164,7 @@ Item {
 
     MultiEffect {
         anchors.fill: parent
-        source: art
+        source: root.texture
         maskEnabled: true
         maskSource: root.side === "back" ? pillMask : crossingMask
         maskInverted: root.side === "back"
@@ -198,23 +176,25 @@ Item {
         }
     }
 
-    // The head, front layer only: a long wedge with a dark crown line, small
-    // eyes and a forked tongue. Drawn pointing +x, then turned.
+    // The head, front layer only: a broad, flat wedge in the saddle colour with
+    // a dark midline, eye stripes and a forked tongue, sized from the body.
+    // Drawn pointing +x from the neck joint, then turned.
     //
-    // Motion comes in two speeds. Anything that moves the body (breathing, the
-    // grip shift) and the head's slow sway and bob follow `t`, ticked at 30 fps:
-    // redrawing the dashed body is the expensive part. The head's quick moves
-    // (turning, waking, probing, tongue flicks) are Qt animations of small
-    // shapes, which run at the display's refresh rate only while moving.
+    // Motion comes in two speeds. The slow, small motions (breathing, the grip
+    // shift, the head's sway and bob) follow `t`, ticked every 21 ms: every
+    // third frame at 144 Hz, so the steps stay even, and each is under a pixel.
+    // A per-frame clock keeps the bar redrawing at the full refresh rate and
+    // costs several times the CPU. The quick moves (turning, waking, probing,
+    // tongue flicks) are Qt animations, which run every frame while they last.
 
-    // It leans along the bar toward the widget under the pointer; otherwise it
-    // now and then looks around.
+    // It looks at the widget under the pointer; otherwise it now and then
+    // looks around.
     readonly property real restAngle: geo.head.angle
     property real idleLook: 0
-    readonly property real aim: isNaN(hoverX) ? restAngle + idleLook : Geo.headAim(restAngle, hoverX, pill.width)
+    readonly property real aim: isNaN(hoverX) ? restAngle + idleLook : Geo.headAim(restAngle, geo.head, hoverX, pill.height)
     property real headAngle: aim
     Behavior on headAngle {
-        SpringAnimation { spring: 2.4; damping: 0.3; epsilon: 0.05 }
+        SpringAnimation { spring: 2.2; damping: 0.32; epsilon: 0.05 }
     }
 
     // 0 = tucked in, 1 = raised. It rises with a small overshoot when the bar appears.
@@ -258,57 +238,66 @@ Item {
     SequentialAnimation {
         id: wake
         PauseAnimation { duration: 160 }
-        NumberAnimation { target: root; property: "lift"; from: 0; to: 1; duration: 560; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+        NumberAnimation { target: root; property: "lift"; from: 0; to: 1; duration: 620; easing.type: Easing.OutBack; easing.overshoot: 1.8 }
     }
 
     SequentialAnimation {
         id: probeAnim
-        NumberAnimation { target: root; property: "probe"; to: 1; duration: 120; easing.type: Easing.OutQuad }
-        NumberAnimation { target: root; property: "probe"; to: 0; duration: 320; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "probe"; to: 1; duration: 140; easing.type: Easing.OutCubic }
+        NumberAnimation { target: root; property: "probe"; to: 0; duration: 420; easing.type: Easing.InOutSine }
     }
 
     SequentialAnimation {
         id: flick
-        NumberAnimation { target: root; property: "tongueOut"; from: 0; to: 1; duration: 85; easing.type: Easing.OutQuad }
-        NumberAnimation { target: root; property: "fork"; from: 0.2; to: 1; duration: 55 }
-        NumberAnimation { target: root; property: "fork"; to: 0.35; duration: 55 }
-        NumberAnimation { target: root; property: "fork"; to: 1; duration: 55 }
-        NumberAnimation { target: root; property: "tongueOut"; to: 0; duration: 95; easing.type: Easing.InQuad }
-        PauseAnimation { duration: 70 }
+        NumberAnimation { target: root; property: "tongueOut"; from: 0; to: 1; duration: 90; easing.type: Easing.OutQuad }
+        NumberAnimation { target: root; property: "fork"; from: 0.2; to: 1; duration: 60; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "fork"; to: 0.35; duration: 60; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "fork"; to: 1; duration: 60; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "tongueOut"; to: 0; duration: 110; easing.type: Easing.InQuad }
+        PauseAnimation { duration: 80 }
     }
 
     Item {
+        id: head
         visible: root.side === "front"
+        readonly property real b: root.bodyW
         // Slow sway and a bob in time with the breathing.
-        readonly property real sway: 2.5 * Math.sin(2 * Math.PI * root.t / 1900) + 1.2 * Math.sin(2 * Math.PI * root.t / 730)
-        readonly property real bob: 1.2 * Math.sin(2 * Math.PI * root.t / 5000 + 0.6)
+        readonly property real sway: 2.5 * Math.sin(2 * Math.PI * root.t / 2300) + 1 * Math.sin(2 * Math.PI * root.t / 890)
+        readonly property real bob: 0.06 * b * Math.sin(2 * Math.PI * root.t / 5000 + 0.6)
         // Tucked back along its own axis until it rises; the probe pushes it forward.
-        readonly property real reach: -9 * (1 - root.lift) + 4 * root.probe
+        readonly property real reach: -0.5 * b * (1 - root.lift) + 0.25 * b * root.probe
         readonly property real dir: (root.headAngle + sway) * Math.PI / 180
+        // Follow the body's breathing scale, so the neck stays joined.
+        readonly property real originY: root.pill.height / 2 - root.box.y
+        readonly property real restY: root.geo.head.y - root.box.y
 
         x: root.geo.head.x - root.box.x + reach * Math.cos(dir)
-        y: root.geo.head.y - root.box.y + reach * Math.sin(dir) + bob
+        y: originY + (restY - originY) * root.breath + reach * Math.sin(dir) + bob
         rotation: root.headAngle + sway
-        scale: 1.4 * (0.78 + 0.22 * root.lift)
+        scale: 0.88 + 0.12 * root.lift
         transformOrigin: Item.TopLeft
+
+        // Circles at points given in body widths, as SVG.
+        function dots(pts, r) {
+            const R = r * b;
+            return pts.map(p => `M ${p[0] * b - R} ${p[1] * b} a ${R} ${R} 0 1 0 ${2 * R} 0 a ${R} ${R} 0 1 0 ${-2 * R} 0`).join(" ");
+        }
 
         Shape {
             id: tongue
             visible: root.tongueOut > 0.01
             preferredRendererType: Shape.CurveRenderer
-            readonly property real tip: 16 + 8 * root.tongueOut
-            readonly property real len: 4.5 * root.tongueOut
+            readonly property real base: 2.42 * head.b
+            readonly property real tip: base + 0.6 * head.b * root.tongueOut
+            readonly property real len: 0.28 * head.b * root.tongueOut
             readonly property real spread: (14 + 22 * root.fork) * Math.PI / 180
-            ShapePath {
-                fillColor: "transparent"
+            Line {
                 strokeColor: Theme.tertiary
-                strokeWidth: 1.2
-                capStyle: ShapePath.RoundCap
-                joinStyle: ShapePath.RoundJoin
+                strokeWidth: Math.max(1.1, 0.07 * head.b)
                 PathSvg {
                     path: {
                         const t = tongue, ex = t.len * Math.cos(t.spread), ey = t.len * Math.sin(t.spread);
-                        return `M 16 0 L ${t.tip} 0 L ${t.tip + ex} ${-ey} M ${t.tip} 0 L ${t.tip + ex} ${ey}`;
+                        return `M ${t.base} 0 L ${t.tip} 0 L ${t.tip + ex} ${-ey} M ${t.tip} 0 L ${t.tip + ex} ${ey}`;
                     }
                 }
             }
@@ -316,32 +305,49 @@ Item {
 
         Shape {
             preferredRendererType: Shape.CurveRenderer
-            ShapePath {
-                fillColor: Theme.secondary
-                strokeColor: Theme.surface
-                strokeWidth: 1.4
-                joinStyle: ShapePath.RoundJoin
-                PathSvg { path: "M -4 -5.5 C 2 -7.5 8 -7.5 12 -5 Q 17 -3 17 0 Q 17 3 12 5 C 8 7.5 2 7.5 -4 5.5 Z" }
+            // Neck joint: covers the seam with the body as the head turns.
+            Fill {
+                fillColor: Theme.surfaceContainer
+                PathSvg { path: head.dots([[0, 0]], 0.36) }
             }
-            ShapePath {
-                fillColor: "transparent"
+            Fill {
+                fillColor: Theme.primaryContainer
                 strokeColor: Theme.surface
-                strokeWidth: 1.2
-                capStyle: ShapePath.RoundCap
-                PathSvg { path: "M -2 0 L 14 0" }
+                strokeWidth: 1.5
+                PathSvg {
+                    path: {
+                        const b = head.b;
+                        return `M ${-0.2 * b} ${-0.36 * b} C ${0.05 * b} ${-0.7 * b} ${0.35 * b} ${-0.8 * b} ${0.65 * b} ${-0.78 * b}`
+                            + ` C ${1.2 * b} ${-0.72 * b} ${1.95 * b} ${-0.48 * b} ${2.28 * b} ${-0.24 * b}`
+                            + ` Q ${2.45 * b} ${-0.1 * b} ${2.45 * b} 0 Q ${2.45 * b} ${0.1 * b} ${2.28 * b} ${0.24 * b}`
+                            + ` C ${1.95 * b} ${0.48 * b} ${1.2 * b} ${0.72 * b} ${0.65 * b} ${0.78 * b}`
+                            + ` C ${0.35 * b} ${0.8 * b} ${0.05 * b} ${0.7 * b} ${-0.2 * b} ${0.36 * b} Z`;
+                    }
+                }
             }
-            // The dark stripe behind each eye, and the nostrils.
-            ShapePath {
-                fillColor: "transparent"
+            // Midline, and the dark stripe running back from each eye.
+            Line {
                 strokeColor: Qt.alpha(Theme.surface, 0.85)
-                strokeWidth: 1
-                capStyle: ShapePath.RoundCap
-                PathSvg { path: "M 9 -4.4 L 0 -5.4 M 9 4.4 L 0 5.4 M 15.2 -1.6 L 15.6 -1.4 M 15.2 1.6 L 15.6 1.4" }
+                strokeWidth: Math.max(1.2, 0.1 * head.b)
+                PathSvg {
+                    path: {
+                        const b = head.b;
+                        return `M ${0.15 * b} 0 L ${2.1 * b} 0`
+                            + ` M ${1.5 * b} ${-0.4 * b} Q ${1.0 * b} ${-0.55 * b} ${0.4 * b} ${-0.6 * b}`
+                            + ` M ${1.5 * b} ${0.4 * b} Q ${1.0 * b} ${0.55 * b} ${0.4 * b} ${0.6 * b}`;
+                    }
+                }
             }
-            ShapePath {
+            // Eyes, set into the stripes, then pupils and nostrils.
+            Fill {
                 fillColor: Theme.tertiary
-                strokeColor: "transparent"
-                PathSvg { path: "M 9 -4.6 a 1.4 1.4 0 1 0 2.8 0 a 1.4 1.4 0 1 0 -2.8 0 M 9 4.6 a 1.4 1.4 0 1 0 2.8 0 a 1.4 1.4 0 1 0 -2.8 0" }
+                strokeColor: Theme.surface
+                strokeWidth: 1
+                PathSvg { path: head.dots([[1.55, -0.38], [1.55, 0.38]], 0.13) }
+            }
+            Fill {
+                fillColor: Theme.surface
+                PathSvg { path: head.dots([[1.58, -0.38], [1.58, 0.38]], 0.05) + " " + head.dots([[2.3, -0.13], [2.3, 0.13]], 0.04) }
             }
         }
     }
@@ -358,7 +364,7 @@ Item {
     Timer {
         running: root.running && root.side === "front"
         repeat: true
-        interval: 33
+        interval: 21
         onTriggered: {
             const t = root.t += interval;
             if (t > root.nextFlick) {

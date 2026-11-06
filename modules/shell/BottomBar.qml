@@ -24,7 +24,7 @@ PanelWindow {
     color: "transparent"
     // Room for the python: the pill rests higher (lower loops below it) and the
     // head rises above it.
-    readonly property int bodyW: Math.round(Theme.barHeight * 0.4)
+    readonly property int bodyW: Math.round(Theme.barHeight * 0.5)
     readonly property int restGap: 8 + bodyW + 1
     implicitHeight: Theme.barHeight + restGap + 64
 
@@ -54,6 +54,7 @@ PanelWindow {
         t: front.t
         slide: front.slide
         squeeze: front.squeeze
+        texture: front.texture
     }
 
     Rectangle {
