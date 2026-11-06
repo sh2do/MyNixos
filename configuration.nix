@@ -7,6 +7,7 @@ in
   imports = [
     ./hardware-configuration.nix
     ./modules/desktop.nix
+    ./modules/sddm
     inputs.home-manager.nixosModules.default
   ];
 
@@ -371,56 +372,7 @@ in
   # Display manager
   # --------------------------------------------------
 
-  programs.silentSDDM = {
-    enable = true;
-    theme = "catppuccin-mocha";
-
-    backgrounds = {
-      wallpaper = ./greeter.mp4;
-      lockscreen = ./lockscreen.mp4; # Sekiro landscape
-    };
-
-    settings = {
-      "General".enable-animations = true;
-
-      "LockScreen".background = "lockscreen.mp4";
-      "LockScreen".use-background-color = false;
-
-      "LoginScreen".background = "greeter.mp4";
-      "LoginScreen".use-background-color = false;
-
-      "LockScreen.Clock".color = "#c2c2b0";
-      "LockScreen.Date".color = "#c9a554";
-
-      "LoginScreen.LoginArea.Avatar" = {
-        active-border-color = "#c9a554";
-        inactive-border-color = "#685742";
-      };
-
-      "LoginScreen.LoginArea.Username".color = "#c2c2b0";
-
-      "LoginScreen.LoginArea.PasswordInput" = {
-        content-color = "#c2c2b0";
-        background-color = "#333333";
-        border-color = "#685742";
-      };
-
-      "LoginScreen.LoginArea.LoginButton" = {
-        background-color = "#333333";
-        active-background-color = "#c9a554";
-        content-color = "#c9a554";
-        active-content-color = "#222222";
-        border-color = "#c9a554";
-      };
-
-      "LoginScreen.MenuArea.Session".background-color = "#c9a554";
-      "LoginScreen.MenuArea.Power".background-color = "#c9a554";
-    };
-  };
-
-  services.displayManager.sddm.extraPackages = [
-    pkgs.kdePackages.qtmultimedia
-  ];
+  # Custom video theme: modules/sddm.
 
   # --------------------------------------------------
   # Audio and power management

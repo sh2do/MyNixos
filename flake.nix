@@ -4,11 +4,6 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    silentSDDM = {
-      url = "github:uiriansan/SilentSDDM";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     antigravity-nix = {
       url = "github:jacopone/antigravity-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -27,7 +22,6 @@
       modules = [
         # home-manager is imported in configuration.nix, not repeated here.
         ./configuration.nix
-        inputs.silentSDDM.nixosModules.default
       ];
     };
   };

@@ -1,0 +1,9 @@
+[SddmGreeterTheme]
+Name=rice
+Description=Train landscape video login for the niri rice
+Author=Zaion
+Type=sddm-theme
+Version=1.0
+MainScript=Main.qml
+ConfigFile=theme.conf
+QtVersion=6
