@@ -24,6 +24,7 @@ Singleton {
     readonly property color viperBlotch: "#262a31"
     readonly property color viperKeel: "#8b94a3"
     readonly property color viperOutline: "#0d0f12"
+    readonly property color viperEye: "#c7ccd4"
 
     readonly property string font: "JetBrainsMono Nerd Font"
 }

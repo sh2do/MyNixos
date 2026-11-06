@@ -6,11 +6,12 @@
 // It is the session's notification server (the niri bar's never runs here).
 // The media keys stay plain wpctl / brightnessctl binds; the island watches
 // the values themselves. Hidden while a fullscreen window is focused, except
-// for a critical notification.
+// for a critical notification or the open launcher.
 //
-// Tasks 6 and 7: openLauncher() / closeLauncher() / expanded (the launcher
-// grows out of the pill), and anchorBottom, the underside centre in screen
-// coordinates (the spider hangs from it).
+// openLauncher() / closeLauncher() / expanded: the pill grows down into the
+// launcher's panel (Launcher.qml), with the viper wound around it, and takes
+// the keyboard while open. anchorBottom (Task 7) is the underside centre in
+// screen coordinates (the spider hangs from it).
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
@@ -48,17 +49,20 @@ PanelWindow {
     }
     readonly property bool critical: view === "notify" && (item?.critical ?? false)
 
-    visible: !UmbrielIpc.fullscreen || critical
+    visible: !UmbrielIpc.fullscreen || critical || expanded
 
+    // The pill sits 14 px down the window, which starts at the screen's top
+    // edge: room for the viper's head over the launcher's corner.
     anchors.top: true
-    margins.top: 14
-    // Room for the largest view and the spring's overshoot; only the pill
-    // takes the pointer.
+    margins.top: 0
+    // Room for the largest view, the launcher with the viper around it, and
+    // the spring's overshoot; only the pill takes the pointer.
     implicitWidth: 360
-    implicitHeight: 96
+    implicitHeight: 400
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: expanded ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     WlrLayershell.namespace: "umbriel-island"
     mask: Region {
         item: pill
@@ -231,6 +235,15 @@ PanelWindow {
 
     // The pill
 
+    // The viper's body behind the launcher's panel.
+    U.Viper {
+        side: "back"
+        phase: viper.phase
+        bands: launcher.bands
+        x: Math.round((root.width - panelW) / 2)
+        y: pill.y
+    }
+
     // A faint wider outline: the accent's glow, for critical notices.
     Rectangle {
         anchors.fill: pill
@@ -250,10 +263,12 @@ PanelWindow {
         id: pill
 
         anchors.horizontalCenter: parent.horizontalCenter
-        width: root.view === "music" ? 280 : root.view === "notify" ? 300 : root.view === "osd" ? 220 : 76
-        height: root.view === "notify" ? 64 : root.view === "clock" ? 28 : 32
+        y: 14
+        width: root.expanded ? launcher.width : root.view === "music" ? 280 : root.view === "notify" ? 300 : root.view === "osd" ? 220 : 76
+        height: root.expanded ? launcher.height : root.view === "notify" ? 64 : root.view === "clock" ? 28 : 32
         radius: Math.min(height / 2, 20)
-        color: U.Palette.panel
+        // Opaque while open, so the viper's back coils don't show through.
+        color: root.expanded ? Qt.alpha(U.Palette.panel, 1) : U.Palette.panel
         border.width: 1
         border.color: root.critical ? U.Palette.bright : U.Palette.line
         clip: true
@@ -266,12 +281,20 @@ PanelWindow {
         }
 
         TapHandler {
-            onTapped: if (root.view === "notify") root.activate()
+            onTapped: if (root.view === "notify" && !root.expanded) root.activate()
+        }
+
+        U.Launcher {
+            id: launcher
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            island: root
+            viper: viper
         }
 
         // Clock
         View {
-            shown: root.view === "clock"
+            shown: root.view === "clock" && !root.expanded
             Text {
                 anchors.centerIn: parent
                 text: Qt.formatTime(clock.date, "HH:mm")
@@ -283,7 +306,7 @@ PanelWindow {
         // Music: equaliser, title · artist, time
         View {
             id: music
-            shown: root.view === "music"
+            shown: root.view === "music" && !root.expanded
             readonly property bool moving: shown && root.visible && root.playing
 
             Row {
@@ -349,7 +372,7 @@ PanelWindow {
         // Notification: icon or image, title, body. A click dismisses it.
         View {
             id: notice
-            shown: root.view === "notify"
+            shown: root.view === "notify" && !root.expanded
             readonly property string icon: root.lastNotice.icon ?? ""
 
             IconImage {
@@ -394,7 +417,7 @@ PanelWindow {
 
         // OSD: glyph, bar, value
         View {
-            shown: root.view === "osd"
+            shown: root.view === "osd" && !root.expanded
 
             Row {
                 anchors.centerIn: parent
@@ -446,6 +469,15 @@ PanelWindow {
                 }
             }
         }
+    }
+
+    // The crossings and head in front of the panel.
+    U.Viper {
+        id: viper
+        side: "front"
+        bands: launcher.bands
+        x: Math.round((root.width - panelW) / 2)
+        y: pill.y
     }
 
     function clockText(seconds) {
