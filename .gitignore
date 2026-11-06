@@ -11,3 +11,9 @@ result-*
 # Backup files left behind by tools (niri, home-manager, etc.)
 *.bak
 *.backup*
+
+# Superpowers scratch state
+.superpowers/
+
+# Old config copy, a separate git repo; kept on disk only
+Configs/

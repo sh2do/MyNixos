@@ -1,0 +1,32 @@
+// fastfetch, shown in the first terminal of a session (and with `ff`).
+// The logo is the bar's python coiled into a ball, re-rendered in the wallpaper's colours by rice-wall.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "sixel",
+    "source": "~/.cache/rice/python.png",
+    "width": 22,
+    "padding": { "top": 1, "right": 3 }
+  },
+  "display": {
+    "separator": "  ",
+    "color": { "keys": "magenta", "title": "blue" }
+  },
+  "modules": [
+    "title",
+    { "type": "custom", "format": "" },
+    { "type": "os", "key": "os" },
+    { "type": "kernel", "key": "kernel" },
+    { "type": "wm", "key": "wm" },
+    { "type": "shell", "key": "shell" },
+    { "type": "terminal", "key": "term" },
+    { "type": "cpu", "key": "cpu" },
+    { "type": "gpu", "key": "gpu" },
+    { "type": "memory", "key": "memory" },
+    { "type": "disk", "key": "disk", "folders": "/" },
+    { "type": "battery", "key": "battery" },
+    { "type": "uptime", "key": "uptime" },
+    { "type": "custom", "format": "" },
+    { "type": "colors", "symbol": "circle" }
+  ]
+}
