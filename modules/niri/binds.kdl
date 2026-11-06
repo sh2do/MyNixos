@@ -13,6 +13,13 @@ binds {
     // shows a list of important hotkeys.
     Mod+Shift+Slash { show-hotkey-overlay; }
 
+    // Rice: launcher, menus and wallpapers (see modules/rofi and modules/theme)
+    Mod+Space hotkey-overlay-title="Launcher" { spawn "rice-menu" "apps"; }
+    Mod+Alt+V hotkey-overlay-title="Clipboard history" { spawn "rice-menu" "clipboard"; }
+    Mod+Shift+Q hotkey-overlay-title="Power menu" { spawn "rice-menu" "power"; }
+    Mod+Alt+W hotkey-overlay-title="Next wallpaper" { spawn "rice-wall" "next"; }
+    Mod+Ctrl+W hotkey-overlay-title="Pick a wallpaper" { spawn "rice-menu" "wallpaper"; }
+
     // Suggested binds for running programs: terminal, app launcher, screen locker.
     Mod+T hotkey-overlay-title="Open a Terminal: foot" { spawn "foot"; }
     Mod+D hotkey-overlay-title="Open Firefox" { spawn "firefox"; }

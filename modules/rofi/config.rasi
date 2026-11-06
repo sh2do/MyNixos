@@ -1,0 +1,10 @@
+/* rofi: the theme lives in theme.rasi; colours come from rice-wall. */
+configuration {
+    modi: "drun,run";
+    show-icons: true;
+    icon-theme: "Papirus-Dark";
+    drun-display-format: "{name}";
+    display-drun: "apps";
+    font: "JetBrainsMono Nerd Font 12";
+}
+@theme "~/.config/rofi/theme.rasi"

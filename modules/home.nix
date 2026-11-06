@@ -4,5 +4,6 @@
     ./niri
     ./theme
     ./terminal
+    ./rofi
   ];
 }

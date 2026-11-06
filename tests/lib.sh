@@ -18,7 +18,7 @@ stub() {
   local name=$1 code=${2:-0}
   cat > "$TMP/bin/$name" <<EOF
 #!/usr/bin/env bash
-echo "$name \$*" >> "$TMP/calls"
+echo "$name\${*:+ \$*}" >> "$TMP/calls"
 exit $code
 EOF
   chmod +x "$TMP/bin/$name"
@@ -43,7 +43,10 @@ assert_contains() {
 run_test() {
   TESTS_RUN=$((TESTS_RUN + 1))
   setup_sandbox
-  if ( set -e; "$1" ); then
+  # Not inside `if` or `||`: either would switch off set -e in the test.
+  ( set -e; "$1" )
+  local rc=$?
+  if [ "$rc" -eq 0 ]; then
     echo "PASS $1"
   else
     echo "FAIL $1"

@@ -7,3 +7,6 @@ include "misc.kdl"
 include "rules.kdl"
 include "binds.kdl"
 include "colors.kdl"
+
+// Keep clipboard history for rice-menu clipboard.
+spawn-sh-at-startup "wl-paste --watch cliphist store"
