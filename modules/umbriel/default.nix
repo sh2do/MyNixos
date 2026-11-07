@@ -134,21 +134,22 @@ in
       ];
 
       # Film grain over the screen (static, see grain.glsl), and windows that
-      # open and close through smoke. The shell switches the grain off on
+      # bleed in and drain out like ink in water (every window: Umbriel's open
+      # and close animation is global). The shell switches the grain off on
       # eDP-2 while a fullscreen window is focused (UmbrielIpc.qml). max_fps
       # caps the frames an effect asks for on its own.
       effects = {
         preset = {
           grain = { kind = "screen"; shader = "effects/grain.glsl"; };
-          smoke-in = { kind = "animation"; shader = "effects/smoke-in.glsl"; };
-          smoke-out = { kind = "animation"; shader = "effects/smoke-out.glsl"; };
+          ink-in = { kind = "animation"; shader = "effects/ink-in.glsl"; };
+          ink-out = { kind = "animation"; shader = "effects/ink-out.glsl"; };
         };
         screen = "grain";
         max_fps = 24;
       };
       animation = {
-        windows_in = { effect = "smoke-in"; duration_ms = 280; curve = "easeout"; };
-        windows_out = { effect = "smoke-out"; duration_ms = 220; curve = "easeout"; };
+        windows_in = { effect = "ink-in"; duration_ms = 380; curve = "easeout"; };
+        windows_out = { effect = "ink-out"; duration_ms = 260; curve = "easeout"; };
       };
     };
   };

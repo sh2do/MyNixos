@@ -50,7 +50,7 @@ These checks need a real Umbriel login, which can't be tested from inside a niri
 
 ## Look
 - [ ] The film grain is visible only if you look for it. It's still grain; moving grain cost about 2.3% CPU.
-- [ ] Windows open (Mod+T) through dark smoke and close (Mod+Q) through a grainy dissolve. Check for banding at the start of the smoke.
+- [ ] Windows bleed in from their centre like ink in water (Mod+T): tendrils with a soft dark fringe, the content dark and grey at first and clear by the end. Mod+Q darkens the window and drains it back to a point. No tint is left on the settled window. Every window does this, not only kitty.
 - [ ] Window borders are slate, not blue. The Bluetooth glyph is grey, with no colour fringe.
 
 ## Fullscreen and games

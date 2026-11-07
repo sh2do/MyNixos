@@ -60,6 +60,13 @@ test_umbriel_terminal_floats_like_foot() {
   assert_contains "$(hm_eval 'xdg.configFile."umbriel-term/kitty.conf".source' | jq -r . | xargs cat)" "background           #0a0b0e"
 }
 
+# Every window opens and closes through the ink shaders, at about 380 and 260 ms.
+test_umbriel_windows_bleed_like_ink() {
+  assert_eq "$(hm_eval programs.umbriel.settings.animation --apply 'a: [ a.windows_in.effect a.windows_in.duration_ms a.windows_out.effect a.windows_out.duration_ms ]')" '["ink-in",380,"ink-out",260]'
+  assert_eq "$(hm_eval programs.umbriel.settings.effects.preset --apply 'p: [ p.ink-in.shader p.ink-out.shader ]')" '["effects/ink-in.glsl","effects/ink-out.glsl"]'
+  [ -f "$FLAKE/modules/umbriel/effects/ink-in.glsl" ] && [ -f "$FLAKE/modules/umbriel/effects/ink-out.glsl" ]
+}
+
 test_umbriel_keeps_clipboard_history() {
   assert_contains "$(hm_eval programs.umbriel.settings.general.autostart)" "wl-paste --watch cliphist store"
 }
@@ -87,7 +94,7 @@ test_menus_are_dripping_glass() {
 }
 
 for t in test_polkit_agent_runs_in_every_graphical_session test_look_is_declared test_leftovers_are_gone \
-  test_umbriel_starship_only_on_its_own_terminals test_umbriel_terminal_floats_like_foot test_umbriel_keeps_clipboard_history test_umbriel_shell_restarts_on_switch \
+  test_umbriel_starship_only_on_its_own_terminals test_umbriel_terminal_floats_like_foot test_umbriel_windows_bleed_like_ink test_umbriel_keeps_clipboard_history test_umbriel_shell_restarts_on_switch \
   test_menus_are_dripping_glass; do
   run_test "$t"
 done
