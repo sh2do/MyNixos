@@ -2,11 +2,8 @@
 // straight horizontal strip (neck on the left, tail tip on the right); it is
 // drawn once into a hidden texture and serpent.vert bends a GridMesh of it
 // along the spine. Per frame only the uniforms change: the 24 evenly spaced
-// spine points and the lighting inputs. The shadow is the same mesh again,
-// drawn first and offset (serpent-shadow.frag).
-//
-// skinRect: the part of the skin item this body wears (default: all of it),
-// so several bodies can share one strip, each its own stretch of it.
+// spine points. The shadow is the same mesh again, drawn first and offset
+// (serpent-shadow.frag).
 //
 // spine: control points [{x, y}] in this item's coordinates, neck first.
 // widths: width scales per control point; by default the plain taper of
@@ -28,21 +25,12 @@ Item {
     id: serpent
 
     property Item skin
-    property rect skinRect
     property real bodyWidth: 20
     property var spine: []
     // Placed by index: widths[k] lands at k / (length - 1) of the body, which
     // is exact for 24 widths or evenly spaced control points.
     property var widths: null
-    property real time: 0
-    property real sheen: 0
-    property real dull: 0
-    property real ripplePhase: 0
-    property real rippleAmp: 0
     property point shadowOffset: Qt.point(3, 5)
-    // Off for a body that continues into another: its shadow would fall
-    // across the seam.
-    property bool castShadow: true
 
     readonly property var head: priv.head
     readonly property var tail: priv.tail
@@ -62,7 +50,6 @@ Item {
     onSpineChanged: priv.markDirty()
     onWidthsChanged: priv.markDirty()
     onSkinChanged: strip.scheduleUpdate()
-    onSkinRectChanged: strip.scheduleUpdate()
     Component.onCompleted: {
         priv.rebuild();
         strip.scheduleUpdate();
@@ -139,7 +126,6 @@ Item {
     ShaderEffectSource {
         id: strip
         sourceItem: serpent.skin
-        sourceRect: serpent.skinRect
         hideSource: true
         live: false
         visible: false
@@ -147,11 +133,6 @@ Item {
 
     component Pass: ShaderEffect {
         property real bodyWidth
-        property real time
-        property real sheen
-        property real dull
-        property real ripplePhase
-        property real rippleAmp
         property vector4d s0
         property vector4d s1
         property vector4d s2
@@ -183,7 +164,7 @@ Item {
 
     Pass {
         id: shadow
-        visible: priv.valid && serpent.castShadow
+        visible: priv.valid
         x: serpent.shadowOffset.x
         y: serpent.shadowOffset.y
         width: serpent.width
@@ -199,11 +180,6 @@ Item {
         width: serpent.width
         height: serpent.height
         bodyWidth: serpent.bodyWidth
-        time: serpent.time
-        sheen: serpent.sheen
-        dull: serpent.dull
-        ripplePhase: serpent.ripplePhase
-        rippleAmp: serpent.rippleAmp
         fragmentShader: "serpent.frag.qsb"
     }
 }

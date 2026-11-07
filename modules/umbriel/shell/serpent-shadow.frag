@@ -9,11 +9,6 @@ layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
     float bodyWidth;   // px
-    float time;        // seconds
-    float sheen;       // 0..1, iridescence strength
-    float dull;        // 0..1, the shed's greying
-    float ripplePhase; // radians, advanced by the caller
-    float rippleAmp;   // brightness swing of the muscle ripple
     // The spine: 24 evenly spaced points, xy in px, z the width scale.
     vec4 s0;
     vec4 s1;

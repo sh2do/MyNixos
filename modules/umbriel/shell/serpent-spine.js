@@ -1,6 +1,6 @@
 .pragma library
 // Spine maths for the Umbriel serpents. A body is a chain of control points
-// computed in JS and bent on the GPU; resample() produces the evenly spaced
+// computed in JS and bent on the GPU; sample() produces the evenly spaced
 // 24-point chain that goes to the shader as vec4 uniforms. Pure functions on
 // plain objects so tests can run them in node.
 
@@ -87,20 +87,6 @@ function walk(points, n, emit) {
 function sample(points, n) {
     var out = new Array(n);
     walk(points, n, function (x, y, tx, ty, s, i) { out[i] = { x: x, y: y, tx: tx, ty: ty, s: s }; });
-    return out;
-}
-
-function resample(points, n) {
-    if (n === undefined) n = SPINE_POINTS;
-    var out = new Array(n);
-    walk(points, n, function (x, y, tx, ty, s, i) { out[i] = { x: x, y: y }; });
-    return out;
-}
-
-function pack(points, widths) {
-    var out = new Array(points.length);
-    for (var i = 0; i < points.length; i++)
-        out[i] = { x: points[i].x, y: points[i].y, z: widths[i], w: 0 };
     return out;
 }
 

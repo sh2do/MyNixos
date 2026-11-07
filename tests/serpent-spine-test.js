@@ -29,8 +29,8 @@ const tests = {
     gaps.forEach(g => assert.ok(Math.abs(g - mean) / mean < 0.02));
     r.forEach(p => near(Math.hypot(p.tx, p.ty), 1, 1e-9));
   },
-  resample_returns_24_points() {
-    const r = Spine.resample(S);
+  sample_spans_the_ends_in_24_points() {
+    const r = Spine.sample(S, Spine.SPINE_POINTS);
     assert.strictEqual(r.length, 24);
     assert.strictEqual(Spine.SPINE_POINTS, 24);
     near(r[0].x, S[0].x, 1e-9); near(r[0].y, S[0].y, 1e-9);
@@ -50,10 +50,6 @@ const tests = {
     assert.strictEqual(Spine.step(3), 0.05);
     assert.strictEqual(Spine.step(-1), 0);
     assert.strictEqual(Spine.step(0.007), 0.007);
-  },
-  pack_makes_vec4s() {
-    const r = Spine.pack([{ x: 1, y: 2 }], [0.5]);
-    assert.deepStrictEqual(JSON.parse(JSON.stringify(r)), [{ x: 1, y: 2, z: 0.5, w: 0 }]);
   },
 };
 
