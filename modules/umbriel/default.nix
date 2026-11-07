@@ -36,10 +36,10 @@ let
     cp -r ${lib.cleanSourceWith {
       src = ./shell;
       filter = path: type:
-        type == "directory" || lib.any (ext: lib.hasSuffix ext path) [ ".qml" ".js" ".glsl" ".frag" ".json" ".svg" ];
+        type == "directory" || lib.any (ext: lib.hasSuffix ext path) [ ".qml" ".js" ".glsl" ".frag" ".vert" ".json" ".svg" ];
     }} $out
     chmod -R u+w $out
-    for f in $out/*.frag; do
+    for f in $out/*.frag $out/*.vert; do
       qsb --qt6 -o "$f.qsb" "$f"
     done
   '';
