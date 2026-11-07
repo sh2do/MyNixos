@@ -77,6 +77,13 @@ Scope {
             if (expanded[g.app])
                 open[g.app] = true;
         }
+        // Forget the stamps of notifications that are gone.
+        const live = {};
+        for (const n of notes)
+            live[n.id] = true;
+        for (const id of Object.keys(stamps))
+            if (!live[id])
+                delete stamps[id];
         now = t;
         shownAt = seen;
         expanded = open;
@@ -232,7 +239,8 @@ Scope {
 
                                 IconImage {
                                     id: appIcon
-                                    visible: slot.appIconUrl.length > 0
+                                    // A path that fails to load falls back to the glyph.
+                                    visible: slot.appIconUrl.length > 0 && status !== Image.Error
                                     source: slot.appIconUrl
                                     implicitSize: 16
                                 }
@@ -317,9 +325,10 @@ Scope {
                                     }
 
                                     IconImage {
+                                        id: avatarIcon
                                         anchors.fill: parent
-                                        visible: !(slot.latest?.image) && slot.appIconUrl.length > 0
-                                        source: visible ? slot.appIconUrl : ""
+                                        visible: !(slot.latest?.image) && slot.appIconUrl.length > 0 && status !== Image.Error
+                                        source: slot.appIconUrl
                                         implicitSize: 36
                                     }
 
@@ -327,7 +336,7 @@ Scope {
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: 18
-                                        visible: slot.avatar.length === 0
+                                        visible: slot.avatar.length === 0 || (!(slot.latest?.image) && avatarIcon.status === Image.Error)
                                         color: slot.critical ? Qt.alpha(Theme.error, 0.15) : Theme.primaryContainer
 
                                         Text {
@@ -404,8 +413,15 @@ Scope {
                                             anchors.fill: parent
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
-                                            // Dismisses the message unless it is resident.
-                                            onClicked: button.modelData.invoke()
+                                            // Invoking dismisses only the latest message, so
+                                            // clear the whole card as a click does, unless resident.
+                                            onClicked: {
+                                                const g = slot.group, resident = slot.latest?.resident ?? false;
+                                                button.modelData.invoke();
+                                                if (g && !resident)
+                                                    for (const n of root.members(g.app))
+                                                        n.dismiss();
+                                            }
                                         }
                                     }
                                 }

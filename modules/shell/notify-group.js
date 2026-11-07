@@ -9,7 +9,7 @@ var MAX_STACK = 2;
 
 // list: [{id, app, icon, summary, body, time, urgency, actions}], in the
 // server's order (oldest first). Returns at most MAX_GROUPS groups, newest
-// first: {app, icon, count, latest, stack, critical}. `stack` holds up to
+// first (critical ones are always kept): {app, icon, count, latest, stack, critical}. `stack` holds up to
 // MAX_STACK older notifications, newest first; `critical` is true when any
 // notification in the group is critical.
 function group(list) {
@@ -40,7 +40,17 @@ function group(list) {
     for (var j = 0; j < groups.length; j++)
         if (!groups[j].icon)
             groups[j].icon = GENERIC_ICON;
-    return groups.slice(0, MAX_GROUPS);
+    if (groups.length <= MAX_GROUPS)
+        return groups;
+    // Over the cap: critical groups are pinned first, the rest fill what is
+    // left, and the result stays newest first.
+    var keep = [];
+    var room = MAX_GROUPS;
+    for (var c = 0; c < groups.length && room > 0; c++)
+        if (groups[c].critical) { keep.push(groups[c]); room--; }
+    for (var o = 0; o < groups.length && room > 0; o++)
+        if (!groups[o].critical) { keep.push(groups[o]); room--; }
+    return groups.filter(function (g) { return keep.indexOf(g) >= 0; });
 }
 
 // A short age label: "now" under a minute, then "2m", "1h", "3d".

@@ -71,6 +71,15 @@ const tests = {
     assert.strictEqual(mail.critical, false);
   },
 
+  test_critical_group_always_visible() {
+    const list = [note("old", 100, { urgency: "critical" })]
+      .concat(["a", "b", "c", "d", "e"].map((app, i) => note(app, 1000 + i)));
+    const out = G.group(list);
+    assert.strictEqual(out.length, 4);
+    assert.ok(out.some(g => g.app === "old"), "the old critical card is pinned");
+    assert.deepStrictEqual(Array.from(out, g => g.app), ["e", "d", "c", "old"], "still newest first");
+  },
+
   test_empty_and_bad_input() {
     assert.deepStrictEqual(Array.from(G.group([])), []);
     assert.deepStrictEqual(Array.from(G.group(null)), []);
