@@ -38,7 +38,28 @@ test_leftovers_are_gone() {
   [ ! -e "$FLAKE/dotfiles/ghostty/themes/dankcolors" ]
 }
 
-for t in test_polkit_agent_runs_in_every_graphical_session test_look_is_declared test_leftovers_are_gone; do
+# Umbriel publishes `environment` to the systemd user manager, which outlives the
+# session: anything set there leaks into a niri login that follows.
+test_umbriel_starship_only_on_its_own_terminals() {
+  local env bind
+  env=$(hm_eval programs.umbriel.settings --apply 's: (s.environment or {}).STARSHIP_CONFIG or null')
+  assert_eq "$env" 'null'
+  bind=$(hm_eval programs.umbriel.settings.keybinds --apply 'b: builtins.toJSON b."Mod+T"')
+  assert_contains "$bind" "STARSHIP_CONFIG="
+  assert_contains "$(cat "$FLAKE/modules/umbriel/shell/Launcher.qml")" "STARSHIP_CONFIG="
+}
+
+test_umbriel_keeps_clipboard_history() {
+  assert_contains "$(hm_eval programs.umbriel.settings.general.autostart)" "wl-paste --watch cliphist store"
+}
+
+# Like the niri bar, the running Umbriel shell watches its old store path.
+test_umbriel_shell_restarts_on_switch() {
+  assert_contains "$(hm_eval home.activation.restartUmbrielShell.data)" "qs kill -c umbriel"
+}
+
+for t in test_polkit_agent_runs_in_every_graphical_session test_look_is_declared test_leftovers_are_gone \
+  test_umbriel_starship_only_on_its_own_terminals test_umbriel_keeps_clipboard_history test_umbriel_shell_restarts_on_switch; do
   run_test "$t"
 done
 finish

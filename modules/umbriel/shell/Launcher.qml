@@ -93,9 +93,10 @@ Item {
         if (!entry)
             return;
         if (entry.runInTerminal) {
-            const cfg = (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/umbriel-term/foot.ini";
+            const dir = (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/umbriel-term";
+            const cfg = dir + "/foot.ini";
             Quickshell.execDetached({
-                command: ["foot", "--config", cfg, "-e"].concat(Array.from(entry.command)),
+                command: ["env", "STARSHIP_CONFIG=" + dir + "/starship.toml", "foot", "--config", cfg, "-e"].concat(Array.from(entry.command)),
                 workingDirectory: entry.workingDirectory
             });
         } else {

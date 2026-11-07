@@ -32,7 +32,7 @@ workspaces // {
   "Mod+Ctrl+W" = once "spawn qs -c umbriel ipc call picker toggle";
 
   # Programs
-  "Mod+T" = once "spawn foot --config ${term}/foot.ini";
+  "Mod+T" = once "spawn env STARSHIP_CONFIG=${term}/starship.toml foot --config ${term}/foot.ini";
   "Mod+D" = once "spawn firefox";
   "Super+Alt+L" = once "spawn rice-lock";
   "Super+S" = once "spawn steam";

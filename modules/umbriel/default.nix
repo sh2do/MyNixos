@@ -58,13 +58,37 @@ in
   xdg.configFile."quickshell/umbriel".source = shell;
 
   # Slate terminal stack. foot, starship and cava are only pointed at these
-  # inside Umbriel (the bind and STARSHIP_CONFIG); kew has no path switch, so
-  # its theme sits in its own themes dir and is picked inside kew.
+  # inside Umbriel: STARSHIP_CONFIG is set on Umbriel's own foot launches (the
+  # Mod+T bind and the launcher), never in Umbriel's `environment`, which goes to
+  # the systemd user manager and would leak into a niri login after it. kew has
+  # no path switch, so its theme sits in its own themes dir and is picked inside
+  # kew.
   xdg.configFile."umbriel-term/foot.ini".source = ./foot-umbriel.ini;
   xdg.configFile."umbriel-term/starship.toml".source = ./starship-umbriel.toml;
   xdg.configFile."umbriel-term/kew.conf".source = ./kew.conf;
   xdg.configFile."umbriel-term/cava.conf".source = ./cava.conf;
   xdg.configFile."kew/themes/umbriel.theme".source = ./kew.conf;
+
+  # A running shell keeps watching the old store path, so a switch never reaches
+  # it (as with the niri bar, modules/shell/default.nix). Restart it inside the
+  # live Umbriel session when its files changed: the socket is
+  # umbriel-$WAYLAND_DISPLAY.sock, and stale ones (left by nested test
+  # sessions) don't answer.
+  home.activation.restartUmbrielShell = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    old=$(readlink -f "''${oldGenPath:-/nonexistent}/home-files/.config/quickshell/umbriel" || true)
+    new=$(readlink -f "$newGenPath/home-files/.config/quickshell/umbriel")
+    export XDG_RUNTIME_DIR=/run/user/$(id -u)
+    if [ "$old" != "$new" ]; then
+      for sock in "$XDG_RUNTIME_DIR"/umbriel-*.sock; do
+        [ -S "$sock" ] || continue
+        if UMBRIEL_SOCKET="$sock" ${config.programs.umbriel.package}/bin/umbriel msg spawn true >/dev/null 2>&1; then
+          run ${pkgs.quickshell}/bin/qs kill -c umbriel >/dev/null 2>&1 || true
+          run env UMBRIEL_SOCKET="$sock" ${config.programs.umbriel.package}/bin/umbriel msg spawn qs -c umbriel
+          break
+        fi
+      done
+    fi
+  '';
 
   # The effect shaders, next to config.toml so its relative paths resolve.
   xdg.configFile."umbriel/effects".source = ./effects;
@@ -72,8 +96,9 @@ in
   programs.umbriel = {
     enable = true;
     settings = {
-      general.autostart = [ "qs -c umbriel" ];
-      environment.STARSHIP_CONFIG = "${term}/starship.toml";
+      # cliphist: niri starts the same watcher, so the clipboard menu has history
+      # in both sessions.
+      general.autostart = [ "qs -c umbriel" "wl-paste --watch cliphist store" ];
       # Umbriel's defaults are blue; these are the slate palette (Palette.qml).
       colors = {
         background = "#14161bff"; # raised
