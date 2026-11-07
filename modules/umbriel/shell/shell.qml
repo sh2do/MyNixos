@@ -18,13 +18,20 @@ ShellRoot {
         screen: root.primary
     }
 
-    Python {
+    Status {
+        id: status
         screen: root.primary
     }
 
     Island {
         id: island
         screen: root.primary
+    }
+
+    Raven {
+        screen: root.primary
+        island: island
+        status: status
     }
 
     Picker {

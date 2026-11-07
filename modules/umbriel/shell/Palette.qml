@@ -28,15 +28,15 @@ Singleton {
     // The hanging viper's venom: the accent, always with a glow.
     readonly property color venom: bright
 
-    // The python
-    readonly property color pyBody: "#5a6070"
-    readonly property color pyNet: "#1b1e24"
-    readonly property color pySaddle: "#717a8a"
-    readonly property color pyFleck: "#c7ccd4"
-    readonly property color pyBelly: "#8b94a3"
-    readonly property color pyOutline: "#0d0f12"
-    readonly property color pyEye: "#c7ccd4"
-    readonly property color pyShedEye: "#9fb4d6"
+    // The raven: near-black, a slate edge on its feathers, a pale catch-light
+    // in its eye and a paler nictitating membrane. Its hoard's trinkets are
+    // the accent, always with a glow.
+    readonly property color ravenBody: "#121419"
+    readonly property color ravenEdge: "#3a404b"
+    readonly property color ravenBeak: "#1b1e24"
+    readonly property color ravenEye: "#c7ccd4"
+    readonly property color ravenMembrane: "#8b94a3"
+    readonly property color trinket: bright
 
     readonly property string font: "JetBrainsMono Nerd Font"
 }

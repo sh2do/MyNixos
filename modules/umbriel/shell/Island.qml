@@ -35,6 +35,14 @@ PanelWindow {
     }
     readonly property point anchorBottom: Qt.point((screen?.width ?? 0) / 2, margins.top + pill.y + pill.height)
 
+    // For the raven (Raven.qml): a notice showing for the first time, and
+    // one gone for good, from the pill's underside centre (screen
+    // coordinates).
+    signal noticeShown()
+    signal noticeGone(point at)
+    // Ids of the notices shown and not yet gone.
+    property var shownNotices: []
+
     // The queue's state; `view` is what shows.
     property var queue: Q.initial()
     readonly property string view: queue.view
@@ -79,6 +87,19 @@ PanelWindow {
         // A notice that has had its turn leaves the server too.
         if (prev.view === "notify" && !prev.item.life.closed && !Q.holds(queue, prev.item.id))
             prev.item.notification.expire();
+        // The raven: a notice that has left for good (not one replaced in
+        // place, or waiting behind a volume change) drops a trinket; one
+        // showing for the first time makes it caw.
+        const gone = shownNotices.filter(id => !Q.holds(queue, id));
+        if (gone.length > 0) {
+            shownNotices = shownNotices.filter(id => Q.holds(queue, id));
+            for (let i = 0; i < gone.length; i++)
+                noticeGone(anchorBottom);
+        }
+        if (queue.view === "notify" && shownNotices.indexOf(queue.item.id) < 0) {
+            shownNotices = shownNotices.concat([queue.item.id]);
+            noticeShown();
+        }
         if (queue.until === Infinity) {
             expiry.stop();
         } else {
