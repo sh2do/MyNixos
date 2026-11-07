@@ -118,8 +118,8 @@ in
   };
 
   environment.shellAliases = {
-    ls = "eza --icons";
-    ll = "eza -l --icons --git";
+    ls = "eza --icons=auto";
+    ll = "eza -l --icons=auto --git";
     cat = "bat";
   };
 
