@@ -490,14 +490,16 @@ Item {
         x: root.homeX + root.hopX - footX
         y: root.perchY - perchY - root.hopY
         size: 44
-        // A very dark surface, its feathers edged in the outline; the eye's
-        // catch-light the text colour; the sheen the wallpaper's accents.
+        // A very dark surface, its feathers edged in a dark slate of the
+        // outline (as dark as Umbriel's, so the bird reads black, not grey);
+        // the eye's catch-light the text colour; the sheen the wallpaper's
+        // accents, deepened so a pale palette doesn't grey the wing.
         bodyColor: Qt.darker(Theme.surface, 1.4)
-        edgeColor: Theme.outline
+        edgeColor: Qt.darker(Theme.outline, 2.6)
         beakColor: Theme.surfaceContainer
         eyeColor: Theme.text
         membraneColor: Theme.textMuted
-        sheenColors: [Theme.primary, Qt.tint(Theme.primary, Qt.alpha(Theme.tertiary, 0.5)), Theme.tertiary]
+        sheenColors: [Qt.darker(Theme.primary, 1.8), Qt.darker(Qt.tint(Theme.primary, Qt.alpha(Theme.tertiary, 0.5)), 1.8), Qt.darker(Theme.tertiary, 1.8)]
         breath: root.breath
         puff: root.puff
         lean: root.lean

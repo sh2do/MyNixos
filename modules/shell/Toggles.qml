@@ -9,7 +9,7 @@ import Quickshell.Services.UPower
 
 Row {
     id: root
-    spacing: 6
+    spacing: 2
 
     // A value on one of the chips changed (the mascot reacts to it).
     signal poked(Item chip)

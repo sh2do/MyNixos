@@ -50,7 +50,7 @@ Singleton {
     readonly property string wallpaper: typeof colours.wallpaper === "string" ? colours.wallpaper : ""
 
     readonly property int radius: 14
-    readonly property int barHeight: 38
+    readonly property int barHeight: 42
     readonly property int fontSize: 13
     readonly property string fontFamily: "JetBrainsMono Nerd Font"
 

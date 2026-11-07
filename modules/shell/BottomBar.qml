@@ -1,7 +1,11 @@
-// The auto-hide bar. Hidden, it leaves a 3 px strip at the bottom edge that
-// listens for the pointer; touching it slides the bar up. The bar slides back
-// down shortly after the pointer leaves. Top layer: fullscreen windows hide it.
+// The auto-hide bar, a slab of pond glass: a lit top rim, a faint depth
+// gradient and reflection band, the widgets on three faint stones, and koi
+// under the glass. Hidden, it leaves a 120 x 2 px water line at the bottom
+// edge; touching the edge slides the bar up. The bar slides back down shortly
+// after the pointer leaves. Top layer: fullscreen windows hide it.
+// Every decoration is static: drawn once, it only moves with the bar.
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 
@@ -47,18 +51,70 @@ PanelWindow {
         }
     }
 
+    // Hidden: a faint glowing water line marks where the bar is.
+    Rectangle {
+        id: waterLine
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        width: 120
+        height: 2
+        radius: 1
+        color: Qt.alpha(Theme.primary, 0.4)
+        opacity: root.shown ? 0 : 1
+        visible: opacity > 0
+
+        Behavior on opacity {
+            NumberAnimation { duration: 180 }
+        }
+
+        RectangularShadow {
+            z: -1
+            anchors.fill: parent
+            spread: 2
+            blur: 8
+            radius: 4
+            color: Qt.alpha(Theme.primary, 0.18)
+        }
+    }
+
+    // The bar's drop shadow: 8 px down, a little inset, soft.
+    RectangularShadow {
+        x: bar.x
+        y: bar.y
+        width: bar.width
+        height: bar.height
+        offset.y: 8
+        spread: -4
+        blur: 8
+        radius: bar.radius
+        color: Qt.alpha("black", 0.45)
+        opacity: bar.opacity
+        visible: opacity > 0
+    }
+
+    // A widget group's faint stone.
+    component Stone: Rectangle {
+        implicitHeight: 28
+        radius: 12
+        color: Qt.alpha(Theme.text, 0.05)
+        border.width: 1
+        border.color: Qt.alpha(Theme.text, 0.07)
+        anchors.verticalCenter: parent.verticalCenter
+    }
+
     Rectangle {
         id: bar
 
         anchors.horizontalCenter: parent.horizontalCenter
         y: root.shown ? parent.height - height - root.restGap : parent.height + 4
-        width: content.implicitWidth + 26
+        width: content.implicitWidth + 20
         height: Theme.barHeight
-        radius: Theme.radius
-        color: Qt.alpha(Theme.surface, 0.82)
+        radius: 16
+        color: Qt.alpha(Theme.surface, 0.78)
         border.width: 1
-        border.color: Qt.alpha(Theme.primary, 0.35)
+        border.color: Qt.alpha(Theme.primary, 0.22)
         opacity: root.shown ? 1 : 0
+        visible: opacity > 0
 
         Behavior on y {
             NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
@@ -72,6 +128,18 @@ PanelWindow {
             onHoveredChanged: hovered ? hideTimer.stop() : hideTimer.restart()
         }
 
+        // Depth: lit from above, darker toward the bottom.
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: bar.radius - 1
+            gradient: Gradient {
+                GradientStop { position: 0; color: Qt.alpha(Theme.primary, 0.07) }
+                GradientStop { position: 0.5; color: Qt.alpha(Theme.surface, 0) }
+                GradientStop { position: 1; color: Qt.alpha("black", 0.3) }
+            }
+        }
+
         Koi {
             id: pond
             visible: !root.raven
@@ -80,6 +148,32 @@ PanelWindow {
             running: root.shown && visible
             hoverX: barHover.hovered ? barHover.point.position.x - 1 : NaN
             hoverY: barHover.hovered ? barHover.point.position.y - 1 : NaN
+        }
+
+        // The glass over the koi: a reflection band under the rim, and the
+        // rim's highlight, brightest in the middle.
+        Rectangle {
+            x: 12
+            y: 2
+            width: parent.width - 24
+            height: 12
+            radius: 6
+            gradient: Gradient {
+                GradientStop { position: 0; color: Qt.alpha("white", 0.05) }
+                GradientStop { position: 1; color: Qt.alpha("white", 0) }
+            }
+        }
+        Rectangle {
+            x: 16
+            y: 1
+            width: parent.width - 32
+            height: 1.5
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: Qt.alpha("white", 0) }
+                GradientStop { position: 0.5; color: Qt.alpha("white", 0.22) }
+                GradientStop { position: 1; color: Qt.alpha("white", 0) }
+            }
         }
 
         // A click on open water (not on a widget) feeds the koi.
@@ -95,39 +189,60 @@ PanelWindow {
 
         Row {
             id: content
-            x: 14
+            x: 10
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 10
+            spacing: 22
 
-            Workspaces {
-                id: workspaces
-                output: root.modelData.name
-                anchors.verticalCenter: parent.verticalCenter
+            Stone {
+                width: workspaces.implicitWidth + 12
+
+                Workspaces {
+                    id: workspaces
+                    output: root.modelData.name
+                    anchors.centerIn: parent
+                }
             }
 
-            Item { width: 8; height: 1 }
+            Stone {
+                width: toggles.implicitWidth + 8
 
-            Toggles {
-                id: toggles
-                anchors.verticalCenter: parent.verticalCenter
+                Toggles {
+                    id: toggles
+                    anchors.centerIn: parent
+                }
             }
 
-            Item { width: 8; height: 1 }
-
-            Clock {
-                id: clock
+            Row {
                 anchors.verticalCenter: parent.verticalCenter
-            }
+                spacing: 8
 
-            Chip {
-                icon: "⏻"
-                anchors.verticalCenter: parent.verticalCenter
-                onClicked: Quickshell.execDetached(["rice-menu", "power"])
+                Stone {
+                    width: clock.implicitWidth + 4
+
+                    Clock {
+                        id: clock
+                        anchors.centerIn: parent
+                    }
+                }
+
+                Stone {
+                    width: 28
+                    radius: 14
+
+                    Chip {
+                        anchors.centerIn: parent
+                        width: 24
+                        radius: 12
+                        icon: "⏻"
+                        iconColor: Theme.tertiary
+                        onClicked: Quickshell.execDetached(["rice-menu", "power"])
+                    }
+                }
             }
         }
     }
 
-    // The raven, its feet on the pill's top edge near the right end; it goes
+    // The raven, its feet on the glass's top rim near the right end; it goes
     // with the pill as it slides and fades.
     Loader {
         id: perched
@@ -149,8 +264,17 @@ PanelWindow {
 
     // The mascot reacts to the bar: a workspace you switch to, or a volume or
     // brightness change, makes the raven turn and caw at it, or the koi
-    // startle. x is in pill coordinates.
+    // startle. x is in pill coordinates. Not while the values first arrive at
+    // startup (the workspaces, the sink and the brightness all "change" then).
+    property bool settled: false
+    Timer {
+        running: true
+        interval: 2000
+        onTriggered: root.settled = true
+    }
     function notice(x) {
+        if (!settled)
+            return;
         if (perched.item)
             perched.item.notice(bar.x + x);
         else
@@ -158,14 +282,14 @@ PanelWindow {
     }
     Connections {
         target: workspaces
-        function onActiveIdxChanged() {
-            root.notice(content.x + workspaces.x + workspaces.activeCenter());
+        function onSwitched() {
+            root.notice(workspaces.mapToItem(bar, workspaces.activeCenter(), 0).x);
         }
     }
     Connections {
         target: toggles
         function onPoked(chip) {
-            root.notice(content.x + toggles.x + chip.x + chip.width / 2);
+            root.notice(chip.mapToItem(bar, chip.width / 2, 0).x);
         }
     }
 
