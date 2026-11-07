@@ -1,7 +1,7 @@
 // The python's skin, drawn once as a straight strip for the Serpent bodies
 // to bend: u along the body (head end at the left), v across it (the upper
-// flank at the top, the belly band at the bottom). The strip is `stripWidth`
-// px long and twice the body's width tall; the art inside is laid out in body
+// flank at the top, the belly band at the bottom). The strip is twice the
+// body's length long and twice its width tall; the art inside is laid out in body
 // pixels, `bodyLength` long, and stretched to fit, so a scale is the same size
 // on screen wherever the strip lands.
 //
@@ -19,7 +19,8 @@ Item {
 
     property real bodyWidth: 22
     property real bodyLength: 900
-    readonly property int stripWidth: 1400
+    // Two strip pixels per body pixel along u, as across it.
+    readonly property int stripWidth: Math.ceil(2 * bodyLength)
 
     width: stripWidth
     height: 2 * bodyWidth
@@ -55,9 +56,9 @@ Item {
             net += `M ${f(a)} ${f(ya)} L ${f(a + lean)} ${f(belly)} `;
             const sx = m, sy = (bot + belly) / 2 + 0.6;
             spots += `M ${f(sx - 4.2)} ${f(sy)} Q ${f(sx)} ${f(sy - 2.6)} ${f(sx + 4.2)} ${f(sy)} Q ${f(sx)} ${f(sy + 2)} ${f(sx - 4.2)} ${f(sy)} Z `;
-            flecks += dot(sx + (rnd() - 0.5), sy - 0.2, 0.6);
+            flecks += dot(sx + (rnd() - 0.5), sy - 0.2, 0.75);
             // Flecks where the net meets, and a few scattered on the saddles.
-            flecks += dot(a + (rnd() - 0.5) * 1.2, ya - 1.7, 0.5);
+            flecks += dot(a + (rnd() - 0.5) * 1.2, ya - 1.7, 0.65);
             if (rnd() < 0.6)
                 flecks += dot(m + (rnd() - 0.5) * 6, cy + (rnd() - 0.5) * 3, 0.35 + rnd() * 0.25);
         }
@@ -130,8 +131,8 @@ Item {
             }
             ShapePath {
                 fillColor: U.Palette.pySaddle
-                strokeColor: Qt.alpha(U.Palette.pyFleck, 0.5)
-                strokeWidth: 0.5
+                strokeColor: Qt.alpha(U.Palette.pyFleck, 0.75)
+                strokeWidth: 0.7
                 joinStyle: ShapePath.RoundJoin
                 PathSvg { path: skin.geo.saddles }
             }

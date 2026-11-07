@@ -23,15 +23,15 @@ const sizes = [[40, 15], [62, 15], [72, 19]];
 const cases = [];
 for (const win of windows)
   for (const [w, h] of sizes)
-    cases.push(statusBox(win, w, h));
+    cases.push([win, statusBox(win, w, h)]);
 
 const coilChains = c => c.back.concat(c.front);
 const allChains = c => coilChains(c).concat([c.neck, c.tail]);
 
 const tests = {
-  test_python_pose_wraps_status_box() {
-    for (const box of cases) {
-      const c = Pose.coils(box, 0, 0);
+  test_python_pose_keeps_clear_of_status_box() {
+    for (const [win, box] of cases) {
+      const c = Pose.coils(box, 0, 0, win);
       assert.strictEqual(c.back.length, 3);
       assert.strictEqual(c.front.length, 3);
       const g = BW / 2;
@@ -40,33 +40,51 @@ const tests = {
         for (const p of chain) {
           const inside = p.x > box.x - g && p.x < box.x + box.w + g && p.y > box.y - g && p.y < box.y + box.h + g;
           assert.ok(!inside, `point ${p.x.toFixed(1)},${p.y.toFixed(1)} inside box ${JSON.stringify(box)}`);
+          // Nothing cropped by the screen's edges.
+          assert.ok(p.x - g >= 0 && p.x + g <= win.w && p.y - g >= 0 && p.y + g <= win.h,
+            `point ${p.x.toFixed(1)},${p.y.toFixed(1)} leaves the ${win.w}x${win.h} window`);
         }
       }
+      // The coils sit left of the row, over it.
       for (const r of c.rings)
-        assert.ok(r.cx >= box.x && r.cx <= box.x + box.w, `coil centre ${r.cx} outside ${box.x}..${box.x + box.w}`);
+        assert.ok(r.cx < box.x + box.w / 2, `coil centre ${r.cx} not left of the row`);
+    }
+  },
+
+  test_coils_are_a_cone_of_flat_ellipses() {
+    const c = Pose.coils(cases[1][1], 0, 0, cases[1][0]);
+    for (const r of c.rings)
+      assert.ok(r.rx / r.ry >= 3 && r.rx / r.ry <= 3.7, `aspect ${(r.rx / r.ry).toFixed(2)}`);
+    for (let k = 1; k < 3; k++) {
+      assert.ok(c.rings[k].rx < c.rings[k - 1].rx, "each coil narrower than the one below");
+      assert.ok(c.rings[k].cy < c.rings[k - 1].cy, "each coil above the one below");
     }
   },
 
   test_back_and_front_meet() {
-    for (const box of cases) {
-      const c = Pose.coils(box, 0, 0);
-      for (let k = 0; k < 3; k++) {
-        const b = c.back[k][c.back[k].length - 1], f = c.front[k][0];
-        assert.ok(Math.hypot(b.x - f.x, b.y - f.y) <= 0.5, `coil ${k}: back ends ${b.x},${b.y}, front starts ${f.x},${f.y}`);
-      }
-      // And the body is one piece: tail into the bottom back, each front into
-      // the next back up, the top front into the neck.
-      const seams = [[c.tail, c.back[0]], [c.front[0], c.back[1]], [c.front[1], c.back[2]], [c.front[2], c.neck]];
-      for (const [a, b] of seams) {
-        const p = a[a.length - 1], q = b[0];
-        assert.ok(Math.hypot(p.x - q.x, p.y - q.y) <= 0.5, `seam ${p.x},${p.y} -> ${q.x},${q.y}`);
+    for (const [win, box] of cases) {
+      for (const breath of [0, 1, -1]) {
+        const c = Pose.coils(box, 0, breath, win);
+        // The same coil's halves scale together, so they meet exactly.
+        for (let k = 0; k < 3; k++) {
+          const b = c.back[k][c.back[k].length - 1], f = c.front[k][0];
+          assert.ok(Math.hypot(b.x - f.x, b.y - f.y) <= 0.5, `coil ${k}: back ends ${b.x},${b.y}, front starts ${f.x},${f.y}`);
+        }
+        // The body is one piece: tail into the bottom back, each front into
+        // the next back up, the top front into the neck. Across coils the
+        // breath moves the ends apart only slightly.
+        const seams = [[c.tail, c.back[0]], [c.front[0], c.back[1]], [c.front[1], c.back[2]], [c.front[2], c.neck]];
+        for (const [a, b] of seams) {
+          const p = a[a.length - 1], q = b[0];
+          assert.ok(Math.hypot(p.x - q.x, p.y - q.y) <= (breath ? 0.6 : 0.5), `seam ${p.x},${p.y} -> ${q.x},${q.y} at breath ${breath}`);
+        }
       }
     }
   },
 
   test_breath_changes_radius_only_slightly() {
-    for (const box of cases) {
-      const a = allChains(Pose.coils(box, 0, 1)), b = allChains(Pose.coils(box, 0, -1));
+    for (const [win, box] of cases) {
+      const a = allChains(Pose.coils(box, 0, 1, win)), b = allChains(Pose.coils(box, 0, -1, win));
       let worst = 0;
       for (let i = 0; i < a.length; i++) {
         assert.strictEqual(a[i].length, b[i].length);
@@ -78,21 +96,23 @@ const tests = {
     }
   },
 
-  test_head_rests_on_top_coil() {
-    for (const box of cases) {
-      const c = Pose.coils(box, 0, 0);
-      const top = c.back[2].concat(c.front[2]).reduce((m, p) => p.y < m.y ? p : m);
+  test_head_rests_level_with_top_coil() {
+    for (const [win, box] of cases) {
+      const c = Pose.coils(box, 0, 0, win);
+      const top = c.back[2].concat(c.front[2]);
+      const crest = top.reduce((m, p) => p.y < m.y ? p : m), left = top.reduce((m, p) => p.x < m.x ? p : m);
       const h = Pose.headPose(Pose.neckEnd(c.neck), 0, 0);
-      const d = Math.hypot(h.x - top.x, h.y - top.y);
-      assert.ok(d <= BW, `head ${h.x.toFixed(1)},${h.y.toFixed(1)} is ${d.toFixed(1)} px from the crest ${top.x.toFixed(1)},${top.y.toFixed(1)}`);
+      assert.ok(Math.abs(h.y - crest.y) <= BW, `head at y ${h.y.toFixed(1)}, crest at ${crest.y.toFixed(1)}`);
+      assert.ok(h.x < left.x, `head ${h.x.toFixed(1)} not left of the top coil (${left.x.toFixed(1)})`);
+      assert.ok(left.x - h.x <= BW * 1.5, `head ${(left.x - h.x).toFixed(1)} px from the top coil`);
       const deg = ((h.angle % 360) + 360) % 360;
       assert.ok(deg >= 150 && deg <= 210, `head faces ${deg.toFixed(1)}°`);
     }
   },
 
   test_neck_bends_toward_lift_and_look_from_its_root() {
-    const box = cases[1];
-    const rest = Pose.coils(box, 0, 0).neck;
+    const [win, box] = cases[1];
+    const rest = Pose.coils(box, 0, 0, win).neck;
     const up = Pose.neckFor(rest, 0, 1, null, 0);
     // The root stays on the coil; the head end rises.
     assert.ok(Math.hypot(up[0].x - rest[0].x, up[0].y - rest[0].y) < 1e-9);
@@ -103,6 +123,42 @@ const tests = {
     const e = hit[hit.length - 1];
     assert.ok(Math.hypot(e.x - t.x, e.y - t.y) < 1, `strike ends ${e.x},${e.y}`);
     assert.strictEqual(Pose.neckFor(rest, 0, 0, null, 0).length, rest.length);
+  },
+
+  test_width_tapers_only_along_the_tail() {
+    const c = Pose.bodyChains(Pose.coils(cases[1][1], 0, 0, cases[1][0]));
+    const tail = c[c.length - 1];
+    assert.strictEqual(tail.name, "tail");
+    // Full width all round the coils, then down to a blunt tip.
+    // (past the neck's thickening, over the first 8% of the body).
+    for (const ch of c.slice(1, -1))
+      for (let k = 0; k <= 10; k++) {
+        const u = ch.u0 + (ch.u1 - ch.u0) * k / 10;
+        if (u >= 0.08)
+          assert.ok(Pose.widthAt(u, tail.u0, []) > 0.98, `${ch.name} at ${u.toFixed(3)}`);
+      }
+    const tip = Pose.widthAt(1, tail.u0, []);
+    assert.ok(tip > 0.1 && tip < 0.2, `tip ${tip}`);
+    assert.ok(Pose.widthAt(0, tail.u0, []) < 0.9, "the neck is slimmer");
+    assert.ok(Pose.widthAt(0.5, tail.u0, [{ u: 0.5, size: 0.4 }]) > 1.3, "a bulge swells");
+  },
+
+  test_clock_keeps_speed_at_any_rate() {
+    // One second of ticks advances one second, at 10, 30 or 144 Hz...
+    for (const hz of [10, 15, 30, 144]) {
+      let t = 0;
+      for (let i = 0; i < hz; i++)
+        t += Pose.clockStep(1 / hz, hz);
+      assert.ok(Math.abs(t - 1) < 1e-9, `${hz} Hz advanced ${t}`);
+    }
+    // ...so ten seconds at 10 Hz hold two 5 s breaths.
+    let t = 0;
+    for (let i = 0; i < 100; i++)
+      t += Pose.clockStep(0.1, 10);
+    assert.ok(Math.abs(t / 5 - 2) < 1e-9);
+    // A stall is clamped; time never runs backwards.
+    assert.strictEqual(Pose.clockStep(3, 10), 0.2);
+    assert.strictEqual(Pose.clockStep(-1, 144), 0);
   },
 };
 

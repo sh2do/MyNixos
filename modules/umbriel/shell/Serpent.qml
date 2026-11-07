@@ -40,6 +40,9 @@ Item {
     property real ripplePhase: 0
     property real rippleAmp: 0
     property point shadowOffset: Qt.point(3, 5)
+    // Off for a body that continues into another: its shadow would fall
+    // across the seam.
+    property bool castShadow: true
 
     readonly property var head: priv.head
     readonly property var tail: priv.tail
@@ -170,7 +173,7 @@ Item {
 
     Pass {
         id: shadow
-        visible: priv.valid
+        visible: priv.valid && serpent.castShadow
         x: serpent.shadowOffset.x
         y: serpent.shadowOffset.y
         width: serpent.width

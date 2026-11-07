@@ -1,19 +1,18 @@
-// Bottom-right corner: a reticulated python coiled three times round the
-// status row (StatusRow.qml, hosted here so it sits between the coils' far
-// and near halves), its head resting on the top coil, watching the screen.
+// Bottom-right corner: a reticulated python in three flat coils piled over
+// the status row (StatusRow.qml, hosted here between the coils' far and near
+// halves), its head raised beside the top coil, watching the screen.
 //
 // The pose (python-pose.js) is computed once per size: eight Serpent bodies,
 // all wearing their own stretch of one skin strip (PythonSkin.qml), drawn far
 // halves first, then the row, then the near halves, the neck and the head
-// (PythonHead.qml). Near halves are bent with negative widths, which mirrors
-// them across their spine, so every coil shows its upper flank (the specular
-// line and the sheen) on top and its belly underneath.
+// (PythonHead.qml). The skin runs on unbroken from head to tail; the bodies'
+// shader lights whichever flank is on top on screen.
 //
 // Always alive, on one clock, which stops while hidden, locked or with the
 // screen off. It runs at the display's rate only while something moves fast,
 // and slower otherwise (see `idleHz`); UMBRIEL_SERPENT_FPS caps it.
-// - breath: each coil swells 3% about its own centre every 5 s, as a
-//   transform, so nothing is rebuilt for it;
+// - breath: each coil swells about 2 px about its own centre every 5 s, as
+//   a transform, so nothing is rebuilt for it;
 // - muscle ripples along the body (shader uniforms), with a stronger wave
 //   every 6-10 s;
 // - a tongue flick every 8-15 s, a drift of the gaze every 10-20 s.
@@ -27,6 +26,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import QtQuick.Shapes
 import "python-pose.js" as Pose
 import "serpent-spine.js" as Spine
 import "wall-cover.js" as Cover
@@ -44,7 +44,7 @@ PanelWindow {
         const h = root.headAt;
         if (!h)
             return;
-        const rest = Pose.headPose(neck.head, 0, 0).angle;
+        const rest = Pose.headPose(Pose.neckEnd(root.pose.neck), 0, 0).angle;
         const lift = Math.min(Math.max((h.y - p.y) / 300, 0), 1) * 0.7;
         let diff = Math.atan2(p.y - h.y, p.x - h.x) * 180 / Math.PI - rest - 12 * lift;
         diff = ((diff + 540) % 360) - 180;
@@ -96,6 +96,12 @@ PanelWindow {
             x: r.cx - r.rx - 12; y: r.cy - r.ry - 12
             width: 2 * (r.rx + 12); height: 2 * (r.ry + 12)
         }
+        // The tail's curl.
+        Region {
+            readonly property var t: root.pose.tail
+            x: t[0].x - 14; y: t[t.length - 1].y
+            width: t[t.length - 1].x - t[0].x + 28; height: t[1].y - t[t.length - 1].y + 14
+        }
         // Where the head rests and lifts.
         Region {
             readonly property var j: root.pose.neck[root.pose.neck.length - 1]
@@ -113,21 +119,23 @@ PanelWindow {
     readonly property real bodyWidth: Pose.BODY_WIDTH
     // The row's glyphs in window coordinates, the width rounded up to 8 px so
     // the battery's digits don't reshape the coils.
-    readonly property var box: {
-        const g = status.glyphs;
-        const w = Math.ceil((g.width + 2) / 8) * 8;
-        return { x: status.x + g.x + g.width + 1 - w, y: status.y + g.y - 1, w: w, h: g.height + 2 };
-    }
-    readonly property var pose: Pose.coils(box, 0, 0)
-    readonly property var chains: Pose.bodyChains(pose).map((c, i) => Object.assign({ order: i, flip: c.name.startsWith("front") }, c))
+    // Kept as plain numbers so the pose is only rebuilt when one changes.
+    readonly property int boxW: Math.ceil((status.glyphs.width + 2) / 8) * 8
+    readonly property int boxH: Math.ceil(status.glyphs.height + 2)
+    readonly property int boxRight: Math.round(status.x + status.glyphs.x + status.glyphs.width + 1)
+    readonly property int boxY: Math.floor(status.y + status.glyphs.y - 1)
+    readonly property var pose: Pose.coils({ x: boxRight - boxW, y: boxY, w: boxW, h: boxH }, 0, 0, { w: implicitWidth, h: implicitHeight })
+    readonly property var chains: Pose.bodyChains(pose)
     readonly property real bodyLength: chains.reduce((a, c) => a + c.len, 0)
     readonly property var neckChain: chains[0]
+    readonly property real tailFrom: chains[chains.length - 1].u0
+    readonly property var neckWidths: widthsFor(neckChain)
 
     // Width scales for a chain, at 24 points, from where it lies on the body.
     function widthsFor(c) {
         const ws = new Array(Spine.SPINE_POINTS), n = ws.length;
         for (let k = 0; k < n; k++)
-            ws[k] = (c.flip ? -1 : 1) * Spine.widthAt(c.u0 + (c.u1 - c.u0) * k / (n - 1), root.bulges);
+            ws[k] = Pose.widthAt(c.u0 + (c.u1 - c.u0) * k / (n - 1), root.tailFrom, root.bulges);
         return ws;
     }
 
@@ -186,8 +194,9 @@ PanelWindow {
         life.turning = true;
     }
 
-    function tick(dt) {
-        const raw = Spine.step(dt), d = raw * (night ? 0.5 : 1);
+    // dt: seconds since the last tick, already clamped by its clock.
+    function tick(raw) {
+        const d = raw * (night ? 0.5 : 1);
         life.raw += raw;
         life.t += d;
         const t = life.t;
@@ -244,20 +253,22 @@ PanelWindow {
     function bendNeck() {
         const s = life.strike;
         const pts = Pose.neckFor(pose.neck, look, lift, s ? s.joint : null, s ? s.k : 0);
-        neck.setSpine(pts.reverse(), widthsFor(neckChain));
+        neck.setSpine(pts.reverse(), neckWidths);
         life.bentLook = look;
         life.bentLift = lift;
         life.neckAcc = 0;
     }
     onPoseChanged: Qt.callLater(bendNeck)
-    onBulgesChanged: bendNeck()
+    onNeckWidthsChanged: bendNeck()
 
     // The clock. Every repaint of this window costs CPU whatever changes
     // in it, so it runs only as fast as the motion needs: the slow idle life
-    // (breath, ripples, the sheen's drift, whose steps stay far below a pixel)
-    // at idleHz, the head's slow turns and the jaw at 30 Hz, and only a
-    // tongue flick or a strike at the display's rate. UMBRIEL_SERPENT_FPS
-    // caps all three.
+    // (breath, ripples and the stronger wave, the sheen's drift: brightness
+    // steps of about a pixel at most) at idleHz, the head's slow turns and the
+    // jaw at 30 Hz, and only a tongue flick or a strike at the display's rate.
+    // (Running the wave at 30 Hz measured about 1.4% more CPU.)
+    // UMBRIEL_SERPENT_FPS caps all three. Each clock clamps its dt only
+    // against stalls (Pose.clockStep), so motion keeps its speed at any rate.
     readonly property int idleHz: 10
     readonly property bool fast: tongue > 0 || life.strike !== null
     readonly property bool slow: life.turning || jawMoving
@@ -274,7 +285,7 @@ PanelWindow {
 
     FrameAnimation {
         running: root.running && root.fast && root.fpsCap <= 0
-        onTriggered: root.tick(frameTime)
+        onTriggered: root.tick(Spine.step(frameTime))
     }
     Timer {
         readonly property int hz: {
@@ -288,7 +299,7 @@ PanelWindow {
         onRunningChanged: last = Date.now()
         onTriggered: {
             const now = Date.now();
-            root.tick((now - last) / 1000);
+            root.tick(Pose.clockStep((now - last) / 1000, hz));
             last = now;
         }
     }
@@ -318,8 +329,10 @@ PanelWindow {
         bodyLength: root.bodyLength
     }
 
-    // One stretch of the body. Coils breathe about their own centre; the tail
-    // rides along with the bottom coil's right end.
+    // One stretch of the body. Each coil's back and front breathe together
+    // about its centre (the neck with the top coil); the tail rides along
+    // with the bottom coil's left end. Only the near halves and the neck
+    // catch the sheen, as on the overview board.
     component Body: Serpent {
         required property var chain
         readonly property var ring: root.pose.rings[chain.ring]
@@ -329,7 +342,9 @@ PanelWindow {
         skinRect: Qt.rect(chain.u0 * skinStrip.stripWidth, 0, (chain.u1 - chain.u0) * skinStrip.stripWidth, skinStrip.height)
         bodyWidth: root.bodyWidth
         time: root.clock
-        sheen: 0.7
+        sheen: chain.near ? 0.4 : 0
+        // One soft shadow lies under the whole pile instead (below).
+        castShadow: false
         dull: root.dull
         // Offset per stretch so the wave runs on unbroken across the seams.
         ripplePhase: root.phase - 40 * chain.order
@@ -342,8 +357,30 @@ PanelWindow {
                 yScale: isTail ? 1 : root.swell
             },
             Translate {
-                x: isTail ? ring.rx * (root.swell - 1) : 0
+                x: isTail ? -ring.rx * (root.swell - 1) : 0
             }
+        ]
+    }
+
+    // The pile's soft shadow on the desktop.
+    Shape {
+        id: pileShadow
+        readonly property var r: root.pose.rings[0]
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            strokeColor: "transparent"
+            fillGradient: RadialGradient {
+                centerX: 0; centerY: 0; centerRadius: 1
+                focalX: 0; focalY: 0
+                GradientStop { position: 0; color: Qt.rgba(0, 0, 0, 0.45) }
+                GradientStop { position: 0.75; color: Qt.rgba(0, 0, 0, 0.25) }
+                GradientStop { position: 1; color: Qt.rgba(0, 0, 0, 0) }
+            }
+            PathSvg { path: "M -1 0 a 1 1 0 1 0 2 0 a 1 1 0 1 0 -2 0" }
+        }
+        transform: [
+            Scale { xScale: pileShadow.r.rx + 18; yScale: pileShadow.r.ry + 16 },
+            Translate { x: pileShadow.r.cx + 4; y: pileShadow.r.cy + 7 }
         ]
     }
 

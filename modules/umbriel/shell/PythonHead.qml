@@ -196,7 +196,7 @@ Item {
                     strokeColor: U.Palette.pyOutline
                     strokeWidth: 1.4
                     joinStyle: ShapePath.RoundJoin
-                    PathSvg { path: "M -1.9 -10.6 C 7.6 -14.3 24.7 -13.3 36.1 -6.9 Q 43.7 -2.8 44.1 0 Q 43.7 2.8 36.1 6.9 C 24.7 13.3 7.6 14.3 -1.9 10.6 Z" }
+                    PathSvg { path: "M -2.5 -9 C 7.6 -14.3 24.7 -13.3 36.1 -6.9 Q 43.7 -2.8 44.1 0 Q 43.7 2.8 36.1 6.9 C 24.7 13.3 7.6 14.3 -2.5 9 Q -5 0 -2.5 -9 Z" }
                 }
                 // A soft pale crown down the middle.
                 ShapePath {
@@ -221,17 +221,17 @@ Item {
                     strokeWidth: 1.1
                     PathSvg { path: "M 0 0 L 37.2 0 M 36 -4.6 L 7.6 -9 M 36 4.6 L 7.6 9" }
                 }
-                // Heat pits, six along each lip.
+                // Heat pits, six along each lip, just inside its edge.
                 ShapePath {
                     fillColor: U.Palette.pyOutline
                     strokeColor: "transparent"
                     PathSvg {
                         path: {
-                            const lip = [[11.4, -12.2], [15.6, -12.4], [19.8, -12], [23.9, -11.2], [28.1, -10], [32.3, -8.4]];
+                            const lip = [[11.4, -10.6], [15.6, -10.8], [19.8, -10.4], [23.9, -9.6], [28.1, -8.4], [32.3, -6.9]];
                             let p = "";
                             for (const [x, y] of lip)
                                 for (const s of [1, -1])
-                                    p += `M ${x} ${s * y} m -0.55 0 a 0.55 0.75 0 1 0 1.1 0 a 0.55 0.75 0 1 0 -1.1 0 `;
+                                    p += `M ${x} ${s * y} m -0.8 0 a 0.8 1.1 0 1 0 1.6 0 a 0.8 1.1 0 1 0 -1.6 0 `;
                             return p;
                         }
                     }
@@ -279,8 +279,8 @@ Item {
         Shape {
             preferredRendererType: Shape.CurveRenderer
             Lines {
-                strokeColor: Qt.alpha("#9aa3b2", 0.8)
-                strokeWidth: 0.25
+                strokeColor: U.Palette.muted
+                strokeWidth: 0.4
                 PathSvg {
                     path: {
                         let p = "";
@@ -303,12 +303,15 @@ Item {
                 xScale: 0.25 + 0.75 * head.dilation
             }
         }
-        Rectangle {
-            x: -1.9; y: -2.1
-            width: 1.2; height: 1.2
-            radius: 0.6
-            color: "white"
-            opacity: 0.75 + 0.25 * head.glint
+        // The catch-light, as a curve so it stays crisp at this size.
+        Shape {
+            preferredRendererType: Shape.CurveRenderer
+            opacity: 0.85 + 0.15 * head.glint
+            ShapePath {
+                fillColor: "white"
+                strokeColor: "transparent"
+                PathSvg { path: "M -2.05 -1.5 a 0.75 0.75 0 1 0 1.5 0 a 0.75 0.75 0 1 0 -1.5 0" }
+            }
         }
         // The night's faint glint round the eye.
         Rectangle {
