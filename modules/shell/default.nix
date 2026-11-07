@@ -3,6 +3,9 @@
 { lib, pkgs, ... }:
 
 {
+  # The top pill's visualiser reads cava's raw output while music plays.
+  home.packages = [ pkgs.cava ];
+
   xdg.configFile."quickshell/rice".source = lib.cleanSourceWith {
     src = ./.;
     filter = path: type: type == "directory" || lib.any (ext: lib.hasSuffix ext path) [ ".qml" ".svg" ".js" ];
