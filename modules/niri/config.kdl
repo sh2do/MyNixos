@@ -11,5 +11,9 @@ include "colors.kdl"
 // Keep clipboard history for rice-menu clipboard.
 spawn-sh-at-startup "wl-paste --watch cliphist store"
 
+// The phone link (KDE Connect, configuration.nix). Its daemon is D-Bus
+// activated too, but started here so phone notifications arrive from login on.
+spawn-at-startup "kdeconnectd"
+
 // The bar, top pill and wallpaper picker (modules/shell).
 spawn-at-startup "qs" "-c" "rice"

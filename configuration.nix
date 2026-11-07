@@ -154,6 +154,13 @@ in
 
   networking.networkmanager.enable = true;
 
+  # The phone link: KDE Connect (kdeconnectd, kdeconnect-cli). It opens TCP and
+  # UDP 1714-1764 in the (default, enabled) firewall; the phone finds this
+  # machine by broadcast on the same Wi-Fi, and only paired devices are
+  # trusted. Both sessions start the daemon (niri's config.kdl, Umbriel's
+  # autostart); the bar and phone-alert talk to it.
+  programs.kdeconnect.enable = true;
+
   hardware.bluetooth = {
     enable = true;
     powerOnBoot = true;

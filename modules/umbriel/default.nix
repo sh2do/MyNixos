@@ -97,8 +97,9 @@ in
     enable = true;
     settings = {
       # cliphist: niri starts the same watcher, so the clipboard menu has history
-      # in both sessions.
-      general.autostart = [ "qs -c umbriel" "wl-paste --watch cliphist store" ];
+      # in both sessions. kdeconnectd: the phone link (configuration.nix), so
+      # phone notifications arrive from login on.
+      general.autostart = [ "qs -c umbriel" "wl-paste --watch cliphist store" "kdeconnectd" ];
       # Umbriel's defaults are blue; these are the slate palette (Palette.qml).
       colors = {
         background = "#14161bff"; # raised
