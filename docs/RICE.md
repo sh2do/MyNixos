@@ -72,7 +72,7 @@ Use `lib.fakeHash` first; the build error prints the real hash. `rotation` image
 | `Mod+Alt+V` | Clipboard history |
 | `Mod+Shift+Q` | Power menu |
 | `Mod+Alt+W` | Next wallpaper |
-| `Mod+Ctrl+W` | Wallpaper picker (a carousel that slides up) |
+| `Mod+Ctrl+W` | Wallpaper picker: a carousel that slides up on a slab of pond glass, each card on a faint stone; the selected card rises with a glowing rim and the menus' drips along its bottom edge (plain beads until rice-wall has rendered them). It moves on its own clock under 60 Hz, only while the selection moves, and costs nothing closed |
 | `Super+Alt+L` | Lock |
 
 **Apps**
