@@ -363,6 +363,35 @@ The spec's "Revision" section is the authority. Tasks 3–4 (the python) are sup
   - `top` idle 20 s: the raven's delta is ≤ 1%, and the whole shell is ≤ 4%. Record both.
 - [ ] **Step 8:** Commit with the message `umbriel: a raven and its hoard replace the python`.
 
+### Task 4N: The raven on niri too (replaces the niri python)
+
+The user: "we're removing the python for the raven on both fronts". On niri the koi stay the default mascot. `RICE_MASCOT=raven` replaces `RICE_MASCOT=python`.
+
+**Files:**
+- Delete:
+  - `modules/shell/Python.qml`, `modules/shell/python-geometry.js`, `tests/python-geometry-test.js`
+  - the unused `[templates.python]` in `modules/theme/matugen.toml` and `modules/theme/templates/python.svg` (fastfetch uses the koi)
+- Keep: starship's `$python` module (it's the language, not the mascot).
+- Modify:
+  - `modules/shell/BottomBar.qml`:
+    - drop the python Loaders, restGap/leftPad/gap special cases and the extra height;
+    - add `RICE_MASCOT=raven`: a Loader hosting a niri `Raven` perched on the bar pill's top edge at the right end, about 44 px tall;
+    - the koi pond stays hidden when the raven is chosen, as it was for the python;
+    - `notice(x)` makes the raven turn its head toward x and caw instead of the python's flinch.
+  - `modules/shell/Toggles.qml` comment.
+  - `docs/RICE.md`: the python paragraph becomes a raven paragraph; update the tests list and file map.
+  - Share `RavenBody.qml` and `raven-mood.js` with Umbriel. Deploy the same files into both Quickshell configs from one source, e.g. `modules/shell/raven/` copied into the umbriel-shell derivation, or a symlinked source; pick the simpler.
+- **Colours:** RavenBody takes its colours as properties. Umbriel passes the slate roles. Niri passes the matugen `Theme` colours (body = a very dark surface, edge = outline, eye = onSurface, sheen = primary/tertiary at low opacity).
+- **Clock:** the same multi-rate clock, running only while the bar is shown (`root.shown`).
+- **Behaviours on niri:** idle life (breath, blink, look, ruffle, preen), watching a still pointer on the bar, caws on `notice(x)`, and sleep after dark. No hoard; niri's notifications live elsewhere.
+- **Tests:** `tests/raven-mood-test.js` covers the shared maths. `bash tests/config-test.sh` passes (update any test that greps for the python). `grep -rni 'python' modules/shell` finds nothing.
+- [ ] **Steps:**
+  1. Remove the python and the matugen template, then build.
+  2. Add the raven Loader and colours.
+  3. Take a screenshot of the niri bar with `RICE_MASCOT=raven` (run a scratch `qs -p` copy on the Overlay layer; never kill `qs -c rice`).
+  4. Measure CPU with the bar shown: it's below the koi's.
+  5. Commit with the message `rice: a raven replaces the python mascot`.
+
 ### Task 6: Docs and final checks
 
 **Files:**
