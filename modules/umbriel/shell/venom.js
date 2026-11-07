@@ -9,6 +9,13 @@
 //   bead -> thread -> fall -> splash | fade -> gone
 // Coordinates are the caller's (y down); the windows are {x, y, w, h} in the
 // same coordinates.
+//
+// A drop never falls across a window's content: one that lets go over a
+// window (the fang hangs inside its rectangle) sags at most BLOCKED_FALL px
+// and fades with a tiny ring. Otherwise it lands on the highest top edge
+// below it, which is also the first window it meets whatever their stacking
+// (Umbriel's IPC reports no z-order): it falls straight down from empty
+// desktop, and enters a window only through its top edge.
 
 var GRAVITY = 1400;      // px/s²
 var BEAD_FOR = 1.2;      // s, the default swell
@@ -18,6 +25,7 @@ var FADE_FOR = 0.6;      // s
 var BEAD_R = 3.2;        // px, a full bead's radius
 var THREAD_LEN = 9;      // px the bead sags before it snaps
 var SNAP_SPEED = 30;     // px/s, downward, as it lets go
+var BLOCKED_FALL = 22;   // px a drop over a window's content may sag
 
 // Milliseconds between drops: 4 s when calm, 0.6 s at full load.
 function dripInterval(load) {
@@ -67,6 +75,16 @@ function parseLoad(prev, text) {
     return { load: Math.min(Math.max(load, 0), 1), sample: s };
 }
 
+// Is (x, y) inside any window?
+function covered(x, y, windows) {
+    for (var i = 0; i < (windows || []).length; i++) {
+        var w = windows[i];
+        if (x >= w.x && x < w.x + w.w && y >= w.y && y < w.y + w.h)
+            return true;
+    }
+    return false;
+}
+
 // The y of the top edge of the highest window under x whose top is below
 // y0, or null.
 function landing(x, y0, windows) {
@@ -86,7 +104,7 @@ function newDrop(x, anchorY, beadFor) {
         phase: "bead", t: 0,
         x: x, anchorY: anchorY, y: anchorY, y0: anchorY, vy: 0,
         beadFor: beadFor > 0 ? beadFor : BEAD_FOR,
-        swell: 0, stretch: 0
+        swell: 0, stretch: 0, blocked: false
     };
 }
 
@@ -118,11 +136,20 @@ function dropStep(drop, dt, windows, fadeAt) {
             d.t = 0;
             d.y0 = d.y;
             d.vy = SNAP_SPEED;
+            d.blocked = covered(d.x, d.y, windows);
         }
     } else if (d.phase === "fall") {
         var from = d.y;
         d.vy += GRAVITY * s;
         d.y += d.vy * s;
+        if (d.blocked) {
+            if (d.y >= d.y0 + BLOCKED_FALL) {
+                d.y = d.y0 + BLOCKED_FALL;
+                d.phase = "fade";
+                d.t = 0;
+            }
+            return d;
+        }
         // Measured from where it was, so a window that opens under a drop
         // already past its top doesn't pull the drop back up.
         var land = landing(d.x, from, windows);

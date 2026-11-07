@@ -11,18 +11,20 @@
 //
 // Alive on one clock that runs only as fast as the motion needs (every
 // repaint of the island's window costs CPU, whatever changes in it):
-// - 15 Hz idle: a ±3° pendulum sway about the hang point (a rotation) and a
-//   slow coil and uncoil, the only thing that re-bends the body, at most
-//   15 times a second and only while it changes;
-// - 30 Hz while a bead swells on the fang;
-// - the display's rate only while a drop necks, falls or splashes, and while
-//   the viper pulls up or lowers itself.
-// UMBRIEL_SERPENT_FPS caps all three. Nothing runs while it is pulled up, the
-// island is hidden, the session is locked or the screen is off.
+// - 10 Hz idle: a ±3° pendulum sway about the hang point (a rotation) and a
+//   slow coil and uncoil;
+// - 30 Hz while a bead swells, necks into its thread, splashes or fades, and
+//   while the viper hisses, pulls up or lowers itself;
+// - the display's rate only while a drop is in free fall.
+// UMBRIEL_SERPENT_FPS caps all three. Only the coil re-bends the body, and
+// only while it changes: at most 10 times a second, 30 while it pulls up or
+// lowers itself (it straightens as it goes). Nothing runs while it is pulled
+// up, the island is hidden, the session is locked or the screen is off.
 //
-// The drip follows the CPU load (/proc/stat every 2 s): a drop every 4 s
-// when calm, every 0.6 s at full load. Drops land on the top edge of the
-// highest window below them (UmbrielIpc.windows), or fade out 300 px down.
+// The drip follows the CPU load (/proc/stat every 2 s, and afresh on each
+// return): a drop every 4 s when calm, every 0.6 s at full load. Drops land
+// on the top edge of the highest window below them (UmbrielIpc.windows), or
+// fade out 300 px down; over a window's content they only sag and fade.
 //
 // It pulls up behind the pill (0.6 s) while a window is fullscreen, the
 // island is open or shows anything but the clock, and comes back down 2 s
@@ -85,7 +87,21 @@ Item {
     Timer {
         id: back
         interval: 2000
-        onTriggered: if (!root.cause) root.mode = "down"
+        onTriggered: {
+            if (root.cause)
+                return;
+            root.mode = "down";
+            // The last sample is from before it went away: read the load
+            // afresh, over the next half second.
+            life.sample = null;
+            stat.reload();
+            reread.restart();
+        }
+    }
+    Timer {
+        id: reread
+        interval: 500
+        onTriggered: stat.reload()
     }
 
     // The clock
@@ -95,12 +111,13 @@ Item {
     readonly property bool active: running && (mode !== "away" || dropCount > 0)
     onRunningChanged: if (!running) clearDrops(false)
 
-    // Set by each tick: drops on the move, a bead on the fang, drops alive.
-    property bool dropsFast: false
-    property bool beading: false
+    // Set by each tick: a drop in free fall, any other drop alive, how many.
+    property bool falling: false
+    property bool dripping: false
     property int dropCount: 0
-    readonly property bool fast: dropsFast || mode === "hiss" || mode === "up" || mode === "down"
-    readonly property int idleHz: 15
+    readonly property bool moving: mode === "hiss" || mode === "up" || mode === "down"
+    readonly property int idleHz: 10
+    readonly property int busyHz: 30
 
     // 0 pulled up .. 1 hanging; the pendulum, in degrees; the coil, 0..1;
     // the hiss, 0..1 through its 300 ms.
@@ -160,7 +177,8 @@ Item {
         // Straight while pulled up, so it slides into the island cleanly.
         const bend = ease(out) * (0.38 + 0.27 * coil);
         life.bendAcc += dt;
-        if (Math.abs(bend - life.bent) > 0.0015 && (fast || life.bendAcc >= 1 / root.idleHz - 0.001))
+        const bendHz = mode === "up" || mode === "down" ? root.busyHz : root.idleHz;
+        if (Math.abs(bend - life.bent) > 0.0015 && life.bendAcc >= 1 / bendHz - 0.001)
             bendBody(bend);
 
         stepDrops(dt);
@@ -187,11 +205,12 @@ Item {
         life.bendAcc = 0;
     }
 
-    // Narrower at the neck, under the head; full width from there up.
+    // A little narrower at the neck, as deep as the head's back there; full
+    // width from there up.
     readonly property var widths: {
         const ws = new Array(Spine.SPINE_POINTS);
         for (let k = 0; k < ws.length; k++)
-            ws[k] = 0.68 + 0.32 * ease(k / (ws.length - 1) / 0.2);
+            ws[k] = 0.82 + 0.18 * ease(k / (ws.length - 1) / 0.2);
         return ws;
     }
 
@@ -212,7 +231,7 @@ Item {
 
     function stepDrops(dt) {
         const ds = life.drops;
-        let onFang = false, fastNow = false, beadNow = false, count = 0;
+        let onFang = false, fallNow = false, dripNow = false, count = 0;
         const tip = head.fang.mapToItem(root, 0, 0);
         for (let i = 0; i < ds.length; i++) {
             const d = ds[i];
@@ -229,8 +248,8 @@ Item {
             }
             count++;
             onFang = onFang || d.phase === "bead" || d.phase === "thread";
-            beadNow = beadNow || d.phase === "bead";
-            fastNow = fastNow || d.phase !== "bead";
+            fallNow = fallNow || d.phase === "fall";
+            dripNow = dripNow || d.phase !== "fall";
         }
         if (mode === "out" && !onFang && life.t >= life.nextDrop) {
             const free = ds.indexOf(null);
@@ -238,13 +257,13 @@ Item {
                 ds[free] = Venom.newDrop(tip.x, tip.y, Venom.beadTime(root.interval));
                 life.nextDrop = life.t + root.interval / 1000;
                 count++;
-                beadNow = true;
+                dripNow = true;
             }
         }
         for (let i = 0; i < ds.length; i++)
             dropItems.itemAt(i).show(ds[i]);
-        dropsFast = fastNow;
-        beading = beadNow;
+        falling = fallNow;
+        dripping = dripNow;
         dropCount = count;
     }
 
@@ -260,22 +279,23 @@ Item {
             dropItems.itemAt(i)?.show(ds[i]);
         }
         dropCount = count;
-        beading = false;
-        if (!count)
-            dropsFast = false;
+        if (!count) {
+            falling = false;
+            dripping = false;
+        }
     }
 
     FrameAnimation {
-        running: root.active && root.fast && root.fpsCap <= 0
+        running: root.active && root.falling && root.fpsCap <= 0
         onTriggered: root.tick(Spine.step(frameTime))
     }
     Timer {
         readonly property int hz: {
-            const want = root.fast ? 1000 : root.beading ? 30 : root.idleHz;
+            const want = root.falling ? 1000 : root.dripping || root.moving ? root.busyHz : root.idleHz;
             return root.fpsCap > 0 ? Math.min(want, root.fpsCap) : want;
         }
         property real last: 0
-        running: root.active && !(root.fast && root.fpsCap <= 0)
+        running: root.active && !(root.falling && root.fpsCap <= 0)
         interval: 1000 / Math.max(1, hz)
         repeat: true
         onRunningChanged: last = Date.now()
@@ -370,6 +390,9 @@ Item {
                     // The spine's tangent runs neck to tail; the head points
                     // the other way, turned so the open jaws gape downward.
                     rotation: p ? Math.atan2(-p.ty, -p.tx) * 180 / Math.PI + 6 : 90
+                    // Gone before it reaches the pill, so it never shows
+                    // beside it; it fades back in as it comes down.
+                    opacity: Math.min(Math.max((root.out - 0.3) / 0.3, 0), 1)
                     hiss: root.hiss
                 }
             }
@@ -383,15 +406,18 @@ Item {
         Drop {}
     }
 
-    // The head, side on: the detail sheet's parts on the overview board's
-    // stockier head, so it reads at this size. Drawn in head units (×1.3 px)
-    // with the origin at the neck joint and the snout along +x, the crown
-    // toward -y. The jaws are hinged at the mouth's corner: the upper tilted
-    // up 28° (a little more in a hiss), the lower dropped 16°.
-    readonly property real headScale: 1.3
-    // The forward fang's tip on the upper jaw, before its tilt.
-    readonly property point fangAt: Qt.point(17.6, 4.4)
-    readonly property point upperHinge: Qt.point(-4, 0)
+    // The head, side on, as on the detail sheet: drawn in the sheet's own
+    // coordinates and scaled to real size (×0.25, about 45 px long). The
+    // origin is the neck joint, (70, 106) on the sheet; the snout points +x,
+    // the crown -y. A long wedge, its jaws hinged parts: the upper tilted up
+    // 28° (a little more in a hiss), the lower dropped 16°. The open mouth
+    // shows its broad pale lining; the two long sabre fangs swing forward
+    // from their roots on the upper jaw, and the venom beads on the forward
+    // one's tip. A pale slate rim keeps the head off a dark wallpaper, and
+    // its jowls overlap the end of the body, so there is no seam.
+    readonly property real headScale: 0.25
+    readonly property point upperHinge: Qt.point(70, 84)
+    readonly property point fangAt: Qt.point(228, 146)
 
     component Lines: ShapePath {
         fillColor: "transparent"
@@ -406,6 +432,9 @@ Item {
         readonly property real upper: -28 - 8 * Math.sin(Math.PI * hiss)
         readonly property Item fang: fangTip
 
+        readonly property string upperPath: "M 58 52 C 108 38 188 44 230 68 Q 248 80 236 90 L 70 97 C 62 90 58 72 58 52 Z"
+        readonly property string lowerPath: "M 68 99 L 222 110 Q 232 116 220 123 C 172 132 110 130 68 127 C 62 118 62 106 68 99 Z"
+
         // A soft shadow on the desktop, at the body's offset.
         Shape {
             x: 2
@@ -414,55 +443,80 @@ Item {
             ShapePath {
                 strokeColor: "transparent"
                 fillGradient: RadialGradient {
-                    centerX: 10; centerY: 0; centerRadius: 16
-                    focalX: 10; focalY: 0
+                    centerX: 18; centerY: 0; centerRadius: 24
+                    focalX: 18; focalY: 0
                     GradientStop { position: 0; color: Qt.rgba(0, 0, 0, 0.42) }
                     GradientStop { position: 1; color: Qt.rgba(0, 0, 0, 0) }
                 }
-                PathSvg { path: "M -6 0 a 16 13 0 1 0 32 0 a 16 13 0 1 0 -32 0" }
+                PathSvg { path: "M -6 0 a 24 13 0 1 0 48 0 a 24 13 0 1 0 -48 0" }
             }
         }
 
         Item {
-            scale: root.headScale
-            transformOrigin: Item.TopLeft
+            transform: [
+                Translate { x: -70; y: -106 },
+                Scale { xScale: root.headScale; yScale: root.headScale }
+            ]
 
-            // The throat, dark between the open jaws.
+            // The jowls, over the end of the body, shaded round like it.
             Shape {
                 preferredRendererType: Shape.CurveRenderer
                 ShapePath {
-                    fillColor: U.Palette.viperOutline
                     strokeColor: "transparent"
-                    PathSvg { path: "M -4.5 0.3 L 9 -4.6 Q 12.5 1.4 9 6.4 Z" }
+                    fillGradient: LinearGradient {
+                        x1: 0; y1: 80; x2: 0; y2: 132
+                        GradientStop { position: 0; color: Qt.darker(U.Palette.viperBody, 1.7) }
+                        GradientStop { position: 0.45; color: U.Palette.viperBody }
+                        GradientStop { position: 1; color: Qt.darker(U.Palette.viperBody, 1.7) }
+                    }
+                    PathSvg { path: "M 56 106 C 56 90 64 82 78 82 C 92 82 98 94 98 106 C 98 120 92 130 78 130 C 64 130 56 122 56 106 Z" }
                 }
             }
 
-            // Lower jaw, dropped: the pale lining and small teeth along its
-            // top, a row of lip scales.
+            // The throat, deep in the gape: dim slate, so the open mouth
+            // still reads on a dark wallpaper.
             Shape {
                 preferredRendererType: Shape.CurveRenderer
-                transform: Rotation { origin.x: -4; origin.y: 0.6; angle: 16 }
                 ShapePath {
-                    fillColor: Qt.darker(U.Palette.viperBody, 1.25)
-                    strokeColor: U.Palette.viperOutline
-                    strokeWidth: 0.7
+                    fillColor: Qt.darker(U.Palette.slate, 1.35)
+                    strokeColor: "transparent"
+                    PathSvg { path: "M 64 100 L 156 62 Q 176 104 152 140 Z" }
+                }
+            }
+
+            // Lower jaw, dropped: pale rim, lip scales, the broad lining
+            // along its top with small teeth.
+            Shape {
+                preferredRendererType: Shape.CurveRenderer
+                transform: Rotation { origin.x: 70; origin.y: 100; angle: 16 }
+                ShapePath {
+                    fillColor: "transparent"
+                    strokeColor: Qt.alpha(U.Palette.viperKeel, 0.5)
+                    strokeWidth: 8
                     joinStyle: ShapePath.RoundJoin
-                    PathSvg { path: "M -4.5 0.6 L 9 1.4 Q 14.6 1.9 15.4 3.1 Q 15 4.8 12 5.3 C 7 6.1 1 6.3 -4.5 6.5 Z" }
+                    PathSvg { path: hd.lowerPath }
                 }
                 ShapePath {
-                    fillColor: Qt.alpha(U.Palette.viperEye, 0.55)
-                    strokeColor: "transparent"
-                    PathSvg { path: "M -3.6 1.1 L 9 1.9 L 14.2 2.5 L 13.4 3.2 L 9 2.9 L -3.6 2.4 Z" }
-                }
-                ShapePath {
-                    fillColor: Qt.alpha(U.Palette.viperEye, 0.85)
-                    strokeColor: "transparent"
-                    PathSvg { path: "M 2 1.6 l 0.5 -1 l 0.5 1.1 Z M 5.4 1.8 l 0.5 -1 l 0.5 1.1 Z M 8.8 2 l 0.45 -0.9 l 0.45 1 Z M 11.8 2.3 l 0.4 -0.8 l 0.4 0.9 Z" }
+                    fillColor: Qt.darker(U.Palette.viperBody, 1.2)
+                    strokeColor: U.Palette.viperOutline
+                    strokeWidth: 3.5
+                    joinStyle: ShapePath.RoundJoin
+                    PathSvg { path: hd.lowerPath }
                 }
                 Lines {
                     strokeColor: Qt.alpha(U.Palette.viperBlotch, 0.95)
-                    strokeWidth: 0.45
-                    PathSvg { path: "M -1 5.6 l 2.4 -0.1 M 2.8 5.5 l 2.4 -0.1 M 6.6 5.3 l 2.4 -0.2 M 10.2 4.9 l 2 -0.3" }
+                    strokeWidth: 3
+                    PathSvg { path: "M 88 122 l 16 1 M 118 124 l 16 0 M 148 124 l 16 -1 M 178 121 l 14 -1 M 204 117 l 10 -2" }
+                }
+                ShapePath {
+                    fillColor: Qt.alpha(U.Palette.viperEye, 0.8)
+                    strokeColor: "transparent"
+                    PathSvg { path: "M 70 101 L 220 110 L 211 118 C 160 117 112 115 70 113 Z" }
+                }
+                ShapePath {
+                    fillColor: U.Palette.bright
+                    strokeColor: "transparent"
+                    PathSvg { path: "M 104 104 l 3 -7 l 3 7 Z M 132 106 l 3 -7 l 3 7 Z M 160 107 l 3 -6 l 3 6 Z M 186 108 l 2.5 -6 l 2.5 6 Z" }
                 }
             }
 
@@ -470,92 +524,134 @@ Item {
             Shape {
                 preferredRendererType: Shape.CurveRenderer
                 transform: Rotation { origin.x: root.upperHinge.x; origin.y: root.upperHinge.y; angle: hd.upper }
-                // Fangs first, swung forward out of the mouth: the rear one,
-                // then the forward one the venom drips from.
+                // The pale slate rim, then the head, rounded by a gradient
+                // from the crown to the lip.
                 ShapePath {
-                    fillColor: U.Palette.bright
-                    strokeColor: U.Palette.viperKeel
-                    strokeWidth: 0.3
+                    fillColor: "transparent"
+                    strokeColor: Qt.alpha(U.Palette.viperKeel, 0.55)
+                    strokeWidth: 9
                     joinStyle: ShapePath.RoundJoin
-                    PathSvg { path: "M 9.4 -0.9 Q 12.6 0.4 13.4 3.4 L 10.9 -0.2 Z M 12.4 -1.3 Q 16.4 0.2 17.6 4.4 L 14.3 -0.3 Z" }
+                    PathSvg { path: hd.upperPath }
                 }
-                // The head: broad jowls narrowing to a blunt snout.
                 ShapePath {
-                    fillColor: U.Palette.viperBody
                     strokeColor: U.Palette.viperOutline
-                    strokeWidth: 0.7
+                    strokeWidth: 3.5
                     joinStyle: ShapePath.RoundJoin
-                    PathSvg { path: "M -6 -6.2 C -2.4 -8.8 3.4 -10 9 -9.8 Q 15.4 -9.4 17 -6.2 Q 18 -4.4 17.4 -2.6 Q 16.8 -1.5 15 -1.4 L 9 -0.8 L -4.5 0.3 Z" }
+                    fillGradient: LinearGradient {
+                        x1: 0; y1: 44; x2: 0; y2: 97
+                        GradientStop { position: 0; color: Qt.lighter(U.Palette.viperBody, 1.18) }
+                        GradientStop { position: 0.55; color: U.Palette.viperBody }
+                        GradientStop { position: 1; color: Qt.darker(U.Palette.viperBody, 1.3) }
+                    }
+                    PathSvg { path: hd.upperPath }
+                }
+                // The broad pale lining of the roof of the mouth.
+                ShapePath {
+                    fillColor: Qt.alpha(U.Palette.viperEye, 0.82)
+                    strokeColor: "transparent"
+                    PathSvg { path: "M 236 90 L 70 97 L 72 111 C 120 109 190 103 230 96 Z" }
+                }
+                Lines {
+                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.35)
+                    strokeWidth: 1.5
+                    PathSvg { path: "M 90 104 C 140 101 190 98 226 94" }
+                }
+                // A highlight along the crown.
+                Lines {
+                    strokeColor: Qt.alpha(U.Palette.viperKeel, 0.45)
+                    strokeWidth: 2.5
+                    PathSvg { path: "M 74 55 C 114 45 182 49 222 71" }
                 }
                 // The dark stripe from the eye back to the jaw's corner, and
-                // a blotch on the crown.
+                // blotches on the crown.
                 Lines {
                     strokeColor: U.Palette.viperBlotch
-                    strokeWidth: 1.5
-                    PathSvg { path: "M 6.4 -5 C 3.6 -4.2 0.6 -3.2 -3.4 -1.8" }
+                    strokeWidth: 9
+                    PathSvg { path: "M 150 74 C 128 80 104 86 80 91" }
                 }
                 ShapePath {
-                    fillColor: Qt.alpha(U.Palette.viperBlotch, 0.9)
+                    fillColor: Qt.alpha(U.Palette.viperBlotch, 0.85)
                     strokeColor: "transparent"
-                    PathSvg { path: "M -3.4 -6.6 C -1 -8.2 2.2 -8.6 3.4 -7.8 C 2.6 -6.2 -1 -5.6 -3.4 -6.6 Z" }
+                    PathSvg { path: "M 84 56 C 96 50 116 49 122 55 C 116 64 96 64 84 60 Z M 186 56 C 194 54 204 56 208 61 C 202 65 192 64 186 60 Z" }
                 }
-                // Keeled scales: rows of pale ridges over the crown and
-                // cheek, and the lip scales.
+                // Keeled scales: rows of pale ridges; the lip scales.
                 Lines {
                     strokeColor: Qt.alpha(U.Palette.viperKeel, 0.75)
-                    strokeWidth: 0.4
-                    PathSvg { path: "M -4.2 -4.8 l 1.6 -0.5 M -1.6 -5.6 l 1.6 -0.5 M 4.2 -8.8 l 1.6 -0.3 M 11.8 -8.8 l 1.5 0.2 M 14 -7.6 l 1.2 0.6 M -2.2 -3 l 1.6 -0.4 M 0.8 -3.8 l 1.6 -0.4 M 10.6 -6.6 l 1.5 0 M 13.2 -5.6 l 1.4 0.3 M 2 -6.6 l 1.5 -0.4" }
+                    strokeWidth: 2.6
+                    PathSvg { path: "M 92 66 l 11 3 M 112 62 l 11 3 M 130 60 l 10 3 M 182 70 l 10 3 M 202 72 l 9 4 M 76 76 l 10 2 M 100 76 l 10 2 M 178 82 l 10 2 M 204 82 l 9 3 M 214 70 l 8 4" }
                 }
                 Lines {
-                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.85)
-                    strokeWidth: 0.35
-                    PathSvg { path: "M 0 -0.2 l 0 -1.1 M 3.2 -0.5 l 0 -1.1 M 6.4 -0.7 l 0 -1.1 M 9.6 -1 l 0 -1.1 M 12.6 -1.2 l 0 -1.1 M 15.2 -1.5 l 0.2 -1" }
-                }
-                // The pale mouth lining.
-                ShapePath {
-                    fillColor: Qt.alpha(U.Palette.viperEye, 0.65)
-                    strokeColor: "transparent"
-                    PathSvg { path: "M 16.6 -1.6 L 9 -0.8 L -4.2 0.3 L -4.2 1.3 L 9 0.4 L 15.6 -0.5 Z" }
+                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.8)
+                    strokeWidth: 2
+                    PathSvg { path: "M 100 95 l 0 -7 M 128 94 l 0 -7 M 156 93 l 0 -7 M 184 92 l 0 -7 M 210 91 l 0 -6" }
                 }
                 // The nostril.
                 ShapePath {
                     fillColor: U.Palette.viperOutline
                     strokeColor: "transparent"
-                    PathSvg { path: "M 15.1 -4.8 a 0.55 0.45 0 1 0 1.1 0 a 0.55 0.45 0 1 0 -1.1 0" }
+                    PathSvg { path: "M 225 77 a 3.4 2.6 0 1 0 6.8 0 a 3.4 2.6 0 1 0 -6.8 0" }
                 }
-                // The horn over the eye, its scales ridged.
+                // The supraocular horns: a small scale, then the tall pointed
+                // horn over the eye, leaning back, ridged across.
+                ShapePath {
+                    fillColor: Qt.darker(U.Palette.viperKeel, 1.25)
+                    strokeColor: U.Palette.viperOutline
+                    strokeWidth: 2.5
+                    joinStyle: ShapePath.RoundJoin
+                    PathSvg { path: "M 130 54 C 131 46 131 39 130 32 C 136 38 142 46 147 53 Z" }
+                }
                 ShapePath {
                     fillColor: U.Palette.viperKeel
                     strokeColor: U.Palette.viperOutline
-                    strokeWidth: 0.55
+                    strokeWidth: 3
                     joinStyle: ShapePath.RoundJoin
-                    PathSvg { path: "M 5.6 -9.4 C 6.2 -11.8 7.2 -14.2 8.4 -16.4 C 9 -14.2 9.8 -11.8 10.6 -9.6 Z" }
+                    PathSvg { path: "M 145 54 C 147 40 147 24 145 4 C 156 18 165 34 172 52 Z" }
                 }
                 Lines {
-                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.6)
-                    strokeWidth: 0.3
-                    PathSvg { path: "M 7 -11.6 l 2.2 -0.1 M 7.6 -13.6 l 1.4 0" }
+                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.55)
+                    strokeWidth: 1.6
+                    PathSvg { path: "M 149 42 l 14 -1 M 148 30 l 9 -1 M 147 18 l 4 0" }
                 }
                 // The eye: dark ring, pale iris, slit pupil, a catch-light.
                 ShapePath {
                     fillColor: U.Palette.viperOutline
                     strokeColor: "transparent"
-                    PathSvg { path: "M 5.9 -6.4 a 2.2 2.2 0 1 0 4.4 0 a 2.2 2.2 0 1 0 -4.4 0" }
+                    PathSvg { path: "M 149 66 a 11 11 0 1 0 22 0 a 11 11 0 1 0 -22 0" }
                 }
                 ShapePath {
                     fillColor: U.Palette.viperEye
                     strokeColor: "transparent"
-                    PathSvg { path: "M 6.4 -6.4 a 1.7 1.7 0 1 0 3.4 0 a 1.7 1.7 0 1 0 -3.4 0" }
+                    PathSvg { path: "M 151.5 66 a 8.5 8.5 0 1 0 17 0 a 8.5 8.5 0 1 0 -17 0" }
                 }
                 ShapePath {
                     fillColor: U.Palette.viperOutline
                     strokeColor: "transparent"
-                    PathSvg { path: "M 8.1 -8 C 8.55 -7.2 8.55 -5.6 8.1 -4.8 C 7.65 -5.6 7.65 -7.2 8.1 -8 Z" }
+                    PathSvg { path: "M 160 57 C 162.6 61.5 162.6 70.5 160 75 C 157.4 70.5 157.4 61.5 160 57 Z" }
                 }
                 ShapePath {
                     fillColor: U.Palette.bright
                     strokeColor: "transparent"
-                    PathSvg { path: "M 7 -7.2 a 0.42 0.42 0 1 0 0.84 0 a 0.42 0.42 0 1 0 -0.84 0" }
+                    PathSvg { path: "M 153.6 61.5 a 2.2 2.2 0 1 0 4.4 0 a 2.2 2.2 0 1 0 -4.4 0" }
+                }
+                // The fangs' roots on the maxilla, then the fangs: long
+                // curved sabres swung forward, pale, clearing at the tips.
+                ShapePath {
+                    fillColor: U.Palette.viperEye
+                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.5)
+                    strokeWidth: 1.5
+                    PathSvg { path: "M 200 94 C 202 86 220 85 222 92 Z M 181 96 C 183 89 197 88 199 94 Z" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.6)
+                    strokeWidth: 2.2
+                    joinStyle: ShapePath.RoundJoin
+                    fillGradient: LinearGradient {
+                        x1: 190; y1: 94; x2: 220; y2: 146
+                        GradientStop { position: 0; color: U.Palette.bright }
+                        GradientStop { position: 0.6; color: U.Palette.bright }
+                        GradientStop { position: 1; color: Qt.alpha(U.Palette.viperEye, 0.75) }
+                    }
+                    PathSvg { path: "M 183 95 L 196 94 C 202 105 206 121 203 140 C 198 123 192 110 183 100 Z M 203 93 L 218 92 C 225 105 230 124 228 146 C 222 128 214 112 203 98 Z" }
                 }
             }
         }
@@ -566,29 +662,31 @@ Item {
             readonly property real a: hd.upper * Math.PI / 180
             readonly property real dx: root.fangAt.x - root.upperHinge.x
             readonly property real dy: root.fangAt.y - root.upperHinge.y
-            x: root.headScale * (root.upperHinge.x + dx * Math.cos(a) - dy * Math.sin(a))
-            y: root.headScale * (root.upperHinge.y + dx * Math.sin(a) + dy * Math.cos(a))
+            x: root.headScale * (root.upperHinge.x + dx * Math.cos(a) - dy * Math.sin(a) - 70)
+            y: root.headScale * (root.upperHinge.y + dx * Math.sin(a) + dy * Math.cos(a) - 106)
         }
 
         // The hiss: two pale arcs puffing out of the open mouth.
         Shape {
             visible: hd.hiss > 0
-            x: 26
+            x: 38
             y: 0
-            opacity: 0.55 * Math.sin(Math.PI * hd.hiss)
+            opacity: 0.6 * Math.sin(Math.PI * hd.hiss)
             scale: 0.7 + 0.8 * hd.hiss
             transformOrigin: Item.Left
             preferredRendererType: Shape.CurveRenderer
             Lines {
                 strokeColor: U.Palette.bright
-                strokeWidth: 1
-                PathSvg { path: "M 3 -5 Q 7 0 3 5 M 8 -8.5 Q 14 0 8 8.5" }
+                strokeWidth: 1.1
+                PathSvg { path: "M 3 -6 Q 8 0 3 6 M 9 -10 Q 16 0 9 10" }
             }
         }
     }
 
     // One drop of venom, centred on its x, y. Moved and shaped only by
-    // transforms and opacity; show(d) copies a venom.js drop in.
+    // transforms and opacity; show(d) copies a venom.js drop in. Every part
+    // has a thin dark edge or under-shadow, so the bright venom reads on a
+    // pale wallpaper as well as a dark one.
     component Drop: Item {
         id: drop
 
@@ -598,8 +696,10 @@ Item {
         property real stretch: 0
         property real vy: 0
         property real anchorY: 0
+        property real y0: 0
         property real fadeY: 0
         property bool lands: false
+        property bool blocked: false
 
         function show(d) {
             if (!d) {
@@ -613,6 +713,8 @@ Item {
             stretch = d.stretch;
             vy = d.vy;
             anchorY = d.anchorY;
+            y0 = d.y0;
+            blocked = d.blocked;
             fadeY = root.fadeAt(d);
             lands = Venom.landing(d.x, d.y - 1, root.windows) !== null;
             phase = d.phase;
@@ -624,8 +726,11 @@ Item {
         // The drop's radius, and how far it is drawn out along y.
         readonly property real r: Venom.BEAD_R * (phase === "bead" ? 0.4 + 0.6 * swell : phase === "thread" ? 1 : 0.88)
         readonly property real sag: phase === "bead" ? 0.78 + 0.22 * swell : phase === "thread" ? 1 + 0.3 * stretch : 1.12
-        // Over empty desktop it fades in the last 80 px of its fall.
-        readonly property real fading: phase === "fall" && !lands ? Math.min(Math.max((y - fadeY + 80) / 80, 0), 1) : 0
+        // Over empty desktop it fades in the last 80 px of its fall; over a
+        // window's content, through its short sag.
+        readonly property real fading: phase !== "fall" ? 0
+            : blocked ? Math.min(Math.max((y - y0) / Venom.BLOCKED_FALL, 0), 1)
+            : !lands ? Math.min(Math.max((y - fadeY + 80) / 80, 0), 1) : 0
         readonly property real u: phase === "splash" ? t / Venom.SPLASH_FOR : phase === "fade" ? t / Venom.FADE_FOR : 0
         readonly property real burst: 1 - Math.pow(1 - Math.min(u, 1), 3)
 
@@ -638,6 +743,8 @@ Item {
             height: Math.max(0, drop.y - drop.anchorY - 1.4 * drop.r * drop.sag)
             radius: width / 2
             color: U.Palette.venom
+            border.width: 0.3
+            border.color: Qt.alpha(U.Palette.viperOutline, 0.4)
         }
         // After the snap, the thread's stub springs back up to the fang.
         Rectangle {
@@ -651,7 +758,7 @@ Item {
         }
         // The faint streak it leaves as it falls.
         Rectangle {
-            visible: drop.phase === "fall"
+            visible: drop.phase === "fall" && !drop.blocked
             x: -1
             width: 2
             height: Math.min(3 + drop.vy * 0.022, 34)
@@ -660,18 +767,19 @@ Item {
             opacity: 1 - drop.fading
             gradient: Gradient {
                 GradientStop { position: 0; color: Qt.alpha(U.Palette.venom, 0) }
-                GradientStop { position: 1; color: Qt.alpha(U.Palette.venom, 0.22) }
+                GradientStop { position: 1; color: Qt.alpha(U.Palette.venom, 0.3) }
             }
         }
 
-        // The glow: a baked radial falloff, scaled with the drop.
+        // The glow.
         Glow {
             visible: drop.hanging
             scale: drop.r / Venom.BEAD_R
             opacity: (drop.phase === "bead" ? 0.25 + 0.75 * drop.swell : 1) * (1 - drop.fading)
         }
 
-        // The drop: a teardrop, its tip up, lit from the upper left.
+        // The drop: a teardrop, its tip up, lit from the upper left, over a
+        // dark under-shadow, with a thin dark rim.
         Shape {
             visible: drop.hanging
             opacity: 1 - drop.fading
@@ -681,7 +789,13 @@ Item {
                 yScale: drop.r / 4 * drop.sag
             }
             ShapePath {
+                fillColor: Qt.alpha(U.Palette.viperOutline, 0.4)
                 strokeColor: "transparent"
+                PathSvg { path: "M 0.9 -6.2 C 3.3 -2.6 4.9 -0.2 4.9 1.8 C 4.9 4.1 3.1 5.2 0.9 5.2 C -1.3 5.2 -3.1 4.1 -3.1 1.8 C -3.1 -0.2 -1.5 -2.6 0.9 -6.2 Z" }
+            }
+            ShapePath {
+                strokeColor: Qt.alpha(U.Palette.viperOutline, 0.55)
+                strokeWidth: 0.7
                 fillGradient: RadialGradient {
                     centerX: -1.2; centerY: -1; centerRadius: 6
                     focalX: -1.2; focalY: -1
@@ -695,19 +809,28 @@ Item {
 
         // The splash: a flash, a ring spreading on the window's top edge,
         // a pool in it, two specks thrown up and out, and a short trickle
-        // down the window's face. Over empty desktop, only a faint ring.
+        // down the window's face. Elsewhere only a faint ring: a tiny one
+        // over a window's content.
         Glow {
             visible: drop.phase === "splash" && drop.u < 0.35
             scale: 1.3
             opacity: 1 - drop.u / 0.35
         }
         Shape {
+            id: ring
             visible: drop.phase === "splash" || drop.phase === "fade"
-            opacity: (drop.phase === "splash" ? 0.45 : 0.22) * (1 - drop.u)
+            opacity: (drop.phase === "splash" ? 0.9 : 0.5) * (1 - drop.u)
             preferredRendererType: Shape.CurveRenderer
+            readonly property real k: (drop.phase === "fade" && drop.blocked ? 0.3 : 1) * (0.25 + 0.75 * drop.burst)
             transform: Scale {
-                xScale: 0.25 + 0.75 * drop.burst
-                yScale: 0.25 + 0.75 * drop.burst
+                xScale: ring.k
+                yScale: ring.k
+            }
+            ShapePath {
+                fillColor: "transparent"
+                strokeColor: Qt.alpha(U.Palette.viperOutline, 0.5)
+                strokeWidth: 1.6
+                PathSvg { path: "M -16 0.9 a 16 3.4 0 1 0 32 0 a 16 3.4 0 1 0 -32 0" }
             }
             ShapePath {
                 fillColor: "transparent"
@@ -718,7 +841,7 @@ Item {
         }
         Shape {
             visible: drop.phase === "splash"
-            opacity: 0.32 * (1 - drop.u)
+            opacity: 0.55 * (1 - drop.u)
             preferredRendererType: Shape.CurveRenderer
             transform: Scale {
                 xScale: 0.5 + 0.5 * drop.burst
@@ -726,7 +849,8 @@ Item {
             }
             ShapePath {
                 fillColor: U.Palette.venom
-                strokeColor: "transparent"
+                strokeColor: Qt.alpha(U.Palette.viperOutline, 0.45)
+                strokeWidth: 0.6
                 PathSvg { path: "M -6 0 a 6 1.4 0 1 0 12 0 a 6 1.4 0 1 0 -12 0" }
             }
         }
@@ -738,42 +862,49 @@ Item {
                 visible: drop.phase === "splash" && k < 1
                 x: modelData[0] * (3 + modelData[1] * (1 - Math.pow(1 - k, 2))) - width / 2
                 y: -modelData[2] * Math.sin(Math.PI * k) * (1 - 0.3 * k) - height / 2
-                width: 2 * modelData[3]
+                width: 2 * modelData[3] + 0.8
                 height: width
                 radius: width / 2
                 color: U.Palette.venom
-                opacity: 0.65 * (1 - k)
+                border.width: 0.5
+                border.color: Qt.alpha(U.Palette.viperOutline, 0.55)
+                opacity: 0.95 * (1 - k)
             }
         }
         Rectangle {
             visible: drop.phase === "splash" && drop.u > 0.1
-            x: 0.6
+            x: 0.3
             y: 1
-            width: 1.6
+            width: 2.2
             height: 3 + 12 * root.ease((drop.u - 0.1) / 0.6)
-            radius: 0.8
+            radius: 1.1
             opacity: 1 - root.ease((drop.u - 0.5) / 0.5)
+            border.width: 0.5
+            border.color: Qt.alpha(U.Palette.viperOutline, 0.35)
             gradient: Gradient {
-                GradientStop { position: 0; color: Qt.alpha(U.Palette.venom, 0.3) }
-                GradientStop { position: 1; color: Qt.alpha(U.Palette.venom, 0) }
+                GradientStop { position: 0; color: Qt.alpha(U.Palette.venom, 0.7) }
+                GradientStop { position: 1; color: Qt.alpha(U.Palette.venom, 0.05) }
             }
         }
     }
 
-    // The venom's glow round a centre at 0, 0: a soft radial falloff drawn
-    // once (no blur effect), sized for a full bead.
-    component Glow: Shape {
-        preferredRendererType: Shape.CurveRenderer
-        ShapePath {
-            strokeColor: "transparent"
-            fillGradient: RadialGradient {
-                centerX: 0; centerY: 0; centerRadius: 9
-                focalX: 0; focalY: 0
-                GradientStop { position: 0; color: Qt.alpha(U.Palette.venom, 0.42) }
-                GradientStop { position: 0.45; color: Qt.alpha(U.Palette.venom, 0.16) }
-                GradientStop { position: 1; color: Qt.alpha(U.Palette.venom, 0) }
-            }
-            PathSvg { path: "M -9 0 a 9 9 0 1 0 18 0 a 9 9 0 1 0 -18 0" }
-        }
+    // The venom's glow round a centre at 0, 0, sized for a full bead: a
+    // pre-blurred image (a soft radial falloff, rasterised once), so nothing
+    // blurs at run time.
+    readonly property string glowSource: {
+        const c = U.Palette.venom.toString();
+        const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36'><defs><radialGradient id='g' cx='0.5' cy='0.5' r='0.5'>"
+            + `<stop offset='0' stop-color='${c}' stop-opacity='0.42'/><stop offset='0.45' stop-color='${c}' stop-opacity='0.16'/><stop offset='1' stop-color='${c}' stop-opacity='0'/>`
+            + "</radialGradient></defs><rect width='36' height='36' fill='url(#g)'/></svg>";
+        return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    }
+    component Glow: Image {
+        x: -9
+        y: -9
+        width: 18
+        height: 18
+        sourceSize: Qt.size(36, 36)
+        source: root.glowSource
+        smooth: true
     }
 }

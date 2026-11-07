@@ -120,6 +120,39 @@ const tests = {
     assert.ok(r.t < 1.5, "the fade is short");
   },
 
+  test_no_fall_over_window_content() {
+    // The fang hangs over a window's content (a tiled window starting near
+    // the top): the drop lets go, sags at most 24 px and fades with a tiny
+    // ring, never crossing the content; not even onto a window lower down.
+    const windows = [{ x: 0, y: 10, w: 400, h: 300 }, { x: 0, y: 330, w: 400, h: 300 }];
+    let d = Venom.newDrop(100, 150);
+    let r = run(d, windows, 450, x => x.phase === "fall");
+    const y0 = r.drop.y0;
+    let lowest = y0, phases = new Set();
+    let t = 0;
+    d = r.drop;
+    while (d.phase !== "gone" && t < 5) {
+      d = Venom.dropStep(d, 1 / 144, windows, 450);
+      phases.add(d.phase);
+      lowest = Math.max(lowest, d.y);
+      t += 1 / 144;
+    }
+    assert.ok(d.blocked, "marked as over content");
+    assert.ok(!phases.has("splash"), "never splashes across the content");
+    assert.ok(phases.has("fade"), "fades");
+    assert.ok(lowest - y0 <= Venom.BLOCKED_FALL + 1e-9, `fell ${lowest - y0} px`);
+    assert.ok(Venom.BLOCKED_FALL <= 24);
+    assert.strictEqual(d.phase, "gone");
+  },
+
+  test_covered_is_inside_a_window() {
+    const windows = [{ x: 10, y: 10, w: 100, h: 100 }];
+    assert.strictEqual(Venom.covered(50, 50, windows), true);
+    assert.strictEqual(Venom.covered(50, 5, windows), false, "above it");
+    assert.strictEqual(Venom.covered(150, 50, windows), false, "beside it");
+    assert.strictEqual(Venom.covered(50, 50, null), false);
+  },
+
   test_bead_follows_the_fang() {
     // Until it snaps, the bead hangs from wherever the fang is.
     let d = Venom.newDrop(100, 150);
