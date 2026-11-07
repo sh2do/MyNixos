@@ -21,6 +21,9 @@ PanelWindow {
     readonly property bool pinned: Quickshell.env("RICE_BAR_PINNED") === "1"
     // Koi swim inside the bar; RICE_MASCOT=raven perches a raven on it instead.
     readonly property bool raven: Quickshell.env("RICE_MASCOT") === "raven"
+    // The music the top pill plays: the mascot moves to it (null: none).
+    readonly property var player: Media.pickPlayer(Mpris.players.values, null, false,
+        MprisPlaybackState.Playing, MprisPlaybackState.Paused)
     property bool shown: pinned
 
     anchors.bottom: true
@@ -151,11 +154,8 @@ PanelWindow {
             running: root.shown && visible
             hoverX: barHover.hovered ? barHover.point.position.x - 1 : NaN
             hoverY: barHover.hovered ? barHover.point.position.y - 1 : NaN
-            // The music the top pill plays.
-            readonly property var player: Media.pickPlayer(Mpris.players.values, null, false,
-                MprisPlaybackState.Playing, MprisPlaybackState.Paused)
-            music: player !== null
-            song: player ? [player.trackArtist, player.trackTitle].join("\n") : ""
+            music: root.player !== null
+            song: root.player ? [root.player.trackArtist, root.player.trackTitle].join("\n") : ""
         }
 
         // The glass over the koi: a reflection band under the rim, and the
@@ -265,6 +265,7 @@ PanelWindow {
             opacity: bar.opacity
             visible: opacity > 0
             running: root.shown
+            music: root.player !== null
             hoverX: barHover.hovered ? bar.x + barHover.point.position.x : NaN
             hoverY: barHover.hovered ? bar.y + barHover.point.position.y : NaN
         }

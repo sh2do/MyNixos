@@ -44,3 +44,17 @@ function beatStep(state, bass, t) {
         beat: beat
     };
 }
+
+// The raven's gate: may it bob its head to a beat now? Only when it is awake
+// and free (not asleep, hopping, in a long action such as a caw, ruffle or
+// preen, watching the pointer, or already moving its head), and at most 2 a
+// second (sinceBob: ms since its last bob). Anything else is a no.
+var BOB_GAP = 500;
+
+function bobAllowed(s) {
+    if (!s || typeof s !== "object")
+        return false;
+    if (s.asleep || s.busy || s.hop || s.watching || s.headBusy)
+        return false;
+    return typeof s.sinceBob === "number" && s.sinceBob >= BOB_GAP;
+}

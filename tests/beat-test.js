@@ -89,6 +89,28 @@ const tests = {
     assert.ok(Number.isFinite(r.state.avg));
   },
 
+  // The raven's gate: may it bob to this beat?
+  test_bob_allowed_when_perched_and_free() {
+    assert.strictEqual(Beat.bobAllowed({ asleep: false, busy: false, hop: false, watching: false, headBusy: false, sinceBob: 5000 }), true);
+  },
+
+  test_bob_refused_in_every_other_state() {
+    const ok = { asleep: false, busy: false, hop: false, watching: false, headBusy: false, sinceBob: 5000 };
+    for (const k of ["asleep", "busy", "hop", "watching", "headBusy"])
+      assert.strictEqual(Beat.bobAllowed(Object.assign({}, ok, { [k]: true })), false, k);
+  },
+
+  test_bob_capped_at_twice_a_second() {
+    const ok = { asleep: false, busy: false, hop: false, watching: false, headBusy: false };
+    assert.strictEqual(Beat.bobAllowed(Object.assign({ sinceBob: 499 }, ok)), false);
+    assert.strictEqual(Beat.bobAllowed(Object.assign({ sinceBob: 500 }, ok)), true);
+  },
+
+  test_bob_gate_is_safe_with_garbage() {
+    for (const s of [null, undefined, 3, "x", {}, { sinceBob: NaN }])
+      assert.strictEqual(Beat.bobAllowed(s), false);
+  },
+
   test_does_not_mutate_the_old_state() {
     const a = Beat.beatStep(null, 0.2, 0).state;
     const copy = JSON.stringify(a);

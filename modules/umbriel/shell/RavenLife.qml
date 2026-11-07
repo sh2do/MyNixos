@@ -6,7 +6,8 @@
 // - blinks, looks (now and then a double-take), ruffles and preens;
 // - the pointer: watched, hopped at and pecked at (Mood.watchState);
 // - sleep after dark with its head tucked in, and waking;
-// - the caw itself (call), and rousing it for one (rouse).
+// - the caw itself (call), and rousing it for one (rouse);
+// - a bob of the head (bob), which only the niri bar's raven asks for.
 //
 // The owner keeps its own clock and calls tick(dt) (dt already clamped), at
 // `need` Hz, or idleHz while that is 0. It says where the bird is (k, homeX,
@@ -437,6 +438,28 @@ QtObject {
             tween("gazeY", 0, 0.3);
             turnHead(1, 0.25, 0);
         }
+    }
+
+    // What bob() needs to know: may the head be bobbed now (see beat.js's
+    // bobAllowed, which the niri bar's raven asks)?
+    function bobState() {
+        return {
+            asleep: asleep,
+            busy: t < busyUntil,
+            hop: hop !== null,
+            watching: watch !== null && watch.phase !== "idle",
+            headBusy: tweens.some(w => !w.dead && (w.p === "headAngle" || w.p === "headDrop" || w.p === "headFlip"))
+        };
+    }
+
+    // A quick bob of the head, to a beat: down a few px with a small forward
+    // tilt in ~60 ms, back in ~70 (fast ticks only for that long). Only the
+    // niri bar calls it, and only once bobState() says the head is free.
+    function bob() {
+        tween("headDrop", 2.2, 0.05, 0, fastHz);
+        tween("headAngle", -7, 0.05, 0, fastHz);
+        tween("headDrop", 0, 0.07, 0.05, fastHz);
+        tween("headAngle", 0, 0.07, 0.05, fastHz);
     }
 
     // Back on its perch at once, at rest, with nothing to come: for an owner

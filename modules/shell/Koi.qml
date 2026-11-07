@@ -24,9 +24,10 @@ Item {
 
     clip: true
 
-    // ---- The music. RICE_KOI_FAKE_BEAT=1 plays a made-up beat (a bass kick
-    // every 600 ms, a swelling loudness) so it can be seen without a player.
-    readonly property bool fakeBeat: Quickshell.env("RICE_KOI_FAKE_BEAT") === "1"
+    // ---- The music. RICE_FAKE_BEAT=1 (or RICE_KOI_FAKE_BEAT=1) plays a
+    // made-up beat (a bass kick every 600 ms, a swelling loudness) so it can
+    // be seen without a player.
+    readonly property bool fakeBeat: Quickshell.env("RICE_FAKE_BEAT") === "1" || Quickshell.env("RICE_KOI_FAKE_BEAT") === "1"
     readonly property bool musical: music || fakeBeat
     // The shared cava runs for us only while the bar is up and music plays.
     readonly property bool listening: running && music && !fakeBeat

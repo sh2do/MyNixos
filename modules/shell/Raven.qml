@@ -23,11 +23,22 @@
 // tenth of a pixel), at 30 Hz while the head turns, blinks or preens, and at
 // 60 Hz during a hop, a caw or a ruffle. It runs only while the bar is shown.
 //
+// To the music it bobs its head (about 120 ms: down a few px with a small
+// forward tilt, then back) on each bass beat of the shared cava (beat.js,
+// the koi's own beat finder), at most twice a second; not asleep (music
+// doesn't wake it), nor in a preen, hop, caw, ruffle or look. It holds cava
+// only while the bar shows and a player plays; the beats come from cava's
+// level changes (no timer), and the bob rides the clock below.
+//
+// RICE_FAKE_BEAT=1 (or the koi's RICE_KOI_FAKE_BEAT=1) fakes a bass kick
+// every 600 ms as though music played, to see it without a player.
+//
 // RICE_RAVEN_DEBUG=1: a ruffle and a preen every 20 s, and night for 30 s of
 // every 2 minutes.
 import QtQuick
 import Quickshell
 import "raven-mood.js" as Mood
+import "beat.js" as Beat
 
 Item {
     id: root
@@ -45,6 +56,8 @@ Item {
     // Where a noticed change happened is level with this y.
     property real noticeY: perchY + 19
     property bool running: false
+    // A player is playing (set by the bar).
+    property bool music: false
 
     readonly property bool debug: Quickshell.env("RICE_RAVEN_DEBUG") === "1"
 
@@ -64,6 +77,45 @@ Item {
         pointerX: root.hoverX
         pointerY: root.hoverY
         movedAt: root.movedAt
+    }
+
+    // ---- The music.
+    readonly property bool fakeBeat: Quickshell.env("RICE_FAKE_BEAT") === "1" || Quickshell.env("RICE_KOI_FAKE_BEAT") === "1"
+    // The shared cava runs for us only while the bar is up and music plays.
+    readonly property bool listening: running && music && !fakeBeat
+    onListeningChanged: {
+        listening ? Cava.acquire() : Cava.release();
+        beatState = null;
+    }
+    Component.onDestruction: if (listening) Cava.release()
+    property var beatState: null
+    property real lastBob: -1e12
+    function heard(bass) {
+        const now = Date.now();
+        const r = Beat.beatStep(beatState, bass, now);
+        beatState = r.state;
+        if (!r.beat)
+            return;
+        const s = life.bobState();
+        s.sinceBob = now - lastBob;
+        if (!Beat.bobAllowed(s))
+            return;
+        lastBob = now;
+        life.bob();
+    }
+    Connections {
+        target: Cava
+        enabled: root.listening && Cava.ok
+        function onLevelsChanged() {
+            root.heard(Cava.levels[0]);
+        }
+    }
+    // The fake beat: cava's 10 Hz frames, a kick every 600 ms (debug only).
+    Timer {
+        interval: 100
+        repeat: true
+        running: root.fakeBeat && root.running
+        onTriggered: root.heard(Date.now() % 600 < 100 ? 0.85 : 0.15)
     }
 
     // Something changed at x (level with noticeY): snap the head round to it
