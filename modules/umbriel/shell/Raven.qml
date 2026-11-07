@@ -12,8 +12,8 @@
 //   every 5-10 min.
 // A notice showing on the island makes it snap round and caw (silently: two
 // pale arcs from the beak). When the notice leaves, a trinket drops from the
-// island down the screen's right edge, in a small window of its own that
-// exists only while it falls; the raven hops up to catch it, turns round
+// island down the screen's right edge, in two small windows of its own that
+// exist only while it falls (one for the toss, a narrow strip down the edge); the raven hops up to catch it, turns round
 // and sets it down in the hoard, where it fades over 10 minutes.
 // A pointer resting near it is watched after 2 s, and hopped at and pecked
 // at after 5. After dark (21:00-06:00) it fluffs up and sleeps with its
@@ -122,7 +122,11 @@ PanelWindow {
     // hoard (window coordinates).
     property bool flying: false
     property point flightPos: Qt.point(0, 0)
-    property real flightW: 0
+    // The two windows it falls through (screen coordinates): the toss's box
+    // from the island out to the edge, and the strip down the edge from
+    // there into the beak.
+    property rect tossBox: Qt.rect(0, 0, 0, 0)
+    property rect stripBox: Qt.rect(0, 0, 0, 0)
     property bool flightRing: true
     property real spin: 0
     property bool dropping: false
@@ -566,12 +570,21 @@ PanelWindow {
         life.watch = null;
         life.catching = true;
         interrupt();
-        const sw = screen?.width ?? 0;
         const total = tossFor + slideFor + arcFor;
+        const sw = screen?.width ?? 0;
+        // Where the toss meets the edge.
+        const ex = sw - 26, ey = at.y + 0.42 * ((screen?.height ?? 0) - at.y);
+        // Room round the trinket and its glow, and in the strip for the beak
+        // where it is now plus its hop.
+        const pad = 12;
+        const b = body.beakSlot.mapToItem(null, 0, 0);
+        tossBox = Qt.rect(at.x - pad, at.y - 40 - pad, sw - at.x + pad, ey - at.y + 40 + 2 * pad);
+        const left = Math.min(ex, originX + b.x - 20) - pad;
+        stripBox = Qt.rect(left, ey - pad, sw - left, (screen?.height ?? 0) - ey + pad);
         flightRing = Math.random() < 0.5;
-        flightW = sw - at.x + 24;
         flightPos = at;
-        life.flight = { sx: at.x, sy: at.y, at: life.t, total: total };
+        spin = 0;
+        life.flight = { sx: at.x, sy: at.y, ex: ex, ey: ey, at: life.t, total: total };
         flying = true;
         busy(total + 3);
         // It looks up and round at it coming down the edge, and hops to meet
@@ -589,10 +602,8 @@ PanelWindow {
         const f = life.flight;
         if (!f)
             return;
-        const sw = screen?.width ?? 0;
         const u = t - f.at;
-        const ex = sw - 26;
-        const ey = f.sy + 0.42 * ((screen?.height ?? 0) - f.sy);
+        const ex = f.ex, ey = f.ey;
         const dy = originY + 6;
         spin = u;
         let x, y;
@@ -931,30 +942,52 @@ PanelWindow {
         scale: 1 / body.k
     }
 
-    // The falling trinket's own window, from the island to the beak; it
-    // takes no input and exists only while the trinket falls.
+    // The falling trinket's windows; they take no input and exist only
+    // while it falls. Both are there from the start and go together at the
+    // end, so the hand-over neither waits for a new window nor stalls on one
+    // going (Umbriel reconfigures every layer when one goes): the one not
+    // holding the trinket is never redrawn.
+    component FlightWindow: PanelWindow {
+        id: flightWindow
+        required property rect box
+        required property bool holds
+        screen: root.screen
+        anchors {
+            top: true
+            left: true
+        }
+        margins {
+            left: Math.round(box.x)
+            top: Math.round(box.y)
+        }
+        implicitWidth: Math.round(box.width)
+        implicitHeight: Math.round(box.height)
+        color: "transparent"
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.namespace: "umbriel-trinket"
+        mask: Region {}
+
+        Trinket {
+            visible: flightWindow.holds
+            x: root.flightPos.x - flightWindow.margins.left
+            y: root.flightPos.y - flightWindow.margins.top
+            ring: root.flightRing
+            spin: root.spin
+            glint: 0.5 + 0.5 * Math.sin(root.spin * 9)
+        }
+    }
     LazyLoader {
         active: root.flying
-        PanelWindow {
-            screen: root.screen
-            anchors {
-                top: true
-                right: true
-                bottom: true
-            }
-            implicitWidth: root.flightW
-            color: "transparent"
-            exclusionMode: ExclusionMode.Ignore
-            WlrLayershell.namespace: "umbriel-trinket"
-            mask: Region {}
-
-            Trinket {
-                x: root.flightPos.x - ((root.screen?.width ?? 0) - root.flightW)
-                y: root.flightPos.y
-                ring: root.flightRing
-                spin: root.spin
-                glint: 0.5 + 0.5 * Math.sin(root.spin * 9)
-            }
+        FlightWindow {
+            box: root.tossBox
+            holds: root.spin < root.tossFor
+        }
+    }
+    LazyLoader {
+        active: root.flying
+        FlightWindow {
+            box: root.stripBox
+            holds: root.spin >= root.tossFor
         }
     }
 
