@@ -18,7 +18,7 @@ ShellRoot {
         screen: root.primary
     }
 
-    Status {
+    Python {
         screen: root.primary
     }
 

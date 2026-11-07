@@ -26,5 +26,15 @@ Singleton {
     readonly property color viperOutline: "#0d0f12"
     readonly property color viperEye: "#c7ccd4"
 
+    // The python
+    readonly property color pyBody: "#5a6070"
+    readonly property color pyNet: "#1b1e24"
+    readonly property color pySaddle: "#717a8a"
+    readonly property color pyFleck: "#c7ccd4"
+    readonly property color pyBelly: "#8b94a3"
+    readonly property color pyOutline: "#0d0f12"
+    readonly property color pyEye: "#c7ccd4"
+    readonly property color pyShedEye: "#9fb4d6"
+
     readonly property string font: "JetBrainsMono Nerd Font"
 }

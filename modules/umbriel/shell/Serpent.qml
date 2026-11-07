@@ -5,6 +5,9 @@
 // spine points and the lighting inputs. The shadow is the same mesh again,
 // drawn first and offset (serpent-shadow.frag).
 //
+// skinRect: the part of the skin item this body wears (default: all of it),
+// so several bodies can share one strip, each its own stretch of it.
+//
 // spine: control points [{x, y}] in this item's coordinates, neck first.
 // widths: width scales per control point; by default the plain taper of
 // serpent-spine.js widthAt. head and tail are the spine's end samples
@@ -25,6 +28,7 @@ Item {
     id: serpent
 
     property Item skin
+    property rect skinRect
     property real bodyWidth: 20
     property var spine: []
     // Placed by index: widths[k] lands at k / (length - 1) of the body, which
@@ -55,6 +59,7 @@ Item {
     onSpineChanged: priv.markDirty()
     onWidthsChanged: priv.markDirty()
     onSkinChanged: strip.scheduleUpdate()
+    onSkinRectChanged: strip.scheduleUpdate()
     Component.onCompleted: {
         priv.rebuild();
         strip.scheduleUpdate();
@@ -121,6 +126,7 @@ Item {
     ShaderEffectSource {
         id: strip
         sourceItem: serpent.skin
+        sourceRect: serpent.skinRect
         hideSource: true
         live: false
         visible: false
