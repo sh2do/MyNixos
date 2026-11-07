@@ -6,8 +6,8 @@
   # The top pill's visualiser reads cava's raw output while music plays.
   home.packages = [ pkgs.cava ];
 
-  # The raven (RICE_MASCOT=raven) is Umbriel's: its art and moods are copied in
-  # from there, so both shells draw it from one source.
+  # The raven (RICE_MASCOT=raven) is Umbriel's: its art, life and moods are
+  # copied in from there, so both shells draw it from one source.
   xdg.configFile."quickshell/rice".source = pkgs.runCommand "rice-shell" { } ''
     cp -r ${lib.cleanSourceWith {
       src = ./.;
@@ -15,6 +15,7 @@
     }} $out
     chmod -R u+w $out
     cp ${../umbriel/shell/RavenBody.qml} $out/RavenBody.qml
+    cp ${../umbriel/shell/RavenLife.qml} $out/RavenLife.qml
     cp ${../umbriel/shell/raven-mood.js} $out/raven-mood.js
   '';
 

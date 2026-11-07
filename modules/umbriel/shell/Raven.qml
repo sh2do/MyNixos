@@ -1,7 +1,9 @@
 // Bottom-right corner: a raven perched on the status row's left edge
 // (Status.qml), facing the screen, and its hoard of up to three trinkets on
 // the row behind it. Drawn once (RavenBody.qml); every motion is a
-// transform of its parts.
+// transform of its parts. Its pose and its life are RavenLife.qml, shared
+// with the niri bar's raven; the island, the trinkets and the hoard are its
+// own, here.
 //
 // Always alive (raven-mood.js times it):
 // - breathing, a 1.5% swell of the chest every 4 s, and the faint sheen on
@@ -83,32 +85,6 @@ PanelWindow {
     readonly property real originX: (screen?.width ?? 0) - margins.right - width
     readonly property real originY: (screen?.height ?? 0) - margins.bottom - height
 
-    // The pose (RavenBody's), and where the bird stands: hopX from home,
-    // hopY up from the perch, facing 1 left and -1 right.
-    property real breath: 1
-    property real puff: 0
-    property real lean: 0
-    property real headAngle: 0
-    property real headFlip: 1
-    property real headDrop: 0
-    property bool headTucked: false
-    property real beakOpen: 0
-    property real hackles: 0
-    property real blink: 0
-    property real lid: 0
-    property real gazeX: 0
-    property real gazeY: 0
-    property real wingLift: 0
-    property real preening: 0
-    property real tailAngle: 0
-    property real tuck: 0
-    property real caw: 0
-    property real sheen: 0.16
-    property real sheenShift: 0
-    property real hopX: 0
-    property real hopY: 0
-    property real facing: 1
-
     // The hoard (Mood.hoardAdd/hoardStep) and each slot's kind of trinket.
     property var hoard: []
     // Each slot's opacity as it fades: updated without rebuilding the
@@ -133,318 +109,44 @@ PanelWindow {
     property bool dropRing: true
     property point dropPos: Qt.point(0, 0)
 
-    QtObject {
+    // The pose and the life common to both ravens (RavenLife.qml), and the
+    // catch's own state.
+    U.RavenLife {
         id: life
 
-        // Seconds of life (the clock's, so it stops while paused).
-        property real t: 0
-        property var tweens: []
-        property var events: []
-        property var hop: null
+        fastHz: 1000
+        moving: flight !== null || drop !== null
+        night: root.night
+        debug: root.debug
+        k: body.k
+        homeX: root.homeX
+        perchY: root.perchY
+        reachLeft: root.homeX - root.rowLeft
+        reachRight: root.width - 30 - root.homeX
+        pointerX: hover.hovered ? near.x + hover.last.x : NaN
+        pointerY: hover.hovered ? near.y + hover.last.y : NaN
+        movedAt: root.movedAt
+        onStepped: t => {
+            root.stepFlight(t);
+            root.stepDrop(t);
+            if (t - hoardAt >= 5 && root.hoard.length > 0) {
+                hoardAt = t;
+                const stepped = Mood.hoardStep(root.hoard, Date.now());
+                if (stepped.length !== root.hoard.length)
+                    root.setHoard(stepped);
+                else
+                    root.fades = root.fadesOf(stepped);
+            }
+        }
+
         property var flight: null
         property var drop: null
-        property real nextBlink: 3
-        property real nextLook: 5
-        property real nextRuffle: 0
-        property real nextPreen: 0
-        // A long action (caw, catch, preen, ruffle, peck) holds off the
-        // idle habits until then.
-        property real busyUntil: 0
-        property var watch: null
-        property bool asleep: false
-        property real awakeUntil: 0
         // From a trinket's fall until the raven is home again; a caw or
         // another trinket meanwhile waits.
         property bool catching: false
         property int cawsWaiting: 0
         property var queued: []
         property real hoardAt: 0
-    }
-
-    Component.onCompleted: {
-        life.nextRuffle = Mood.nextIdle("ruffle", 0, Math.random) / 1000;
-        life.nextPreen = Mood.nextIdle("preen", 0, Math.random) / 1000;
-        if (debug) {
-            life.nextRuffle = 10;
-            life.nextPreen = 20;
-        }
-    }
-
-    // Tweens: ease `prop` to `to` over `dur` s, starting `delay` s from now;
-    // `hz` is the clock rate it needs. A tween that starts takes its property
-    // over from any running one.
-    function tween(prop, to, dur, delay, hz) {
-        life.tweens.push({ p: prop, to: to, dur: Math.max(dur, 0.001), at: life.t + (delay || 0), from: NaN, hz: hz || 30, dead: false });
-        rate();
-    }
-    function after(delay, fn) {
-        life.events.push({ at: life.t + delay, fn: fn });
-        rate();
-    }
-    // A new behaviour: what was still to come of the last one (a look's
-    // return, a caw's lingering gaze) gives way; blinks go on.
-    function interrupt() {
-        life.tweens = life.tweens.filter(w => w.at <= life.t || w.p === "blink");
-        // Feathers lifted in a preen settle whatever comes next.
-        if (preening > 0)
-            tween("preening", 0, 0.2);
-    }
-    function busy(secs) {
-        life.busyUntil = Math.max(life.busyUntil, life.t + secs);
-    }
-    // A hop from hopX to x (offset from home), `h` px high, over `dur` s; at
-    // `turnTo` (if given) it turns round in the air.
-    function hopTo(x, h, dur, turnTo, onLand) {
-        life.hop = { x0: hopX, x1: x, h: h, at: life.t, dur: dur, f0: facing, f1: turnTo ?? facing, onLand: onLand ?? null };
-        rate();
-    }
-
-    // The clock's rate: the display's during a hop, a fall or a fast tween,
-    // 30 Hz for the head's moves, idleHz otherwise. It goes up a tick ahead
-    // of what is due.
-    property int need: 0
-    function rate() {
-        let hz = 0;
-        if (life.hop || life.flight || life.drop) {
-            hz = 1000;
-        } else {
-            for (const w of life.tweens)
-                if (!w.dead && life.t >= w.at - 1.2 / idleHz)
-                    hz = Math.max(hz, w.hz);
-            for (const e of life.events)
-                if (life.t >= e.at - 1.2 / idleHz)
-                    hz = Math.max(hz, 30);
-        }
-        need = hz;
-    }
-
-    // dt: seconds since the last tick, already clamped by its clock.
-    function tick(dt) {
-        life.t += dt;
-        const t = life.t;
-
-        // The slow life: breath always, the sheen's drift while awake.
-        breath = 1 + 0.0075 * (1 - Math.cos(2 * Math.PI * t / 4));
-        if (!life.asleep) {
-            sheen = 0.16 + 0.06 * Math.sin(2 * Math.PI * t / 23);
-            sheenShift = 0.15 * (1 + Math.sin(2 * Math.PI * t / 41));
-        }
-
-        const due = life.events.filter(e => t >= e.at);
-        if (due.length > 0) {
-            life.events = life.events.filter(e => t < e.at);
-            for (const e of due)
-                e.fn();
-        }
-
-        for (const w of life.tweens) {
-            if (w.dead || t < w.at)
-                continue;
-            if (isNaN(w.from)) {
-                w.from = root[w.p];
-                for (const o of life.tweens)
-                    if (o !== w && o.p === w.p && !isNaN(o.from))
-                        o.dead = true;
-            }
-            const u = Math.min((t - w.at) / w.dur, 1);
-            root[w.p] = w.from + (w.to - w.from) * u * u * (3 - 2 * u);
-            if (u >= 1)
-                w.dead = true;
-        }
-        life.tweens = life.tweens.filter(w => !w.dead);
-
-        stepHop(t);
-        stepFlight(t);
-        stepDrop(t);
-        if (t - life.hoardAt >= 5 && hoard.length > 0) {
-            life.hoardAt = t;
-            const stepped = Mood.hoardStep(hoard, Date.now());
-            if (stepped.length !== hoard.length)
-                setHoard(stepped);
-            else
-                fades = fadesOf(stepped);
-        }
-        habits(t, dt);
-        rate();
-    }
-
-    function stepHop(t) {
-        const h = life.hop;
-        if (!h)
-            return;
-        // A crouch, then the jump: up and over in a parabola, wings beating
-        // twice, legs swung back.
-        const u = Math.min((t - h.at) / h.dur, 1);
-        const c = 0.15;
-        if (u < c) {
-            hopY = -1.5 * Math.sin(Math.PI * u / c);
-        } else {
-            const p = (u - c) / (1 - c);
-            hopX = h.x0 + (h.x1 - h.x0) * p * p * (3 - 2 * p);
-            hopY = 4 * h.h * p * (1 - p);
-            tuck = Math.sin(Math.PI * p);
-            wingLift = Math.sin(Math.PI * p) * (0.6 + 0.4 * Math.sin(4 * Math.PI * p));
-            lean = -7 * Math.sin(Math.PI * p);
-            tailAngle = 6 * Math.sin(2 * Math.PI * p);
-            if (h.f1 !== h.f0) {
-                const q = Math.min(Math.max((p - 0.3) / 0.35, 0), 1);
-                facing = h.f0 * Math.cos(Math.PI * q * q * (3 - 2 * q));
-            }
-        }
-        if (u >= 1) {
-            life.hop = null;
-            hopX = h.x1;
-            hopY = 0;
-            tuck = 0;
-            wingLift = 0;
-            lean = 0;
-            tailAngle = 0;
-            facing = h.f1;
-            if (h.onLand)
-                h.onLand();
-        }
-    }
-
-    // Habits, the pointer and sleep.
-    function habits(t, dt) {
-        const free = t >= life.busyUntil && !life.hop;
-        const night = root.night && t >= life.awakeUntil;
-        if (free && night && !life.asleep)
-            sleep();
-        else if (free && !night && life.asleep)
-            wake();
-        if (life.asleep)
-            return;
-
-        if (t >= life.nextBlink) {
-            life.nextBlink = Mood.nextIdle("blink", t * 1000, Math.random) / 1000;
-            tween("blink", 1, 0.07);
-            tween("blink", 0, 0.1, 0.12);
-        }
-
-        // The pointer, unless something else holds its attention.
-        const watching = life.watch && life.watch.phase !== "idle";
-        if (free || watching) {
-            const p = hover.hovered ? { x: near.x + hover.last.x, y: near.y + hover.last.y, still: Date.now() - root.movedAt } : null;
-            const was = life.watch?.phase ?? "idle";
-            life.watch = Mood.watchState(life.watch, p, dt * 1000);
-            if (life.watch.phase !== was)
-                onWatch(was, life.watch);
-            if (life.watch.phase !== "idle")
-                return;
-        }
-        if (!free)
-            return;
-
-        if (t >= life.nextPreen) {
-            life.nextPreen = debug ? t + 20 : Mood.nextIdle("preen", t * 1000, Math.random) / 1000;
-            preen();
-        } else if (t >= life.nextRuffle) {
-            life.nextRuffle = debug ? t + 20 : Mood.nextIdle("ruffle", t * 1000, Math.random) / 1000;
-            ruffle();
-        } else if (t >= life.nextLook) {
-            life.nextLook = Mood.nextIdle("look", t * 1000, Math.random) / 1000;
-            look();
-        }
-    }
-
-    // Behaviours
-
-    // A tilt or a turn of the head, held for a while; sometimes a quick
-    // double-take first.
-    function look() {
-        interrupt();
-        const a = -10 + Math.random() * 26;
-        const turn = Math.random() < 0.35 ? 0.72 : 1;
-        const hold = 1.5 + Math.random() * 2.5;
-        if (Math.random() < 0.3) {
-            tween("headAngle", a, 0.09);
-            tween("headAngle", 0, 0.09, 0.2);
-            tween("headAngle", a, 0.1, 0.4);
-            busy(0.6);
-        } else {
-            tween("headAngle", a, 0.25);
-        }
-        tween("headFlip", turn, 0.25);
-        tween("gazeX", Math.random() * 2 - 1, 0.2);
-        tween("gazeY", Math.random() * 1.2 - 0.6, 0.2);
-        tween("headAngle", 0, 0.35, hold);
-        tween("headFlip", 1, 0.35, hold);
-        tween("gazeX", 0, 0.3, hold);
-        tween("gazeY", 0, 0.3, hold);
-    }
-
-    // Feathers puffed and shaken out, then settled.
-    function ruffle() {
-        interrupt();
-        busy(1.8);
-        tween("puff", 0.06, 0.3);
-        tween("hackles", 0.7, 0.3);
-        for (let i = 0; i < 6; i++) {
-            tween("lean", i % 2 ? 2.5 : -2.5, 0.06, 0.32 + i * 0.07, 1000);
-            tween("tailAngle", i % 2 ? -4 : 4, 0.06, 0.32 + i * 0.07, 1000);
-        }
-        tween("wingLift", 0.14, 0.12, 0.34, 1000);
-        tween("wingLift", 0, 0.16, 0.6, 1000);
-        tween("lean", 0, 0.12, 0.76, 1000);
-        tween("tailAngle", 0, 0.12, 0.76, 1000);
-        tween("puff", nightPuff(), 0.6, 1.1);
-        tween("hackles", 0, 0.6, 1.1);
-    }
-
-    // The head turned right round over the shoulder, the beak worked into
-    // the feathers of the back, which part and lift round it, for ~2 s. The
-    // head stays in front of the wing (unlike asleep, tucked under it).
-    function preen() {
-        interrupt();
-        busy(3.3);
-        tween("headFlip", -1, 0.28);
-        tween("headAngle", 30, 0.35, 0.2);
-        tween("headDrop", 1.5, 0.35, 0.2);
-        tween("preening", 1, 0.2, 0.45);
-        for (let i = 0; i < 6; i++) {
-            tween("headAngle", i % 2 ? 27 : 33, 0.2, 0.6 + i * 0.32);
-            tween("beakOpen", i % 2 ? 0 : 0.18, 0.12, 0.6 + i * 0.32);
-        }
-        tween("beakOpen", 0, 0.12, 2.6);
-        tween("preening", 0, 0.3, 2.6);
-        tween("headAngle", 0, 0.3, 2.7);
-        tween("headDrop", 0, 0.3, 2.7);
-        tween("headFlip", 1, 0.28, 2.9);
-    }
-
-    // Turn the head to face `to` (1 forward, -1 back) over `dur` s; it goes
-    // under the wing's edge while it faces back.
-    function turnHead(to, dur, delay) {
-        tween("headFlip", to, dur, delay);
-        after(delay + dur / 2, () => root.headTucked = to < 0);
-    }
-
-    readonly property real nightPuffAmount: 0.08
-    function nightPuff() {
-        return life.asleep ? nightPuffAmount : 0;
-    }
-
-    function sleep() {
-        interrupt();
-        life.asleep = true;
-        tween("puff", nightPuffAmount, 1.2);
-        turnHead(-1, 0.4, 0);
-        tween("headAngle", 40, 0.8, 0.3);
-        tween("headDrop", 5, 0.8, 0.3);
-        tween("lid", 1, 0.3, 0.6);
-        tween("sheen", 0.12, 1.2);
-    }
-
-    function wake() {
-        interrupt();
-        life.asleep = false;
-        tween("lid", 0, 0.15);
-        tween("headAngle", 0, 0.3);
-        tween("headDrop", 0, 0.3);
-        turnHead(1, 0.3, 0.1);
-        tween("puff", 0, 0.8);
-        busy(0.5);
     }
 
     // The angle that points the beak at the island, as far as a neck goes.
@@ -464,83 +166,23 @@ PanelWindow {
             return;
         }
         // Woken, it first lifts its head out of the wing.
-        const d = life.asleep ? 0.45 : 0;
-        if (life.asleep || root.night) {
-            life.awakeUntil = life.t + 20;
-            if (life.asleep)
-                wake();
-        }
-        life.watch = null;
-        interrupt();
-        busy(4);
+        const d = life.rouse();
+        life.busy(4);
         const a = islandAngle();
-        if (headFlip < 0.9)
-            turnHead(1, 0.15, d);
-        tween("headAngle", a, 0.12, d, 1000);
-        tween("gazeX", -0.7, 0.12, d, 1000);
-        tween("gazeY", -0.7, 0.12, d, 1000);
-        // The call: gape, hackles up, a bob of the body and a flick of the
-        // tail, and the two arcs.
-        tween("beakOpen", 1, 0.08, d + 0.15, 1000);
-        tween("hackles", 1, 0.12, d + 0.15, 1000);
-        tween("lean", -6, 0.1, d + 0.15, 1000);
-        tween("tailAngle", 7, 0.1, d + 0.15, 1000);
-        tween("caw", 1, 0.75, d + 0.17, 1000);
-        tween("beakOpen", 0, 0.16, d + 0.48, 1000);
-        tween("lean", 0, 0.3, d + 0.4, 1000);
-        tween("tailAngle", 0, 0.3, d + 0.4, 1000);
-        tween("hackles", 0, 0.6, d + 0.6);
-        after(d + 0.95, () => root.caw = 0);
+        if (life.headFlip < 0.9)
+            life.turnHead(1, 0.15, d);
+        life.tween("headAngle", a, 0.12, d, 1000);
+        life.tween("gazeX", -0.7, 0.12, d, 1000);
+        life.tween("gazeY", -0.7, 0.12, d, 1000);
+        life.call(d);
         // Then it keeps an eye on the island a while.
-        tween("headAngle", 0, 0.5, d + 3.4);
-        tween("gazeX", 0, 0.4, d + 3.4);
-        tween("gazeY", 0, 0.4, d + 3.4);
+        life.tween("headAngle", 0, 0.5, d + 3.4);
+        life.tween("gazeX", 0, 0.4, d + 3.4);
+        life.tween("gazeY", 0, 0.4, d + 3.4);
     }
 
-    // The pointer: watch, hop at it, peck the air, settle back.
+    // The pointer (as `near` sees it): only a real move counts.
     property real movedAt: 0
-    function onWatch(was, s) {
-        const k = body.k;
-        const hx = homeX + hopX - 10 * k, hy = perchY - 43 * k;
-        interrupt();
-        if (s.phase === "watch") {
-            const behind = s.target.x > hx + 6;
-            const dx = Math.abs(s.target.x - hx), dy = hy - s.target.y;
-            const a = Math.min(Math.max(Math.atan2(dy, dx) * 180 / Math.PI, -35), 35);
-            turnHead(behind ? -1 : 1, 0.2, 0);
-            // Cocked: one eye on it.
-            tween("headAngle", a + 10, 0.25);
-            tween("gazeX", behind ? 0.8 : -0.8, 0.2);
-            tween("gazeY", Math.max(Math.min(-dy / 40, 1), -1), 0.2);
-        } else if (s.phase === "hop") {
-            const dir = s.target.x < homeX ? -1 : 1;
-            const x = Math.min(Math.max(dir * 8, rowLeft - homeX), width - 30 - homeX);
-            hopTo(x, 7, Mood.HOP / 1000);
-        } else if (s.phase === "peck") {
-            const dx = Math.abs(s.target.x - hx), dy = hy - s.target.y;
-            const a = Math.min(Math.max(Math.atan2(dy, dx) * 180 / Math.PI, -40), 30);
-            tween("lean", -14, 0.08, 0, 1000);
-            tween("headAngle", a - 8, 0.08, 0, 1000);
-            tween("beakOpen", 0.5, 0.05, 0.06, 1000);
-            tween("beakOpen", 0, 0.05, 0.12, 1000);
-            tween("beakOpen", 0.45, 0.05, 0.18, 1000);
-            tween("beakOpen", 0, 0.05, 0.24, 1000);
-        } else if (s.phase === "settle") {
-            tween("lean", 0, 0.15, 0, 1000);
-            tween("headAngle", 0, 0.3);
-            tween("gazeX", 0, 0.3);
-            tween("gazeY", 0, 0.3);
-            turnHead(1, 0.2, 0);
-            hopTo(0, 4, 0.45);
-            tween("puff", 0.03, 0.15, 0.45);
-            tween("puff", nightPuff(), 0.15, 0.6);
-        } else if (was === "watch") {
-            tween("headAngle", 0, 0.35);
-            tween("gazeX", 0, 0.3);
-            tween("gazeY", 0, 0.3);
-            turnHead(1, 0.25, 0);
-        }
-    }
 
     // The hoard
 
@@ -562,14 +204,8 @@ PanelWindow {
             life.queued = life.queued.concat([at]);
             return;
         }
-        if (life.asleep || root.night) {
-            life.awakeUntil = life.t + 20;
-            if (life.asleep)
-                wake();
-        }
-        life.watch = null;
+        life.rouse();
         life.catching = true;
-        interrupt();
         const total = tossFor + slideFor + arcFor;
         const sw = screen?.width ?? 0;
         // Where the toss meets the edge.
@@ -586,16 +222,16 @@ PanelWindow {
         spin = 0;
         life.flight = { sx: at.x, sy: at.y, ex: ex, ey: ey, at: life.t, total: total };
         flying = true;
-        busy(total + 3);
+        life.busy(total + 3);
         // It looks up and round at it coming down the edge, and hops to meet
         // it at the top of the hop.
-        turnHead(-1, 0.25, tossFor * 0.6);
-        tween("headAngle", 28, 0.3, tossFor * 0.6);
-        tween("gazeX", 0.6, 0.2, tossFor * 0.6);
-        tween("gazeY", -0.8, 0.2, tossFor * 0.6);
-        tween("headAngle", 12, 0.25, total - 0.3);
-        after(total - 0.29, () => root.hopTo(9, 12, 0.5));
-        rate();
+        life.turnHead(-1, 0.25, tossFor * 0.6);
+        life.tween("headAngle", 28, 0.3, tossFor * 0.6);
+        life.tween("gazeX", 0.6, 0.2, tossFor * 0.6);
+        life.tween("gazeY", -0.8, 0.2, tossFor * 0.6);
+        life.tween("headAngle", 12, 0.25, total - 0.3);
+        life.after(total - 0.29, () => life.hopTo(9, 12, 0.5));
+        life.rate();
     }
 
     function stepFlight(t) {
@@ -636,30 +272,30 @@ PanelWindow {
     function caught() {
         heldRing = flightRing;
         holding = true;
-        tween("beakOpen", 0.25, 0.05, 0, 1000);
-        tween("beakOpen", 0.08, 0.08, 0.06, 1000);
-        after(0.55, () => {
+        life.tween("beakOpen", 0.25, 0.05, 0, 1000);
+        life.tween("beakOpen", 0.08, 0.08, 0.06, 1000);
+        life.after(0.55, () => {
             // In the air it turns round; the head, still facing back, is
             // now forward.
-            root.hopTo(9, 4, 0.34, -1);
-            root.tween("headFlip", 1, 0.12, 0.1, 1000);
-            root.after(0.16, () => root.headTucked = false);
-            root.tween("headAngle", 0, 0.12, 0.1, 1000);
+            life.hopTo(9, 4, 0.34, -1);
+            life.tween("headFlip", 1, 0.12, 0.1, 1000);
+            life.after(0.16, () => life.headTucked = false);
+            life.tween("headAngle", 0, 0.12, 0.1, 1000);
         });
-        tween("lean", -13, 0.22, 1.0, 1000);
-        tween("headAngle", -42, 0.22, 1.0, 1000);
-        tween("headDrop", 4, 0.22, 1.0, 1000);
-        tween("gazeX", -0.4, 0.2, 1.0);
-        tween("gazeY", 0.8, 0.2, 1.0);
-        tween("beakOpen", 0.35, 0.06, 1.24, 1000);
-        after(1.26, root.release);
-        tween("beakOpen", 0, 0.1, 1.34, 1000);
-        tween("lean", 0, 0.25, 1.45, 1000);
-        tween("headAngle", 0, 0.25, 1.45, 1000);
-        tween("headDrop", 0, 0.25, 1.45, 1000);
-        tween("gazeX", 0, 0.3, 1.5);
-        tween("gazeY", 0, 0.3, 1.5);
-        after(1.9, () => root.hopTo(0, 6, 0.45, 1, root.nextTrinket));
+        life.tween("lean", -13, 0.22, 1.0, 1000);
+        life.tween("headAngle", -42, 0.22, 1.0, 1000);
+        life.tween("headDrop", 4, 0.22, 1.0, 1000);
+        life.tween("gazeX", -0.4, 0.2, 1.0);
+        life.tween("gazeY", 0.8, 0.2, 1.0);
+        life.tween("beakOpen", 0.35, 0.06, 1.24, 1000);
+        life.after(1.26, root.release);
+        life.tween("beakOpen", 0, 0.1, 1.34, 1000);
+        life.tween("lean", 0, 0.25, 1.45, 1000);
+        life.tween("headAngle", 0, 0.25, 1.45, 1000);
+        life.tween("headDrop", 0, 0.25, 1.45, 1000);
+        life.tween("gazeX", 0, 0.3, 1.5);
+        life.tween("gazeY", 0, 0.3, 1.5);
+        life.after(1.9, () => life.hopTo(0, 6, 0.45, 1, root.nextTrinket));
     }
 
     // Let go: it drops onto the row at its slot.
@@ -672,7 +308,7 @@ PanelWindow {
         dropPos = Qt.point(b.x, b.y);
         life.drop = { x0: b.x, y0: b.y, x1: slotX(slot), y1: perchY - 3, at: life.t, dur: 0.3, next: next, slot: slot };
         dropping = true;
-        rate();
+        life.rate();
     }
 
     function stepDrop(t) {
@@ -733,32 +369,11 @@ PanelWindow {
         life.cawsWaiting = 0;
         life.flight = null;
         life.drop = null;
-        life.hop = null;
         life.catching = false;
-        life.tweens = [];
-        life.events = [];
-        life.busyUntil = life.t;
         flying = false;
         holding = false;
         dropping = false;
-        hopX = 0;
-        hopY = 0;
-        facing = 1;
-        tuck = 0;
-        wingLift = 0;
-        lean = 0;
-        tailAngle = 0;
-        beakOpen = 0;
-        hackles = 0;
-        caw = 0;
-        headAngle = 0;
-        headFlip = 1;
-        headDrop = 0;
-        headTucked = false;
-        preening = 0;
-        gazeX = 0;
-        gazeY = 0;
-        need = 0;
+        life.perch();
     }
     onRunningChanged: if (!running) settleNow()
 
@@ -769,7 +384,7 @@ PanelWindow {
             life.cawsWaiting--;
             cawAtIsland();
             if (life.cawsWaiting > 0 || life.queued.length > 0)
-                after(1.2, nextTrinket);
+                life.after(1.2, nextTrinket);
             return;
         }
         if (life.queued.length > 0) {
@@ -804,16 +419,15 @@ PanelWindow {
 
     readonly property int fpsCap: parseInt(Quickshell.env("UMBRIEL_SERPENT_FPS") || "") || 0
     readonly property bool running: visible && !locked && !Cover.outputOff(UmbrielIpc.outputs, screen?.name ?? "")
-    readonly property bool fast: need >= 1000
-    readonly property int idleHz: 5
+    readonly property bool fast: life.need >= 1000
 
     FrameAnimation {
         running: root.running && root.fast && root.fpsCap <= 0
-        onTriggered: root.tick(Mood.clockStep(frameTime, 60))
+        onTriggered: life.tick(Mood.clockStep(frameTime, 60))
     }
     Timer {
         readonly property int hz: {
-            const want = root.need > 0 ? root.need : root.idleHz;
+            const want = life.need > 0 ? life.need : life.idleHz;
             return root.fpsCap > 0 ? Math.min(want, root.fpsCap) : want;
         }
         property real last: 0
@@ -823,7 +437,7 @@ PanelWindow {
         onRunningChanged: last = Date.now()
         onTriggered: {
             const now = Date.now();
-            root.tick(Mood.clockStep((now - last) / 1000, hz));
+            life.tick(Mood.clockStep((now - last) / 1000, hz));
             last = now;
         }
     }
@@ -900,8 +514,8 @@ PanelWindow {
 
     RavenBody {
         id: body
-        x: root.homeX + root.hopX - footX
-        y: root.perchY - perchY - root.hopY
+        x: root.homeX + life.hopX - footX
+        y: root.perchY - perchY - life.hopY
         size: 64
         bodyColor: U.Palette.ravenBody
         edgeColor: U.Palette.ravenEdge
@@ -910,28 +524,28 @@ PanelWindow {
         membraneColor: U.Palette.ravenMembrane
         transform: Scale {
             origin.x: body.footX
-            xScale: root.facing
+            xScale: life.facing
         }
-        breath: root.breath
-        puff: root.puff
-        lean: root.lean
-        headAngle: root.headAngle
-        headFlip: root.headFlip
-        headDrop: root.headDrop
-        headTucked: root.headTucked
-        beakOpen: root.beakOpen
-        hackles: root.hackles
-        blink: root.blink
-        lid: root.lid
-        gazeX: root.gazeX
-        gazeY: root.gazeY
-        wingLift: root.wingLift
-        preen: root.preening
-        tailAngle: root.tailAngle
-        tuck: root.tuck
-        caw: root.caw
-        sheen: root.sheen
-        sheenShift: root.sheenShift
+        breath: life.breath
+        puff: life.puff
+        lean: life.lean
+        headAngle: life.headAngle
+        headFlip: life.headFlip
+        headDrop: life.headDrop
+        headTucked: life.headTucked
+        beakOpen: life.beakOpen
+        hackles: life.hackles
+        blink: life.blink
+        lid: life.lid
+        gazeX: life.gazeX
+        gazeY: life.gazeY
+        wingLift: life.wingLift
+        preen: life.preening
+        tailAngle: life.tailAngle
+        tuck: life.tuck
+        caw: life.caw
+        sheen: life.sheen
+        sheenShift: life.sheenShift
     }
 
     // Held in the beak (it rides on the lower mandible).
