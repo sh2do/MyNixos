@@ -58,8 +58,26 @@ test_umbriel_shell_restarts_on_switch() {
   assert_contains "$(hm_eval home.activation.restartUmbrielShell.data)" "qs kill -c umbriel"
 }
 
+# The rofi glass: matugen renders the drips, rofi uses them, niri blurs behind rofi.
+test_menus_are_dripping_glass() {
+  local mg templates theme rules
+  mg=$(hm_eval 'xdg.configFile."matugen/config.toml".source' | jq -r .)
+  templates=$(hm_eval 'xdg.configFile."matugen/templates".source' | jq -r .)
+  theme=$(hm_eval 'xdg.configFile."rofi/theme.rasi".source' | jq -r .)
+  rules=$(hm_eval 'xdg.configFile."niri/rules.kdl".source' | jq -r .)
+  local name
+  for name in drips drip-row; do
+    assert_contains "$(cat "$mg")" "[templates.$name]"
+    assert_contains "$(cat "$mg")" 'rsvg-convert \"$HOME/.cache/rice/'"$name"'.svg\" -o \"$HOME/.cache/rice/'"$name"'.png\"'
+    assert_contains "$(cat "$templates/$name.svg")" "{{colors.primary.default.hex}}"
+    assert_contains "$(cat "$theme")" "~/.cache/rice/$name.png"
+  done
+  assert_contains "$(tr -s ' \n' ' ' < "$rules")" 'match namespace="^rofi$" geometry-corner-radius 16 background-effect { blur true }'
+}
+
 for t in test_polkit_agent_runs_in_every_graphical_session test_look_is_declared test_leftovers_are_gone \
-  test_umbriel_starship_only_on_its_own_terminals test_umbriel_keeps_clipboard_history test_umbriel_shell_restarts_on_switch; do
+  test_umbriel_starship_only_on_its_own_terminals test_umbriel_keeps_clipboard_history test_umbriel_shell_restarts_on_switch \
+  test_menus_are_dripping_glass; do
   run_test "$t"
 done
 finish

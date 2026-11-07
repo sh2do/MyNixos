@@ -40,6 +40,18 @@ input_path = "~/.config/matugen/templates/python.svg"
 output_path = "~/.cache/rice/python.svg"
 post_hook = "rsvg-convert -w 512 \"$HOME/.cache/rice/python.svg\" -o \"$HOME/.cache/rice/python.png\""
 
+# Water drips on the rofi menu glass (modules/rofi/theme.rasi): the strip under
+# the list and the selected row's pill with its drop.
+[templates.drips]
+input_path = "~/.config/matugen/templates/drips.svg"
+output_path = "~/.cache/rice/drips.svg"
+post_hook = "rsvg-convert \"$HOME/.cache/rice/drips.svg\" -o \"$HOME/.cache/rice/drips.png\""
+
+[templates.drip-row]
+input_path = "~/.config/matugen/templates/drip-row.svg"
+output_path = "~/.cache/rice/drip-row.svg"
+post_hook = "rsvg-convert \"$HOME/.cache/rice/drip-row.svg\" -o \"$HOME/.cache/rice/drip-row.png\""
+
 # GTK 3 and 4 (libadwaita named colours); Home Manager leaves gtk.css to us.
 [templates.gtk3]
 input_path = "~/.config/matugen/templates/gtk.css"

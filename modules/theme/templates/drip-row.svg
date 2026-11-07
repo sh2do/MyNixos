@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 382 44" width="382" height="44">
+  <!-- The selected rofi row: the primary pill with a drop hanging from its lower edge. A matugen template,
+       rendered to ~/.cache/rice/drip-row.png and used by modules/rofi/theme.rasi. Static. -->
+<defs>
+<radialGradient id="drop" cx="0.4" cy="0.35" r="0.65"><stop offset="0" stop-color="{{colors.primary.default.hex}}"/><stop offset="0.7" stop-color="{{colors.primary.default.hex}}"/><stop offset="1" stop-color="{{colors.primary_container.default.hex}}"/></radialGradient>
+<linearGradient id="pill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white" stop-opacity="0.16"/><stop offset="0.5" stop-color="white" stop-opacity="0"/></linearGradient>
+</defs>
+<rect width="382" height="38" rx="10" fill="{{colors.primary.default.hex}}"/>
+<rect width="382" height="38" rx="10" fill="url(#pill)"/>
+<path d="M 330 37.5 C 333.6 37.5 333.0 37.40 333.0 40.70 A 3.0 3.0 0 0 0 339.0 40.70 C 339.0 37.40 338.4 37.5 342 37.5 Z" fill="{{colors.primary.default.hex}}"/>
+<path d="M 333.0 40.70 A 3.0 3.0 0 0 0 339.0 40.70" fill="url(#drop)" stroke="{{colors.primary_container.default.hex}}" stroke-opacity="0.7" stroke-width="0.6"/>
+<ellipse cx="335.10" cy="39.80" rx="0.9" ry="0.6" transform="rotate(-30 335.10 39.80)" fill="white" fill-opacity="0.85"/>
+</svg>

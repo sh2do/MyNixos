@@ -64,3 +64,13 @@ window-rule {
     match app-id="^imv$"
     open-floating true
 }
+
+// rofi menus are glass (modules/rofi/theme.rasi): blur what's behind them,
+// rounded like the rofi window.
+layer-rule {
+    match namespace="^rofi$"
+    geometry-corner-radius 16
+    background-effect {
+        blur true
+    }
+}

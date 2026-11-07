@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 418 46" width="418" height="46">
+  <!-- Water left on the menu glass, in the wallpaper's colours: runs ending in beads, gathered at the bottom edge.
+       A matugen template, rendered to ~/.cache/rice/drips.png and used by modules/rofi/theme.rasi. Static. -->
+<defs>
+<linearGradient id="trail" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{{colors.on_surface.default.hex}}" stop-opacity="0"/><stop offset="0.45" stop-color="{{colors.on_surface.default.hex}}" stop-opacity="0.16"/><stop offset="1" stop-color="{{colors.primary.default.hex}}" stop-opacity="0.24"/></linearGradient>
+<radialGradient id="body" cx="0.42" cy="0.38" r="0.62"><stop offset="0" stop-color="{{colors.on_surface.default.hex}}" stop-opacity="0.10"/><stop offset="0.65" stop-color="{{colors.primary.default.hex}}" stop-opacity="0.16"/><stop offset="1" stop-color="{{colors.surface.default.hex}}" stop-opacity="0.55"/></radialGradient>
+<radialGradient id="shadow"><stop offset="0.5" stop-color="{{colors.surface.default.hex}}" stop-opacity="0.45"/><stop offset="1" stop-color="{{colors.surface.default.hex}}" stop-opacity="0"/></radialGradient>
+<linearGradient id="edge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{{colors.surface.default.hex}}" stop-opacity="0"/><stop offset="1" stop-color="{{colors.surface.default.hex}}" stop-opacity="0.5"/></linearGradient>
+<linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white" stop-opacity="0"/><stop offset="1" stop-color="white" stop-opacity="0.55"/></linearGradient>
+</defs>
+<path d="M 6 46 C 60 43.8 120 44.6 180 43.6 S 330 44.4 404 44.8 L 404 46 Z" fill="url(#body)"/>
+<g>
+<path d="M 26.28 -2 C 26.28 17.08 24.86 19.71 24.80 23.90 A 3.10 3.10 0 0 0 31.00 23.90 C 30.94 19.71 27.72 17.08 27.72 -2 Z" fill="url(#trail)" stroke="url(#edge)" stroke-width="0.6"/>
+<ellipse cx="28.67" cy="25.29" rx="3.26" ry="2.94" fill="url(#shadow)"/>
+<circle cx="27.90" cy="23.90" r="3.10" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 25.73 24.67 A 2.33 2.33 0 0 0 30.07 24.67" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.87" stroke-linecap="round"/>
+<ellipse cx="26.81" cy="22.60" rx="1.12" ry="0.74" transform="rotate(-30 26.81 22.60)" fill="white" fill-opacity="0.9"/>
+<path d="M 26.80 8.40 Q 26.19 18.94 26.19 21.11" fill="none" stroke="url(#sheen)" stroke-width="0.5" stroke-linecap="round"/>
+</g>
+<g>
+<path d="M 57.12 -2 C 57.12 29.12 52.49 32.86 52.40 38.80 A 4.40 4.40 0 0 0 61.20 38.80 C 61.11 32.86 58.88 29.12 58.88 -2 Z" fill="url(#trail)" stroke="url(#edge)" stroke-width="0.6"/>
+<ellipse cx="57.90" cy="40.78" rx="4.62" ry="4.18" fill="url(#shadow)"/>
+<circle cx="56.80" cy="38.80" r="4.40" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 53.72 39.90 A 3.30 3.30 0 0 0 59.88 39.90" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="1.23" stroke-linecap="round"/>
+<ellipse cx="55.26" cy="36.95" rx="1.58" ry="1.06" transform="rotate(-30 55.26 36.95)" fill="white" fill-opacity="0.9"/>
+<path d="M 57.80 16.80 Q 54.38 31.76 54.38 34.84" fill="none" stroke="url(#sheen)" stroke-width="0.5" stroke-linecap="round"/>
+</g>
+<g>
+<path d="M 78.39 3 C 78.39 9.96 77.24 11.83 77.20 14.80 A 2.20 2.20 0 0 0 81.60 14.80 C 81.56 11.83 79.61 9.96 79.61 3 Z" fill="url(#trail)" stroke="url(#edge)" stroke-width="0.6"/>
+<ellipse cx="79.95" cy="15.79" rx="2.31" ry="2.09" fill="url(#shadow)"/>
+<circle cx="79.40" cy="14.80" r="2.20" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 77.86 15.35 A 1.65 1.65 0 0 0 80.94 15.35" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.62" stroke-linecap="round"/>
+<ellipse cx="78.63" cy="13.88" rx="0.79" ry="0.53" transform="rotate(-30 78.63 13.88)" fill="white" fill-opacity="0.9"/>
+<path d="M 78.80 5.00 Q 78.19 11.28 78.19 12.82" fill="none" stroke="url(#sheen)" stroke-width="0.5" stroke-linecap="round"/>
+</g>
+<g>
+<path d="M 130.22 -2 C 130.22 24.48 128.87 27.54 128.80 32.40 A 3.60 3.60 0 0 0 136.00 32.40 C 135.93 27.54 131.78 24.48 131.78 -2 Z" fill="url(#trail)" stroke="url(#edge)" stroke-width="0.6"/>
+<ellipse cx="133.30" cy="34.02" rx="3.78" ry="3.42" fill="url(#shadow)"/>
+<circle cx="132.40" cy="32.40" r="3.60" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 129.88 33.30 A 2.70 2.70 0 0 0 134.92 33.30" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="1.01" stroke-linecap="round"/>
+<ellipse cx="131.14" cy="30.89" rx="1.30" ry="0.86" transform="rotate(-30 131.14 30.89)" fill="white" fill-opacity="0.9"/>
+<path d="M 130.80 14.40 Q 130.42 26.64 130.42 29.16" fill="none" stroke="url(#sheen)" stroke-width="0.5" stroke-linecap="round"/>
+</g>
+<g>
+<path d="M 151.34 24 C 151.34 35.68 149.65 37.89 149.60 41.40 A 2.60 2.60 0 0 0 154.80 41.40 C 154.75 37.89 152.66 35.68 152.66 24 Z" fill="url(#trail)" stroke="url(#edge)" stroke-width="0.6"/>
+<ellipse cx="152.85" cy="42.57" rx="2.73" ry="2.47" fill="url(#shadow)"/>
+<circle cx="152.20" cy="41.40" r="2.60" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 150.38 42.05 A 1.95 1.95 0 0 0 154.02 42.05" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.73" stroke-linecap="round"/>
+<ellipse cx="151.29" cy="40.31" rx="0.94" ry="0.62" transform="rotate(-30 151.29 40.31)" fill="white" fill-opacity="0.9"/>
+<path d="M 151.80 28.40 Q 150.77 37.24 150.77 39.06" fill="none" stroke="url(#sheen)" stroke-width="0.5" stroke-linecap="round"/>
+</g>
+<g>
+<path d="M 195.34 -2 C 195.34 13.68 192.75 15.89 192.70 19.40 A 2.60 2.60 0 0 0 197.90 19.40 C 197.85 15.89 196.66 13.68 196.66 -2 Z" fill="url(#trail)" stroke="url(#edge)" stroke-width="0.6"/>
+<ellipse cx="195.95" cy="20.57" rx="2.73" ry="2.47" fill="url(#shadow)"/>
+<circle cx="195.30" cy="19.40" r="2.60" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 193.48 20.05 A 1.95 1.95 0 0 0 197.12 20.05" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.73" stroke-linecap="round"/>
+<ellipse cx="194.39" cy="18.31" rx="0.94" ry="0.62" transform="rotate(-30 194.39 18.31)" fill="white" fill-opacity="0.9"/>
+<path d="M 195.80 6.40 Q 193.87 15.24 193.87 17.06" fill="none" stroke="url(#sheen)" stroke-width="0.5" stroke-linecap="round"/>
+</g>
+<g>
+<path d="M 237.07 -2 C 237.07 26.14 233.90 30.22 233.80 36.70 A 4.80 4.80 0 0 0 243.40 36.70 C 243.30 30.22 238.93 26.14 238.93 -2 Z" fill="url(#trail)" stroke="url(#edge)" stroke-width="0.6"/>
+<ellipse cx="239.80" cy="38.86" rx="5.04" ry="4.56" fill="url(#shadow)"/>
+<circle cx="238.60" cy="36.70" r="4.80" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 235.24 37.90 A 3.60 3.60 0 0 0 241.96 37.90" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="1.34" stroke-linecap="round"/>
+<ellipse cx="236.92" cy="34.68" rx="1.73" ry="1.15" transform="rotate(-30 236.92 34.68)" fill="white" fill-opacity="0.9"/>
+<path d="M 237.80 12.70 Q 235.96 29.02 235.96 32.38" fill="none" stroke="url(#sheen)" stroke-width="0.5" stroke-linecap="round"/>
+</g>
+<g>
+<path d="M 283.29 6 C 283.29 21.40 279.96 23.95 279.90 28.00 A 3.00 3.00 0 0 0 285.90 28.00 C 285.84 23.95 284.71 21.40 284.71 6 Z" fill="url(#trail)" stroke="url(#edge)" stroke-width="0.6"/>
+<ellipse cx="283.65" cy="29.35" rx="3.15" ry="2.85" fill="url(#shadow)"/>
+<circle cx="282.90" cy="28.00" r="3.00" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 280.80 28.75 A 2.25 2.25 0 0 0 285.00 28.75" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.84" stroke-linecap="round"/>
+<ellipse cx="281.85" cy="26.74" rx="1.08" ry="0.72" transform="rotate(-30 281.85 26.74)" fill="white" fill-opacity="0.9"/>
+<path d="M 283.80 13.00 Q 281.25 23.20 281.25 25.30" fill="none" stroke="url(#sheen)" stroke-width="0.5" stroke-linecap="round"/>
+</g>
+<g>
+<path d="M 304.42 -2 C 304.42 6.92 303.44 8.54 303.40 11.10 A 1.90 1.90 0 0 0 307.20 11.10 C 307.16 8.54 305.58 6.92 305.58 -2 Z" fill="url(#trail)" stroke="url(#edge)" stroke-width="0.6"/>
+<ellipse cx="305.78" cy="11.96" rx="1.99" ry="1.80" fill="url(#shadow)"/>
+<circle cx="305.30" cy="11.10" r="1.90" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 303.97 11.57 A 1.42 1.42 0 0 0 306.63 11.57" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.53" stroke-linecap="round"/>
+<ellipse cx="304.63" cy="10.30" rx="0.68" ry="0.46" transform="rotate(-30 304.63 10.30)" fill="white" fill-opacity="0.9"/>
+<path d="M 304.80 1.60 Q 304.25 8.06 304.25 9.39" fill="none" stroke="url(#sheen)" stroke-width="0.5" stroke-linecap="round"/>
+</g>
+<g>
+<path d="M 346.18 -2 C 346.18 26.52 343.98 29.84 343.90 35.10 A 3.90 3.90 0 0 0 351.70 35.10 C 351.62 29.84 347.82 26.52 347.82 -2 Z" fill="url(#trail)" stroke="url(#edge)" stroke-width="0.6"/>
+<ellipse cx="348.78" cy="36.86" rx="4.09" ry="3.70" fill="url(#shadow)"/>
+<circle cx="347.80" cy="35.10" r="3.90" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 345.07 36.08 A 2.92 2.92 0 0 0 350.53 36.08" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="1.09" stroke-linecap="round"/>
+<ellipse cx="346.44" cy="33.46" rx="1.40" ry="0.94" transform="rotate(-30 346.44 33.46)" fill="white" fill-opacity="0.9"/>
+<path d="M 346.80 15.60 Q 345.66 28.86 345.66 31.59" fill="none" stroke="url(#sheen)" stroke-width="0.5" stroke-linecap="round"/>
+</g>
+<g>
+<path d="M 380.35 10 C 380.35 17.00 378.05 19.12 378.00 22.50 A 2.50 2.50 0 0 0 383.00 22.50 C 382.95 19.12 381.65 17.00 381.65 10 Z" fill="url(#trail)" stroke="url(#edge)" stroke-width="0.6"/>
+<ellipse cx="381.12" cy="23.62" rx="2.62" ry="2.38" fill="url(#shadow)"/>
+<circle cx="380.50" cy="22.50" r="2.50" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 378.75 23.12 A 1.88 1.88 0 0 0 382.25 23.12" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.70" stroke-linecap="round"/>
+<ellipse cx="379.62" cy="21.45" rx="0.90" ry="0.60" transform="rotate(-30 379.62 21.45)" fill="white" fill-opacity="0.9"/>
+<path d="M 380.80 12.00 Q 379.12 18.50 379.12 20.25" fill="none" stroke="url(#sheen)" stroke-width="0.5" stroke-linecap="round"/>
+</g>
+<ellipse cx="44.40" cy="11.72" rx="1.68" ry="1.52" fill="url(#shadow)"/>
+<circle cx="44.00" cy="11.00" r="1.60" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 42.88 11.40 A 1.20 1.20 0 0 0 45.12 11.40" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.50" stroke-linecap="round"/>
+<ellipse cx="43.44" cy="10.33" rx="0.58" ry="0.38" transform="rotate(-30 43.44 10.33)" fill="white" fill-opacity="0.9"/>
+<ellipse cx="103.53" cy="31.95" rx="2.21" ry="1.99" fill="url(#shadow)"/>
+<circle cx="103.00" cy="31.00" r="2.10" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 101.53 31.52 A 1.58 1.58 0 0 0 104.47 31.52" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.59" stroke-linecap="round"/>
+<ellipse cx="102.27" cy="30.12" rx="0.76" ry="0.50" transform="rotate(-30 102.27 30.12)" fill="white" fill-opacity="0.9"/>
+<ellipse cx="113.28" cy="8.49" rx="1.16" ry="1.04" fill="url(#shadow)"/>
+<circle cx="113.00" cy="8.00" r="1.10" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 112.23 8.28 A 0.83 0.83 0 0 0 113.77 8.28" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.50" stroke-linecap="round"/>
+<ellipse cx="112.61" cy="7.54" rx="0.40" ry="0.26" transform="rotate(-30 112.61 7.54)" fill="white" fill-opacity="0.9"/>
+<ellipse cx="171.35" cy="14.63" rx="1.47" ry="1.33" fill="url(#shadow)"/>
+<circle cx="171.00" cy="14.00" r="1.40" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 170.02 14.35 A 1.05 1.05 0 0 0 171.98 14.35" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.50" stroke-linecap="round"/>
+<ellipse cx="170.51" cy="13.41" rx="0.50" ry="0.34" transform="rotate(-30 170.51 13.41)" fill="white" fill-opacity="0.9"/>
+<ellipse cx="214.45" cy="37.81" rx="1.89" ry="1.71" fill="url(#shadow)"/>
+<circle cx="214.00" cy="37.00" r="1.80" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 212.74 37.45 A 1.35 1.35 0 0 0 215.26 37.45" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.50" stroke-linecap="round"/>
+<ellipse cx="213.37" cy="36.24" rx="0.65" ry="0.43" transform="rotate(-30 213.37 36.24)" fill="white" fill-opacity="0.9"/>
+<ellipse cx="262.32" cy="9.59" rx="1.37" ry="1.23" fill="url(#shadow)"/>
+<circle cx="262.00" cy="9.00" r="1.30" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 261.09 9.32 A 0.98 0.98 0 0 0 262.91 9.32" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.50" stroke-linecap="round"/>
+<ellipse cx="261.55" cy="8.45" rx="0.47" ry="0.31" transform="rotate(-30 261.55 8.45)" fill="white" fill-opacity="0.9"/>
+<ellipse cx="268.60" cy="41.08" rx="2.52" ry="2.28" fill="url(#shadow)"/>
+<circle cx="268.00" cy="40.00" r="2.40" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 266.32 40.60 A 1.80 1.80 0 0 0 269.68 40.60" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.67" stroke-linecap="round"/>
+<ellipse cx="267.16" cy="38.99" rx="0.86" ry="0.58" transform="rotate(-30 267.16 38.99)" fill="white" fill-opacity="0.9"/>
+<ellipse cx="326.43" cy="19.77" rx="1.78" ry="1.61" fill="url(#shadow)"/>
+<circle cx="326.00" cy="19.00" r="1.70" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 324.81 19.43 A 1.27 1.27 0 0 0 327.19 19.43" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.50" stroke-linecap="round"/>
+<ellipse cx="325.40" cy="18.29" rx="0.61" ry="0.41" transform="rotate(-30 325.40 18.29)" fill="white" fill-opacity="0.9"/>
+<ellipse cx="366.30" cy="9.54" rx="1.26" ry="1.14" fill="url(#shadow)"/>
+<circle cx="366.00" cy="9.00" r="1.20" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 365.16 9.30 A 0.90 0.90 0 0 0 366.84 9.30" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.50" stroke-linecap="round"/>
+<ellipse cx="365.58" cy="8.50" rx="0.43" ry="0.29" transform="rotate(-30 365.58 8.50)" fill="white" fill-opacity="0.9"/>
+<ellipse cx="397.48" cy="41.85" rx="1.99" ry="1.80" fill="url(#shadow)"/>
+<circle cx="397.00" cy="41.00" r="1.90" fill="url(#body)" stroke="{{colors.surface.default.hex}}" stroke-opacity="0.55" stroke-width="0.7"/>
+<path d="M 395.67 41.48 A 1.42 1.42 0 0 0 398.33 41.48" fill="none" stroke="{{colors.primary.default.hex}}" stroke-opacity="0.55" stroke-width="0.53" stroke-linecap="round"/>
+<ellipse cx="396.33" cy="40.20" rx="0.68" ry="0.46" transform="rotate(-30 396.33 40.20)" fill="white" fill-opacity="0.9"/>
+</svg>

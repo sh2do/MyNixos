@@ -56,6 +56,20 @@ test_wallpaper_sets() {
   grep -qx "rice-wall set $RICE_WALL_DIR/a.jpg" "$TMP/calls"
 }
 
+# Until rice-wall has rendered the drip pill, the selected row falls back to a plain one.
+test_selected_row_without_drips_is_plain() {
+  stubs
+  RICE_TEST_CHOICE="" bash "$RICE_MENU" power
+  grep -qF 'element selected { background-color: @primary; }' "$TMP/calls"
+}
+
+test_selected_row_with_drips_uses_them() {
+  stubs
+  : > "$RICE_STATE_DIR/drip-row.png"
+  RICE_TEST_CHOICE="" bash "$RICE_MENU" power
+  ! grep -qF 'element selected { background-color: @primary; }' "$TMP/calls"
+}
+
 test_cancel_does_nothing() {
   stubs
   local code=0
@@ -72,6 +86,7 @@ test_unknown_mode() {
 }
 
 for t in test_power_shutdown test_power_lock test_logout_niri test_logout_umbriel test_profile_sets test_wallpaper_sets \
+  test_selected_row_without_drips_is_plain test_selected_row_with_drips_uses_them \
   test_cancel_does_nothing test_unknown_mode; do
   run_test "$t"
 done

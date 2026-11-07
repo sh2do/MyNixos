@@ -12,6 +12,12 @@
     on-surface-variant: {{colors.on_surface_variant.default.hex}};
     outline:            {{colors.outline.default.hex}};
     error:              {{colors.error.default.hex}};
+
+    /* the menu glass: translucent surfaces and a light edge */
+    glass:              {{colors.surface.default.hex}}b3;
+    glass-raised:       {{colors.surface_container_high.default.hex}}99;
+    glass-panel:        {{colors.surface_container.default.hex}}80;
+    glass-edge:         {{colors.on_surface.default.hex}}2e;
 }
 
 imagebox {

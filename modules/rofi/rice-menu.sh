@@ -13,9 +13,14 @@ theme=${RICE_ROFI_THEME:-$HOME/.config/rofi/theme.rasi}
 # Used when rice-wall hasn't generated colours yet (first boot).
 fallback_colours='* { primary: #dbbce5; on-primary: #3e2848; primary-container: #62496c; secondary: #d2c1d4; tertiary: #f6b6c1; surface: #151315; surface-container: #211f21; surface-high: #2c292c; on-surface: #e7e1e4; on-surface-variant: #cec3ce; outline: #978e97; error: #ffb4ab; }'
 
+# The selected row is drawn from a matugen render (drip-row.png, a pill with a
+# drop under it); until rice-wall has made one it is a plain pill.
+plain_row='element selected { background-color: @primary; }'
+
 theme_args() {
   local args=(-theme "$theme")
   [ -f "$state_dir/colors.rasi" ] || args+=(-theme-str "$fallback_colours")
+  [ -f "$state_dir/drip-row.png" ] || args+=(-theme-str "$plain_row")
   printf '%s\0' "${args[@]}"
 }
 
@@ -120,7 +125,7 @@ wallpaper() {
   local choice
   choice=$({ find -L "$wall_dir" "$saved_dir" -maxdepth 1 -type f 2>/dev/null || true; } | sort |
     while IFS= read -r f; do printf '%s\0icon\x1f%s\n' "$f" "$f"; done |
-    pick "wallpaper" -show-icons -theme-str 'listview { columns: 3; lines: 3; } element { orientation: vertical; } element-icon { size: 160px; } element-text { enabled: false; }')
+    pick "wallpaper" -show-icons -theme-str 'listview { columns: 3; lines: 3; spacing: 4px; } element { orientation: vertical; padding: 10px; } element selected { background-color: @primary; background-image: linear-gradient(to bottom, #00000000, #00000000); } element-icon { size: 160px; } element-text { enabled: false; }')
   [ -n "$choice" ] && rice-wall set "$choice"
 }
 
