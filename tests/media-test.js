@@ -15,6 +15,19 @@ vm.runInContext(src, Media);
 const plain = a => Array.from(a);
 
 const tests = {
+  test_pick_player_keeps_paused_player() {
+    const a = { playbackState: "Playing" }, b = { playbackState: "Paused" }, c = { playbackState: "Stopped" };
+    // A playing player always wins.
+    assert.strictEqual(Media.pickPlayer([b, a], b, true, "Playing", "Paused"), a);
+    // Paused after playing: kept while asked to keep it, so the pill can resume it.
+    assert.strictEqual(Media.pickPlayer([b], b, true, "Playing", "Paused"), b);
+    // Not kept once the grace and hover are over.
+    assert.strictEqual(Media.pickPlayer([b], b, false, "Playing", "Paused"), null);
+    // A stopped or vanished player is never kept.
+    assert.strictEqual(Media.pickPlayer([c], c, true, "Playing", "Paused"), null);
+    assert.strictEqual(Media.pickPlayer([], b, true, "Playing", "Paused"), null);
+    assert.strictEqual(Media.pickPlayer([], null, true, "Playing", "Paused"), null);
+  },
   test_parse_cava() {
     const max = Media.CAVA_MAX;
     assert.deepStrictEqual(plain(Media.parseCava(`0;${max / 2};${max};${max / 4};0;`, 5)), [0, 0.5, 1, 0.25, 0]);

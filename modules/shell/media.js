@@ -58,3 +58,16 @@ function pulse(t, bars) {
         out.push(0.4 + 0.25 * Math.sin(t * (2.1 + i * 0.7) + i * 1.3) + 0.1 * Math.sin(t * 5.3 + i));
     return out;
 }
+
+// Which player the pill shows. A playing one always wins. The last one that
+// played (held) stays while it is paused and `keep` is true (the pointer is on
+// the pill, or it was paused moments ago), so the pill's play button can
+// resume it instead of the pill collapsing the moment you pause.
+function pickPlayer(players, held, keep, playingState, pausedState) {
+    for (var i = 0; i < players.length; i++)
+        if (players[i].playbackState === playingState)
+            return players[i];
+    if (held && keep && held.playbackState === pausedState && players.indexOf(held) >= 0)
+        return held;
+    return null;
+}

@@ -21,8 +21,24 @@ PanelWindow {
     required property var modelData
     screen: modelData
 
-    readonly property var player: Mpris.players.values.find(p => p.playbackState === MprisPlaybackState.Playing) ?? null
+    // The last player that played: kept (paused) while the pointer is on the
+    // pill or for a few seconds after pausing, so play resumes it from here.
+    property var held: null
+    readonly property var player: Media.pickPlayer(Mpris.players.values, held, hovered || pauseGrace.running,
+        MprisPlaybackState.Playing, MprisPlaybackState.Paused)
+    // Media mode: a player is shown, playing or briefly paused.
     readonly property bool playing: player !== null
+    readonly property bool isPlaying: player?.playbackState === MprisPlaybackState.Playing
+    onIsPlayingChanged: {
+        if (isPlaying)
+            held = player;
+        else if (held)
+            pauseGrace.restart();
+    }
+    Timer {
+        id: pauseGrace
+        interval: 4000
+    }
     readonly property string text: playing
         ? [player.trackArtist, player.trackTitle].filter(s => s && s.length).join(" — ")
         : Niri.focusedTitle
@@ -69,7 +85,7 @@ PanelWindow {
 
     // ---- The visualiser: cava's raw output, only while it plays and shows.
     readonly property int bars: 5
-    readonly property bool live: playing && shown
+    readonly property bool live: isPlaying && shown
     property var levels: Media.parseCava("", bars)
     // False once cava has failed for this track; then the bars pulse gently.
     property bool cavaOk: true
@@ -368,8 +384,7 @@ PanelWindow {
 
                         Text {
                             anchors.centerIn: parent
-                            // Playing is the only state the pill is shown in, so this is pause.
-                            text: parent.modelData.big ? "󰏤" : parent.modelData.glyph
+                            text: parent.modelData.big ? (root.isPlaying ? "󰏤" : "󰐊") : parent.modelData.glyph
                             color: parent.modelData.big ? Theme.textOnPrimary : Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: parent.modelData.big ? 15 : 13
