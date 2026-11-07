@@ -155,6 +155,35 @@ const tests = {
     assert.ok(f.x > k.x + 30, `flee went to ${f.x}`);
   },
 
+  test_gather_pulls_targets_toward_the_middle() {
+    const cx = pool.x + pool.w / 2;
+    for (const x of [pool.x, pool.x + 100, cx + 40, pool.x + pool.w]) {
+      const g = Koi.gather({ x: x, y: 12 }, cx, 0.3);
+      assert.ok(Math.abs(g.x - cx) <= Math.abs(x - cx) * 0.3 + 1e-9, `${x} -> ${g.x}`);
+      assert.ok(Math.sign(g.x - cx) === Math.sign(x - cx) || g.x === cx, "stays on its side");
+      assert.strictEqual(g.y, 12);
+    }
+  },
+
+  test_gather_with_full_spread_leaves_targets_alone() {
+    const g = Koi.gather({ x: 50, y: 20 }, 300, 1);
+    assert.deepStrictEqual({ x: g.x, y: g.y }, { x: 50, y: 20 });
+  },
+
+  test_koi_cruising_to_gathered_targets_end_up_near_the_middle() {
+    const cx = pool.x + pool.w / 2, rand = rng(7);
+    const k = Koi.create(30, pool.x + 10, 19, 0);
+    let target = Koi.gather(Koi.cruise(k, rand, pool), cx, 0.25);
+    let far = 0;
+    for (let i = 0; i < 6000; i++) {
+      if (Math.hypot(k.x - target.x, k.y - target.y) < 8) target = Koi.gather(Koi.cruise(k, rand, pool), cx, 0.25);
+      Koi.steer(k, dt, target.x, target.y, 18);
+      Koi.keepIn(k, pool);
+      if (i > 2000 && Math.abs(k.x - cx) > 110) far++;
+    }
+    assert.ok(far < 200, `${far} ticks far from the middle`);
+  },
+
   test_heading_angles_stay_wrapped() {
     const k = Koi.create(30, 100, 19, 0);
     for (let i = 0; i < 2000; i++) Koi.steer(k, dt, 100 + 30 * Math.cos(i / 20), 19 + 8 * Math.sin(i / 20), 25);

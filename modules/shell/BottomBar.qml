@@ -7,7 +7,9 @@
 import QtQuick
 import QtQuick.Effects
 import Quickshell
+import Quickshell.Services.Mpris
 import Quickshell.Wayland
+import "media.js" as Media
 
 PanelWindow {
     id: root
@@ -149,6 +151,11 @@ PanelWindow {
             running: root.shown && visible
             hoverX: barHover.hovered ? barHover.point.position.x - 1 : NaN
             hoverY: barHover.hovered ? barHover.point.position.y - 1 : NaN
+            // The music the top pill plays.
+            readonly property var player: Media.pickPlayer(Mpris.players.values, null, false,
+                MprisPlaybackState.Playing, MprisPlaybackState.Paused)
+            music: player !== null
+            song: player ? [player.trackArtist, player.trackTitle].join("\n") : ""
         }
 
         // The glass over the koi: a reflection band under the rim, and the

@@ -124,3 +124,9 @@ function flee(k, px, py, pool) {
         t = at(-dir);
     return t;
 }
+
+// Drawn to the middle (the music, under the top pill): the same target, its
+// distance from cx scaled by `spread` (1 leaves it, 0 puts it on cx).
+function gather(pt, cx, spread) {
+    return { x: cx + (pt.x - cx) * spread, y: pt.y };
+}

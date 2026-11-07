@@ -2,10 +2,14 @@
 // the widgets. They wander, rest, and now and then touch the surface; they
 // come to look at a pointer held still, dart off from a fast one, rush to a
 // click on the water, and startle when a workspace or the volume changes.
+// While music plays they gather in the middle, under the top pill, flick
+// their tails to the bass and come up when the track changes.
 // Motion comes from koi-motion.js; colours from the wallpaper (Theme).
 import QtQuick
 import QtQuick.Shapes
+import Quickshell
 import "koi-motion.js" as Koi
+import "beat.js" as Beat
 
 Item {
     id: root
@@ -14,8 +18,84 @@ Item {
     // Pointer in this item's coordinates, NaN when it isn't over the bar.
     property real hoverX: NaN
     property real hoverY: NaN
+    // A player is playing, and its song (artist and title): set by the bar.
+    property bool music: false
+    property string song: ""
 
     clip: true
+
+    // ---- The music. RICE_KOI_FAKE_BEAT=1 plays a made-up beat (a bass kick
+    // every 600 ms, a swelling loudness) so it can be seen without a player.
+    readonly property bool fakeBeat: Quickshell.env("RICE_KOI_FAKE_BEAT") === "1"
+    readonly property bool musical: music || fakeBeat
+    // The shared cava runs for us only while the bar is up and music plays.
+    readonly property bool listening: running && music && !fakeBeat
+    onListeningChanged: listening ? Cava.acquire() : Cava.release()
+    Component.onDestruction: if (listening) Cava.release()
+    property var beatState: null
+    // The loudness, smoothed: brightens the caustic light a little.
+    property real loud: 0
+    onMusicalChanged: {
+        for (const k of fish) {
+            if (musical) {
+                // Pick a new (gathered) place to go now.
+                if (k.mode === "wander" || k.mode === "rest") k.until = t;
+            } else {
+                // Slow down, and spread out from the middle afterwards.
+                rest(k, 1200 + Math.random() * 1800);
+            }
+        }
+        if (!musical) {
+            beatState = null;
+            loud = 0;
+        }
+    }
+    // The last song heard, so pausing and playing on isn't a new track.
+    property string lastSong: ""
+    onSongChanged: {
+        if (song === "" || song === lastSong) return;
+        lastSong = song;
+        if (!running || !fish.length) return;
+        // The koi nearest the middle comes up to see.
+        let near = fish[0];
+        for (const k of fish)
+            if (Math.abs(k.x - width / 2) < Math.abs(near.x - width / 2)) near = k;
+        surface(near);
+        bubble(near.x + Math.cos(near.a) * 2, near.y + Math.sin(near.a) * 2 + 1);
+        rest(near, 1000 + Math.random() * 800);
+    }
+    // Levels from cava (or the fake beat), 0..1: [bass, ..., treble].
+    function levelsNow() {
+        if (fakeBeat) {
+            const kick = t % 600 < 80 ? 0.85 : 0.15;
+            return [kick, 0.3, 0.35 + 0.25 * Math.sin(t / 2000), 0.3, 0.2];
+        }
+        return Cava.ok ? Cava.levels : null;
+    }
+    // One tick of listening: beats flick a tail, loudness lights the water.
+    function listen() {
+        const lv = levelsNow();
+        if (!lv) return;
+        const r = Beat.beatStep(beatState, lv[0], t);
+        beatState = r.state;
+        if (r.beat) {
+            // The koi nearest a random spot flicks its tail; a ring above it.
+            const px = pool.x + Math.random() * pool.w;
+            let near = null;
+            for (const k of fish)
+                if (!near || Math.abs(k.x - px) < Math.abs(near.x - px)) near = k;
+            if (near) {
+                near.flickUntil = t + 260;
+                near.v = Math.max(near.v, near.kind.speed * 1.5);
+                ripple(near.x, near.y, 16);
+            }
+        }
+        let m = 0;
+        for (const x of lv) m += x;
+        m /= lv.length;
+        const next = loud + (m - loud) * 0.08;
+        if (Math.abs(next - loud) > 0.005) loud = next;
+    }
 
     // Where heads may go: the middle band, clear of the rounded ends.
     readonly property var pool: ({ x: 12, y: height / 2 - 7, w: width - 24, h: 14 })
@@ -179,22 +259,28 @@ Item {
             return Math.hypot(k.x - k.target.x, k.y - k.target.y) < 6 ? 2 : 22;
         // Wandering, with rests.
         if (k.mode !== "wander" || Math.hypot(k.x - k.target.x, k.y - k.target.y) < 8 || t > k.until) {
-            if (k.mode === "wander" && Math.random() < 0.3) {
+            if (k.mode === "wander" && Math.random() < (musical ? 0.1 : 0.3)) {
                 rest(k, 1500 + Math.random() * 2500);
                 return 2;
             }
             k.mode = "wander";
             k.target = Koi.cruise(k, Math.random, pool);
+            if (musical)
+                k.target = Koi.gather(k.target, pool.x + pool.w / 2, 0.3);
             k.until = t + 12000;
         }
-        if (t > k.nextKiss) {
-            // Up to the surface for a moment.
-            ripple(k.x + Math.cos(k.a) * 4, k.y + Math.sin(k.a) * 4, 12);
-            bubble(k.x + Math.cos(k.a) * 5, k.y + Math.sin(k.a) * 5);
-            bubble(k.x + Math.cos(k.a) * 3 + 2, k.y + Math.sin(k.a) * 3 - 1);
-            k.nextKiss = t + 12000 + Math.random() * 20000;
-        }
-        return k.kind.speed;
+        if (t > k.nextKiss)
+            surface(k);
+        // Livelier to the music.
+        return musical ? k.kind.speed * 1.35 : k.kind.speed;
+    }
+
+    // Up to the surface for a moment: a ring and a couple of bubbles.
+    function surface(k) {
+        ripple(k.x + Math.cos(k.a) * 4, k.y + Math.sin(k.a) * 4, 12);
+        bubble(k.x + Math.cos(k.a) * 5, k.y + Math.sin(k.a) * 5);
+        bubble(k.x + Math.cos(k.a) * 3 + 2, k.y + Math.sin(k.a) * 3 - 1);
+        k.nextKiss = t + 12000 + Math.random() * 20000;
     }
 
     Timer {
@@ -206,9 +292,14 @@ Item {
             const dt = interval / 1000;
             root.t += interval;
             root.pointerSpeed *= 0.85;
+            if (root.musical)
+                root.listen();
             for (const k of root.fish) {
                 const speed = root.think(k);
                 Koi.steer(k, dt, k.target.x, k.target.y, speed);
+                // A quicker tail beat to the music, and a flick on a beat.
+                if (root.musical)
+                    k.phase += dt * (root.t < (k.flickUntil || 0) ? 16 : 1.6);
                 // Keep a little room between fish.
                 for (const o of root.fish) {
                     if (o === k) continue;
@@ -249,7 +340,8 @@ Item {
             width: root.width + period
             height: root.height
             x: -((root.t * modelData.dx % period + period) % period)
-            opacity: modelData.op
+            // A little brighter the louder the music.
+            opacity: modelData.op * (1 + 0.9 * root.loud)
             onWidthChanged: requestPaint()
             Connections {
                 target: Theme
