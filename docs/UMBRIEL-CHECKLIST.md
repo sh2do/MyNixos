@@ -33,6 +33,21 @@ These checks need a real Umbriel login, which can't be tested from inside a niri
 - [ ] Within an hour the spider has dropped from the island at least once. To see it every 10 s, run `qs kill -c umbriel; UMBRIEL_HIDDEN_DEBUG=1 qs -c umbriel`.
 - [ ] With debug on, cycle all 8 wallpapers (Mod+Ctrl+W). The eyes appear in a dark spot on each, and never over a window.
 
+## Viper and raven
+- [ ] The viper hangs head down under the island with venom on its fang, and its horns aren't clipped. At 1x on your wallpapers (pale and dark), the outline and the venom bead read clearly.
+- [ ] Its tongue flicks every 10-20 s. Is that too often or too rare?
+- [ ] Drops land on the top edge of a floating window's title bar, and fade over window content or the bare desktop. Also try a window on a second output, if any.
+- [ ] The drip speeds up under load: `nix shell nixpkgs#stress-ng -c stress-ng --cpu 0 -t 15s` gives a drop about every 0.6 s, and it calms again afterwards.
+- [ ] With a real fullscreen window (not nested), the viper hisses and retreats, and returns when you leave. It also retreats while the island is expanded.
+- [ ] The raven sits at the left end of the status row. Its size beside the status row looks right, and it has contrast on your wallpapers. Sheen strength is fine.
+- [ ] It breathes, blinks and looks about. Caws, hops and the trinket's fall are smooth at 144 Hz.
+- [ ] A notice (`notify-send hi`) makes it caw. Its trinket falls from the island, it catches it, and the trinket lands in the hoard. The mask doesn't block clicks near that corner.
+- [ ] Rest the pointer near the raven: after 2 s it watches, then hops and pecks, and settles after about 5 s. Does the timing feel right?
+- [ ] The preen (head turned under the wing, nibbling for about 2 s) looks right. To see it every 20 s: `qs kill -c umbriel; UMBRIEL_RAVEN_DEBUG=1 qs -c umbriel`.
+- [ ] At night (21:00-06:00) it sleeps with its head tucked in. A notice wakes it, it caws and catches, then sleeps again after about 20 s. With the debug env var it is night for 30 s of every 2 minutes.
+- [ ] Locking (Super+Alt+L) and screen-off stop both: the shell's CPU drops. Fullscreen hides the raven, and it redraws afterwards.
+- [ ] CPU in the real session: with windows maximised and idle for 60 s, the whole shell stays under about 4% (nested measurement was 3.3-4%). Also watch the compositor while a trinket falls and while the taller island window is up.
+
 ## Look
 - [ ] The film grain is visible only if you look for it. It's still grain; moving grain cost about 2.3% CPU.
 - [ ] Windows open (Mod+T) through dark smoke and close (Mod+Q) through a grainy dissolve. Check for banding at the start of the smoke.

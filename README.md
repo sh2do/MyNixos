@@ -13,10 +13,10 @@ modules/
   desktop.nix                 packages and services for the rice
   home.nix                    Home Manager entry; imports the per-user modules
   niri/                       niri config split by block (KDL), deployed by HM
-  theme/                      rice-wall + matugen templates (niri, rofi, foot, starship, python)
+  theme/                      rice-wall + matugen templates (niri, rofi, foot, starship, drips)
   terminal/                   foot, fastfetch, first-terminal fetch for fish
   rofi/                       launcher theme and rice-menu (apps, clipboard, power, wifi, ...)
-  shell/                      Quickshell bar: top pill, auto-hide bottom bar with the python, OSD, notifications
+  shell/                      Quickshell bar: top pill, auto-hide bottom bar with koi or a raven, OSD, notifications
   lock/                       Quickshell video lock screen, rice-lock, swayidle
   sddm/                       SDDM video login theme
   look/                       polkit agent, cursor, icon and GTK themes (every session)
@@ -32,7 +32,7 @@ For the full guide (theming flow, every key, menus, lock and recovery, adding wa
 
 ## How the theming works
 
-`rice-wall` owns the wallpaper. It picks from `~/.local/share/wallpapers/rotation`, shows it with awww, and runs matugen, which rewrites the colour files in `~/.config` and `~/.cache/rice`. Everything else (niri borders, the bar, rofi, foot, starship, the python) reads those files. A systemd user timer runs `rice-wall next` every 45 minutes.
+`rice-wall` owns the wallpaper. It picks from `~/.local/share/wallpapers/rotation`, shows it with awww, and runs matugen, which rewrites the colour files in `~/.config` and `~/.cache/rice`. Everything else (niri borders, the bar, rofi, foot, starship) reads those files. A systemd user timer runs `rice-wall next` every 45 minutes.
 
 ## Keys
 
@@ -50,7 +50,11 @@ For the full guide (theming flow, every key, menus, lock and recovery, adding wa
 A second session next to niri, on the [Umbriel](https://github.com/noctalia-dev/umbriel) compositor: dark, quiet and slate-grey, with its own wallpapers and no matugen. niri is untouched; pick either one at login.
 
 - **Pick it at login:** on the login screen, the session name sits under the password field (`‹  niri  ›`). Press Left or Right (or click it) until it reads **Umbriel**, then type the password. It starts on the last session used, so pick **niri** the same way to go back.
-- **What's there:** chain-link workspaces top-left, an island top-centre (clock, music, volume and brightness OSD, notifications), faint status bottom-right, a launcher that drops out of the island, live rain and storm wallpapers, film grain over the screen (off while a fullscreen window is focused) and windows that open and close through smoke.
+- **What's there:** chain-link workspaces top-left, an island top-centre (clock, music, volume and brightness OSD, notifications), faint status bottom-right, a launcher that drops out of the island, a horned viper hanging from the island, a raven on the status row, live rain and storm wallpapers, film grain over the screen (off while a fullscreen window is focused) and windows that open and close through smoke.
+- **The viper:** a horned viper hangs head down from under the island, jaws open, with venom on its forward fang. The drip follows CPU load (read from `/proc/stat` every 2 s): a drop every 4 s when calm, every 0.6 s at full load. A drop falls from the fang and lands on a window's title-bar edge, or fades (over window content it falls a short way and fades with a tiny ring). It slides out when the launcher opens and strikes when you launch something. It retreats for a fullscreen window or while the island is expanded (a song, a notice, the OSD), with a short hiss first, and returns afterwards. It flicks its tongue every 10-20 s. While it is away with nothing falling, its clock is stopped.
+- **The raven:** a raven perches on the left end of the status row (bottom-right), with a hoard beside it. It breathes, blinks, looks about, now and then ruffles its feathers, and preens every few minutes. A pointer resting near it is watched after 2 s, then hopped at and pecked. A notice makes it turn to the island and caw; it then catches the notice's trinket (a ring or a coin) as it falls from the island and drops it into the hoard. Trinkets fade out after a while. After dark (21:00-06:00) it sleeps with its head tucked in; a notice wakes it for about 20 s. It hides for fullscreen, and stops while the screen is locked or off.
+- **Debug and tuning:** `UMBRIEL_SERPENT_FPS` caps every viper and raven clock. `UMBRIEL_RAVEN_DEBUG=1` makes the raven ruffle and preen every 20 s, and makes it night for 30 s of every 2 minutes. `UMBRIEL_HIDDEN_DEBUG=1` shows the spider every 10 s. Start the shell with them, e.g. `qs kill -c umbriel; UMBRIEL_RAVEN_DEBUG=1 qs -c umbriel`.
+- **CPU (nested, so only a guide):** the whole shell with viper and raven is about 3.3-4% of one core at rest (60 s mean 3.8%); the viper is about 3%, the raven about 0.6%. With a fullscreen window the shell is about 0.15%. The real-session figures are in [the checklist](docs/UMBRIEL-CHECKLIST.md#viper-and-raven).
 - **Keys:** the same as niri wherever Umbriel has an equivalent (`modules/umbriel/binds.nix`). `Mod+Shift+/` shows them all.
 
 | Key | Action |
