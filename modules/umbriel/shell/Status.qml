@@ -1,5 +1,6 @@
-// Bottom-right corner: faint wifi, bluetooth and battery. Small and low in
-// contrast on purpose; it only reports.
+// Bottom-right corner: faint phone (when one is paired, Phone.qml), wifi,
+// bluetooth and battery. Small and low in contrast on purpose; it only
+// reports. The raven perches on its left edge, so it moves with the phone.
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
@@ -41,6 +42,15 @@ PanelWindow {
         x: 8
         spacing: 10
 
+        // The paired phone: its battery while reachable, a crossed-out phone
+        // when it's away.
+        Text {
+            visible: U.Phone.paired
+            text: (U.Phone.reachable ? "󰄜" : "󰥐") + (U.Phone.battery ? " " + U.Phone.battery : "")
+            color: U.Palette.muted
+            opacity: 0.7
+            font { family: U.Palette.font; pixelSize: 11 }
+        }
         Text {
             text: !Networking.wifiEnabled ? "󰖪" : (root.wifiNetwork ? "󰖩" : "󰤯")
             color: U.Palette.muted

@@ -133,6 +133,31 @@ All menus share the wallpaper-coloured rofi theme. Escape always does nothing.
 - **Water OSD:** the volume and brightness keys show a 56 x 168 glass capsule at the bottom centre, filled with water to the level. Each change sends ripples across the surface, and a held key makes a steady train. It hides after 1.5 s. It redraws at 20 Hz for 500 ms after a change, then 6 Hz for the slow drift.
 - Cost: about 3% of a core while a card's timeout line runs, 0 with only critical cards; the OSD is about 1.4-2.8% while visible.
 
+## Phone link
+
+The phone talks to the desktop over KDE Connect (an open protocol on the LAN, no cloud). `programs.kdeconnect` in `configuration.nix` installs it and opens TCP and UDP 1714-1764 in the firewall; niri (`config.kdl`) and Umbriel (its autostart) start `kdeconnectd` at login.
+
+- **Phone to desktop:** the phone's notifications arrive as ordinary desktop notifications: grouped cards on niri, the island on Umbriel.
+- **The chip:** on niri's bottom bar, after the clock: a phone icon, the phone's battery ("87%", "87%+" while charging) and the 3 px "on" dot while it is reachable; a crossed-out phone and no battery while it is away. **Click** rings the phone (find my phone). **Right-click** opens a zenity file picker and sends the file. It is hidden while no phone is paired. Umbriel shows the same as a faint glyph and battery at the left of its status corner.
+- **How it's read:** `Phone.qml` (shared by both shells; Umbriel copies it in) asks the daemon over D-Bus with a few `busctl` calls every 30 s: the paired devices, then each one's `isReachable`, `name` and the battery plugin's `charge` and `isCharging`. `phone.js` parses that and picks the phone (the first reachable one, else the first paired). No daemon or nothing paired: no phone, nothing shown.
+- **`phone-alert "<message>"`** shows the message on the first paired phone that is reachable (`kdeconnect-cli --ping-msg`), e.g. `nh os switch; phone-alert "switch done"`. `phone-alert --critical "<message>"` prefixes it with "Critical: ". With no phone reachable it says so and exits 1; a missing message exits 2.
+- **Critical forwarding:** every **critical** desktop notification is also sent to the phone (`phone-alert --critical "summary: body"`); ordinary ones are not. Notifications that came from the phone (app "KDE Connect") are never sent back. `RICE_PHONE_FORWARD=off` in the session environment switches it off; `critical` is the default.
+
+**Pairing (once, by hand):**
+
+1. Install **KDE Connect** on the phone (F-Droid or Play Store; iOS support is limited) and open it.
+2. Put the phone on the same Wi-Fi as this machine.
+3. Pair: on the phone, tap this machine in KDE Connect's list and "Request pairing", then accept the request on the desktop (`kdeconnect-app`, or `kdeconnect-cli --list-devices` for its id and `kdeconnect-cli --pair -d <id>`). Or start it from the desktop: `kdeconnect-cli --refresh; kdeconnect-cli --list-devices`, then `kdeconnect-cli --pair -d <id>` and accept on the phone.
+4. Test: `phone-alert "hello"` pops up on the phone. On the phone, allow KDE Connect's notification access ("Send notifications") so phone notifications reach the desktop.
+
+Checks after switching and pairing:
+
+- [ ] `busctl --user list | grep kdeconnect` shows `org.kde.kdeconnect` in both sessions.
+- [ ] The bar's phone chip shows the battery and the dot; turn the phone's Wi-Fi off and within 30 s it shows the crossed-out phone; unpair (`kdeconnect-cli --unpair -d <id>`) and the chip goes.
+- [ ] Clicking the chip rings the phone; right-clicking sends a file.
+- [ ] `notify-send -u critical -a test "Disk full" "3% left"` reaches the phone as "Critical: Disk full: 3% left"; a plain `notify-send hi` does not.
+- [ ] A phone notification shows as a desktop card and does not come back to the phone.
+
 ## Lock, idle and login
 
 | When | What happens |

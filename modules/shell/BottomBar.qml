@@ -233,6 +233,17 @@ PanelWindow {
                     }
                 }
 
+                // The paired phone (Phone.qml); hidden when none is paired.
+                Stone {
+                    visible: Phone.paired
+                    width: phoneChip.implicitWidth + 4
+
+                    PhoneChip {
+                        id: phoneChip
+                        anchors.centerIn: parent
+                    }
+                }
+
                 Stone {
                     width: 28
                     radius: 14

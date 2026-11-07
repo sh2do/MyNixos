@@ -13,6 +13,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import "notify-group.js" as Group
+import "phone.js" as PhoneLink
 
 Scope {
     id: root
@@ -28,6 +29,7 @@ Scope {
         onNotification: n => {
             root.stamps[n.id] = Date.now();
             n.tracked = true;
+            root.forward(n);
         }
     }
 
@@ -38,6 +40,18 @@ Scope {
             for (const n of server.trackedNotifications.values.slice())
                 n.dismiss();
         }
+    }
+
+    // Critical notifications also go to the phone (phone-alert), unless
+    // RICE_PHONE_FORWARD=off. Ones that came from the phone never go back.
+    readonly property string phoneForward: Quickshell.env("RICE_PHONE_FORWARD") ?? ""
+    function forward(n) {
+        const urgency = n.urgency === NotificationUrgency.Critical ? "critical" : "normal";
+        if (!PhoneLink.shouldForward(root.phoneForward, n.appName, n.desktopEntry, urgency))
+            return;
+        const text = PhoneLink.alertText(n.summary, n.body);
+        if (text.length)
+            Quickshell.execDetached(["phone-alert", "--critical", "--", text]);
     }
 
     // When each notification arrived, by id. The server doesn't keep it;

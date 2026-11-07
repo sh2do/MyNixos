@@ -71,6 +71,17 @@ A second session next to niri, on the [Umbriel](https://github.com/noctalia-dev/
 - **Wallpapers:** `umbriel-wall` remembers which of `~/.local/share/wallpapers/umbriel` the shell shows. There is no rotation. `umbriel-wall list` prints the ids, `umbriel-wall current` the one in use and `umbriel-wall set ID` switches (the picker calls this). `xe9223` (hydrangea in the rain) and `jeyo1m` (storm) are live.
 - **Check the config:** `umbriel config validate`.
 
+## Phone link
+
+KDE Connect links an Android phone over the LAN (no cloud): phone notifications show on the desktop, a phone chip on the bar (battery and a connected dot; click rings the phone, right-click sends a file; hidden until a phone is paired), and `phone-alert "<message>"` pings the phone, e.g. `nh os switch; phone-alert "switch done"`. Critical desktop notifications are forwarded to the phone too (`RICE_PHONE_FORWARD=off` turns that off). More in [docs/RICE.md](docs/RICE.md#phone-link).
+
+**Pair it once:**
+
+1. Install **KDE Connect** on the phone (F-Droid or Play Store) and open it.
+2. Put the phone on the same Wi-Fi as this machine.
+3. On the phone, tap this machine in KDE Connect and request pairing, then accept on the desktop. Or from the desktop: `kdeconnect-cli --refresh; kdeconnect-cli --list-devices` for the phone's id, then `kdeconnect-cli --pair -d <id>` and accept on the phone.
+4. Test with `phone-alert "hello"`.
+
 ## Rebuild
 
 ```sh

@@ -39,6 +39,9 @@ let
         type == "directory" || lib.any (ext: lib.hasSuffix ext path) [ ".qml" ".js" ".glsl" ".frag" ".vert" ".json" ".svg" ];
     }} $out
     chmod -R u+w $out
+    # The phone link is the niri bar's (modules/shell); both shells poll it.
+    cp ${../shell/Phone.qml} $out/Phone.qml
+    cp ${../shell/phone.js} $out/phone.js
     for f in $out/*.frag $out/*.vert; do
       qsb --qt6 -o "$f.qsb" "$f"
     done

@@ -2,9 +2,20 @@
 # Deployed as ~/.config/quickshell/rice; niri starts it with `qs -c rice`.
 { lib, pkgs, ... }:
 
+let
+  # Shows a message on the paired phone (KDE Connect); the bar also forwards
+  # critical notifications through it. kdeconnect-cli comes from the system's
+  # programs.kdeconnect, so it matches the running daemon.
+  phone-alert = pkgs.writeShellApplication {
+    name = "phone-alert";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = builtins.readFile ./phone-alert.sh;
+  };
+in
 {
   # The top pill's visualiser reads cava's raw output while music plays.
-  home.packages = [ pkgs.cava ];
+  # zenity: the phone chip's "send a file" picker.
+  home.packages = [ pkgs.cava pkgs.zenity phone-alert ];
 
   # The raven (RICE_MASCOT=raven) is Umbriel's: its art, life and moods are
   # copied in from there, so both shells draw it from one source.
