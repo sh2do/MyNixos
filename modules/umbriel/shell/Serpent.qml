@@ -9,7 +9,15 @@
 // widths: width scales per control point; by default the plain taper of
 // serpent-spine.js widthAt. head and tail are the spine's end samples
 // ({x, y, tx, ty, s}, tangent pointing from the neck towards the tail), for
-// whatever attaches there.
+// whatever attaches there; null while the spine has fewer than 2 points (the
+// body is hidden then).
+//
+// Updates are batched: assigning spine and/or widths only marks the body
+// dirty, and one rebuild runs at the end of the event loop pass
+// (Qt.callLater), however many were assigned. A driver ticking its own clock
+// should call setSpine(spine, widths) instead: it assigns both and rebuilds
+// once, immediately, with no frame of latency. Every assignment counts as a
+// change, so a driver whose body is still should not assign at all.
 import QtQuick
 import "serpent-spine.js" as Spine
 
@@ -19,6 +27,8 @@ Item {
     property Item skin
     property real bodyWidth: 20
     property var spine: []
+    // Placed by index: widths[k] lands at k / (length - 1) of the body, which
+    // is exact for 24 widths or evenly spaced control points.
     property var widths: null
     property real time: 0
     property real sheen: 0
@@ -32,8 +42,18 @@ Item {
 
     anchors.fill: parent
 
-    onSpineChanged: priv.rebuild()
-    onWidthsChanged: priv.rebuild()
+    // Assign both and rebuild now; ws may be omitted to keep the current widths.
+    function setSpine(points, ws) {
+        priv.direct = true;
+        spine = points;
+        if (ws !== undefined)
+            widths = ws;
+        priv.direct = false;
+        priv.rebuild();
+    }
+
+    onSpineChanged: priv.markDirty()
+    onWidthsChanged: priv.markDirty()
     onSkinChanged: strip.scheduleUpdate()
     Component.onCompleted: {
         priv.rebuild();
@@ -45,31 +65,55 @@ Item {
 
         property var head: null
         property var tail: null
+        property bool valid: false
+        property bool dirty: false
+        // True while setSpine assigns, so its own assignments don't mark dirty.
+        property bool direct: false
+        readonly property var names: Array.from({ length: Spine.SPINE_POINTS }, (_, i) => "s" + i)
+        readonly property var noBulges: []
+
+        function markDirty() {
+            if (direct || dirty)
+                return;
+            dirty = true;
+            Qt.callLater(flush);
+        }
+
+        function flush() {
+            if (dirty)
+                rebuild();
+        }
 
         // Resample the spine, attach each point's width scale and hand the
         // points to both passes.
         function rebuild() {
+            dirty = false;
             const n = Spine.SPINE_POINTS;
-            if (!serpent.spine || serpent.spine.length < 2)
+            if (!serpent.spine || serpent.spine.length < 2) {
+                valid = false;
+                head = null;
+                tail = null;
                 return;
+            }
             const samples = Spine.sample(serpent.spine, n);
             const ws = serpent.widths;
             for (let i = 0; i < n; i++) {
                 const u = i / (n - 1);
                 let w;
                 if (ws && ws.length > 1) {
-                    // Per control point, interpolated at this point's share of the chain.
+                    // By index fraction, not arc length (see widths).
                     const f = u * (ws.length - 1), k = Math.min(Math.floor(f), ws.length - 2);
                     w = ws[k] + (ws[k + 1] - ws[k]) * (f - k);
                 } else {
-                    w = Spine.widthAt(u, []);
+                    w = Spine.widthAt(u, noBulges);
                 }
                 const p = Qt.vector4d(samples[i].x, samples[i].y, w, 0);
-                body["s" + i] = p;
-                shadow["s" + i] = p;
+                body[names[i]] = p;
+                shadow[names[i]] = p;
             }
             head = samples[0];
             tail = samples[n - 1];
+            valid = true;
         }
     }
 
@@ -120,6 +164,7 @@ Item {
 
     Pass {
         id: shadow
+        visible: priv.valid
         x: serpent.shadowOffset.x
         y: serpent.shadowOffset.y
         width: serpent.width
@@ -130,6 +175,7 @@ Item {
 
     Pass {
         id: body
+        visible: priv.valid
         readonly property var source: strip
         width: serpent.width
         height: serpent.height
