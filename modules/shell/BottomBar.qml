@@ -44,9 +44,10 @@ PanelWindow {
         height: 3
 
         HoverHandler {
+            // Raised by the edge, it hides again unless the pointer enters the bar.
             onHoveredChanged: if (hovered) {
-                hideTimer.stop();
                 root.shown = true;
+                hideTimer.restart();
             }
         }
     }
