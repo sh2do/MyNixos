@@ -8,7 +8,8 @@
 //   its wing and back drifting;
 // - a blink of the pale nictitating membrane every 4-9 s;
 // - a tilt or turn of the head every 6-14 s, now and then a double-take;
-// - a ruffle every 2-4 min, a preen (beak in the wing, ~2 s) every 5-10 min.
+// - a ruffle every 2-4 min, a preen (beak in the back's feathers, ~2 s)
+//   every 5-10 min.
 // A notice showing on the island makes it snap round and caw (silently: two
 // pale arcs from the beak). When the notice leaves, a trinket drops from the
 // island down the screen's right edge, in a small window of its own that
@@ -98,6 +99,7 @@ PanelWindow {
     property real gazeX: 0
     property real gazeY: 0
     property real wingLift: 0
+    property real preening: 0
     property real tailAngle: 0
     property real tuck: 0
     property real caw: 0
@@ -179,6 +181,9 @@ PanelWindow {
     // return, a caw's lingering gaze) gives way; blinks go on.
     function interrupt() {
         life.tweens = life.tweens.filter(w => w.at <= life.t || w.p === "blink");
+        // Feathers lifted in a preen settle whatever comes next.
+        if (preening > 0)
+            tween("preening", 0, 0.2);
     }
     function busy(secs) {
         life.busyUntil = Math.max(life.busyUntil, life.t + secs);
@@ -383,22 +388,25 @@ PanelWindow {
         tween("hackles", 0, 0.6, 1.1);
     }
 
-    // The head turned right round and down, the beak worked into the wing
-    // for ~2 s.
+    // The head turned right round over the shoulder, the beak worked into
+    // the feathers of the back, which part and lift round it, for ~2 s. The
+    // head stays in front of the wing (unlike asleep, tucked under it).
     function preen() {
         interrupt();
         busy(3.3);
-        turnHead(-1, 0.28, 0);
-        tween("headAngle", 34, 0.35, 0.2);
+        tween("headFlip", -1, 0.28);
+        tween("headAngle", 30, 0.35, 0.2);
         tween("headDrop", 1.5, 0.35, 0.2);
+        tween("preening", 1, 0.2, 0.45);
         for (let i = 0; i < 6; i++) {
-            tween("headAngle", i % 2 ? 31 : 37, 0.2, 0.6 + i * 0.32);
+            tween("headAngle", i % 2 ? 27 : 33, 0.2, 0.6 + i * 0.32);
             tween("beakOpen", i % 2 ? 0 : 0.18, 0.12, 0.6 + i * 0.32);
         }
         tween("beakOpen", 0, 0.12, 2.6);
+        tween("preening", 0, 0.3, 2.6);
         tween("headAngle", 0, 0.3, 2.7);
         tween("headDrop", 0, 0.3, 2.7);
-        turnHead(1, 0.28, 2.9);
+        tween("headFlip", 1, 0.28, 2.9);
     }
 
     // Turn the head to face `to` (1 forward, -1 back) over `dur` s; it goes
@@ -736,6 +744,7 @@ PanelWindow {
         headFlip = 1;
         headDrop = 0;
         headTucked = false;
+        preening = 0;
         gazeX = 0;
         gazeY = 0;
         need = 0;
@@ -906,6 +915,7 @@ PanelWindow {
         gazeX: root.gazeX
         gazeY: root.gazeY
         wingLift: root.wingLift
+        preen: root.preening
         tailAngle: root.tailAngle
         tuck: root.tuck
         caw: root.caw

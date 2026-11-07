@@ -6,8 +6,10 @@
 // The body is a Serpent (GPU-bent) wearing HangingViperSkin; it comes out
 // from behind the pill and falls in a slow S about 130 px long. Everything
 // else is drawn once and moved by transforms: the head (side on, from the
-// detail sheet: hinged jaws, horn, slit-pupilled eye, pale lining, two fangs
-// swung forward), the hiss puff and up to four venom drops (venom.js).
+// close study: hinged jaws lined with labial scales, the horn of three keeled
+// scales on its brow ridge, slit-pupilled eye, heat pit, pale lining with the
+// glottis and tongue sheath, two sabre fangs swung forward, and the forked
+// tongue), the hiss puff and up to four venom drops (venom.js).
 //
 // Alive on one clock that runs only as fast as the motion needs (every
 // repaint of the island's window costs CPU, whatever changes in it):
@@ -15,7 +17,8 @@
 //   slow coil and uncoil;
 // - 30 Hz while a bead swells, necks into its thread, splashes or fades, and
 //   while the viper hisses, pulls up or lowers itself;
-// - the display's rate only while a drop is in free fall.
+// - the display's rate only while a drop is in free fall, and through the
+//   tongue's 250 ms flick (every 10-20 s while it hangs).
 // UMBRIEL_SERPENT_FPS caps all three. Only the coil re-bends the body, and
 // only while it changes: at most 10 times a second, 30 while it pulls up or
 // lowers itself (it straightens as it goes). Nothing runs while it is pulled
@@ -115,6 +118,11 @@ Item {
     property bool falling: false
     property bool dripping: false
     property int dropCount: 0
+    // The tongue's flick is under way; how far out it is, 0..1. The display's
+    // rate runs for it as for a falling drop.
+    property bool flicking: false
+    property real tongue: 0
+    readonly property bool fast: falling || flicking
     readonly property bool moving: mode === "hiss" || mode === "up" || mode === "down"
     readonly property int idleHz: 10
     readonly property int busyHz: 30
@@ -134,6 +142,8 @@ Item {
         property real bent: -1
         property real bendAcc: 1
         property real nextDrop: 0
+        property real nextFlick: 0
+        property real flickAt: 0
         property var drops: [null, null, null, null]
         property var sample: null
     }
@@ -167,6 +177,7 @@ Item {
             if (out === 1) {
                 mode = "out";
                 life.nextDrop = t + 1.2;
+                life.nextFlick = t + 3 + Math.random() * 10;
             }
         }
 
@@ -180,6 +191,22 @@ Item {
         const bendHz = mode === "up" || mode === "down" ? root.busyHz : root.idleHz;
         if (Math.abs(bend - life.bent) > 0.0015 && life.bendAcc >= 1 / bendHz - 0.001)
             bendBody(bend);
+
+        // The tongue: out and back in 250 ms, every 10-20 s while it hangs.
+        if (!flicking && mode === "out" && t >= life.nextFlick) {
+            flicking = true;
+            life.flickAt = t;
+        }
+        if (flicking) {
+            const u = (t - life.flickAt) / 0.25;
+            if (u >= 1 || mode !== "out") {
+                flicking = false;
+                tongue = 0;
+                life.nextFlick = t + 10 + Math.random() * 10;
+            } else {
+                tongue = Math.min(1, 1.3 * Math.sin(Math.PI * u));
+            }
+        }
 
         stepDrops(dt);
     }
@@ -286,16 +313,16 @@ Item {
     }
 
     FrameAnimation {
-        running: root.active && root.falling && root.fpsCap <= 0
+        running: root.active && root.fast && root.fpsCap <= 0
         onTriggered: root.tick(Spine.step(frameTime))
     }
     Timer {
         readonly property int hz: {
-            const want = root.falling ? 1000 : root.dripping || root.moving ? root.busyHz : root.idleHz;
+            const want = root.fast ? 1000 : root.dripping || root.moving ? root.busyHz : root.idleHz;
             return root.fpsCap > 0 ? Math.min(want, root.fpsCap) : want;
         }
         property real last: 0
-        running: root.active && !(root.falling && root.fpsCap <= 0)
+        running: root.active && !(root.fast && root.fpsCap <= 0)
         interval: 1000 / Math.max(1, hz)
         repeat: true
         onRunningChanged: last = Date.now()
@@ -394,6 +421,7 @@ Item {
                     // beside it; it fades back in as it comes down.
                     opacity: Math.min(Math.max((root.out - 0.3) / 0.3, 0), 1)
                     hiss: root.hiss
+                    tongue: root.tongue
                 }
             }
         }
@@ -429,11 +457,50 @@ Item {
         id: hd
 
         property real hiss: 0
+        // The tongue, 0 in its sheath .. 1 flicked right out.
+        property real tongue: 0
+        readonly property string tonguePath: "M 185 111.5 C 210 111 236 113 256 112 L 278 101 M 256 112 L 277 121"
         readonly property real upper: -28 - 8 * Math.sin(Math.PI * hiss)
         readonly property Item fang: fangTip
 
         readonly property string upperPath: "M 58 52 C 108 38 188 44 230 68 Q 248 80 236 90 L 70 97 C 62 90 58 72 58 52 Z"
         readonly property string lowerPath: "M 68 99 L 222 110 Q 232 116 220 123 C 172 132 110 130 68 127 C 62 118 62 106 68 99 Z"
+
+        // The labial scales: a row of rounded plates along a lip, from
+        // (x0, y0) to (x1, y1), `depth` deep, bulging away from the mouth
+        // (side -1 up, 1 down).
+        function labials(x0, y0, x1, y1, n, depth, side) {
+            const f = v => v.toFixed(1);
+            const dx = (x1 - x0) / n, dy = (y1 - y0) / n;
+            let d = `M ${f(x0)} ${f(y0)} L ${f(x1)} ${f(y1)} L ${f(x1)} ${f(y1 + side * depth * 0.55)} `;
+            for (let i = n; i > 0; i--) {
+                const xa = x0 + dx * i, ya = y0 + dy * i;
+                d += `Q ${f(xa - dx / 2)} ${f(ya - dy / 2 + side * depth * 1.35)} ${f(xa - dx)} ${f(ya - dy + side * depth * 0.55)} `;
+            }
+            return d + "Z";
+        }
+        // The keeled scales over the crown and cheek: staggered almonds,
+        // each with a pale ridge, between the crown's edge and the labials,
+        // clear of the eye and the pit.
+        readonly property var crownScales: {
+            const f = v => v.toFixed(1);
+            const top = x => 50 + 0.0011 * Math.pow(x - 120, 2) + (x > 150 ? (x - 150) * 0.12 : 0);
+            const lip = x => 96.4 - (x - 74) * 0.0377;
+            let scales = "", keels = "";
+            const sw = 13, sh = 7.5;
+            for (let r = 0, y = 54; y < 92; r++, y += sh) {
+                for (let x = 64 + (r % 2) * sw / 2; x < 232; x += sw) {
+                    const cx = x + sw / 2;
+                    if (y < top(cx) + 4 || y > lip(cx) - 11 || Math.hypot(cx - 160, y - 66) < 15 || Math.hypot(cx - 205, y - 80) < 9 || Math.hypot(cx - 228, y - 77) < 8)
+                        continue;
+                    scales += `M ${f(x)} ${f(y)} Q ${f(cx)} ${f(y - sh * 0.62)} ${f(x + sw)} ${f(y)} Q ${f(cx)} ${f(y + sh * 0.62)} ${f(x)} ${f(y)} `;
+                    keels += `M ${f(x + 3)} ${f(y)} L ${f(x + sw - 3)} ${f(y)} `;
+                }
+            }
+            return { scales: scales, keels: keels };
+        }
+        readonly property string upperLabials: labials(74, 96.4, 228, 90.6, 10, 7.5, -1)
+        readonly property string lowerLabials: labials(72, 113.2, 210, 118, 9, 6.5, 1)
 
         // A soft shadow on the desktop, at the body's offset.
         Shape {
@@ -491,6 +558,13 @@ Item {
                 transform: Rotation { origin.x: 70; origin.y: 100; angle: 16 }
                 ShapePath {
                     fillColor: "transparent"
+                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.85)
+                    strokeWidth: 15
+                    joinStyle: ShapePath.RoundJoin
+                    PathSvg { path: hd.lowerPath }
+                }
+                ShapePath {
+                    fillColor: "transparent"
                     strokeColor: Qt.alpha(U.Palette.viperKeel, 0.5)
                     strokeWidth: 8
                     joinStyle: ShapePath.RoundJoin
@@ -503,20 +577,72 @@ Item {
                     joinStyle: ShapePath.RoundJoin
                     PathSvg { path: hd.lowerPath }
                 }
-                Lines {
-                    strokeColor: Qt.alpha(U.Palette.viperBlotch, 0.95)
-                    strokeWidth: 3
-                    PathSvg { path: "M 88 122 l 16 1 M 118 124 l 16 0 M 148 124 l 16 -1 M 178 121 l 14 -1 M 204 117 l 10 -2" }
+                ShapePath {
+                    fillColor: Qt.alpha(U.Palette.viperKeel, 0.8)
+                    strokeColor: U.Palette.viperOutline
+                    strokeWidth: 1.4
+                    joinStyle: ShapePath.RoundJoin
+                    PathSvg { path: hd.lowerLabials }
                 }
                 ShapePath {
-                    fillColor: Qt.alpha(U.Palette.viperEye, 0.8)
+                    fillColor: Qt.alpha(U.Palette.viperEye, 0.85)
                     strokeColor: "transparent"
                     PathSvg { path: "M 70 101 L 220 110 L 211 118 C 160 117 112 115 70 113 Z" }
+                }
+                Lines {
+                    strokeColor: Qt.alpha(U.Palette.viperKeel, 0.9)
+                    strokeWidth: 0.9
+                    PathSvg { path: "M 84 104 Q 150 106 206 111 M 92 108 Q 150 110 198 114" }
+                }
+                // The glottis on the mouth's floor, and the tongue's sheath
+                // in front of it.
+                ShapePath {
+                    fillColor: U.Palette.viperKeel
+                    strokeColor: Qt.darker(U.Palette.viperKeel, 1.5)
+                    strokeWidth: 1
+                    PathSvg { path: "M 112 107.5 Q 142 103.5 170 109 Q 142 112.5 112 110.5 Z" }
+                }
+                Lines {
+                    strokeColor: Qt.darker(U.Palette.viperKeel, 1.5)
+                    strokeWidth: 0.8
+                    PathSvg { path: "M 120 109 L 164 109.4" }
+                }
+                ShapePath {
+                    fillColor: Qt.lighter(U.Palette.viperKeel, 1.25)
+                    strokeColor: Qt.darker(U.Palette.viperKeel, 1.5)
+                    strokeWidth: 1
+                    PathSvg { path: "M 177 111.5 a 8 3.4 0 1 0 16 0 a 8 3.4 0 1 0 -16 0" }
+                }
+                Lines {
+                    strokeColor: U.Palette.viperBlotch
+                    strokeWidth: 1.6
+                    PathSvg { path: "M 180 111.5 L 190 111.5" }
                 }
                 ShapePath {
                     fillColor: U.Palette.bright
                     strokeColor: "transparent"
-                    PathSvg { path: "M 104 104 l 3 -7 l 3 7 Z M 132 106 l 3 -7 l 3 7 Z M 160 107 l 3 -6 l 3 6 Z M 186 108 l 2.5 -6 l 2.5 6 Z" }
+                    PathSvg { path: "M 104 104 l 3 -7 l 3 7 Z M 132 106 l 3 -7 l 3 7 Z M 160 107 l 3 -6 l 3 6 Z M 200 109.5 l 2.5 -6 l 2.5 6 Z" }
+                }
+            }
+
+            // The forked tongue, flicked out of its sheath every 10-20 s: drawn
+            // once, along the dropped lower jaw, and only stretched out.
+            Shape {
+                visible: hd.tongue > 0
+                preferredRendererType: Shape.CurveRenderer
+                transform: [
+                    Scale { origin.x: 185; origin.y: 111.5; xScale: hd.tongue; yScale: 0.4 + 0.6 * hd.tongue },
+                    Rotation { origin.x: 70; origin.y: 100; angle: 16 }
+                ]
+                Lines {
+                    strokeColor: Qt.alpha(U.Palette.viperKeel, 0.5)
+                    strokeWidth: 7.5
+                    PathSvg { path: hd.tonguePath }
+                }
+                Lines {
+                    strokeColor: U.Palette.viperBlotch
+                    strokeWidth: 4.5
+                    PathSvg { path: hd.tonguePath }
                 }
             }
 
@@ -526,6 +652,13 @@ Item {
                 transform: Rotation { origin.x: root.upperHinge.x; origin.y: root.upperHinge.y; angle: hd.upper }
                 // The pale slate rim, then the head, rounded by a gradient
                 // from the crown to the lip.
+                ShapePath {
+                    fillColor: "transparent"
+                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.85)
+                    strokeWidth: 16
+                    joinStyle: ShapePath.RoundJoin
+                    PathSvg { path: hd.upperPath }
+                }
                 ShapePath {
                     fillColor: "transparent"
                     strokeColor: Qt.alpha(U.Palette.viperKeel, 0.55)
@@ -574,73 +707,134 @@ Item {
                     strokeColor: "transparent"
                     PathSvg { path: "M 84 56 C 96 50 116 49 122 55 C 116 64 96 64 84 60 Z M 186 56 C 194 54 204 56 208 61 C 202 65 192 64 186 60 Z" }
                 }
-                // Keeled scales: rows of pale ridges; the lip scales.
-                Lines {
-                    strokeColor: Qt.alpha(U.Palette.viperKeel, 0.75)
-                    strokeWidth: 2.6
-                    PathSvg { path: "M 92 66 l 11 3 M 112 62 l 11 3 M 130 60 l 10 3 M 182 70 l 10 3 M 202 72 l 9 4 M 76 76 l 10 2 M 100 76 l 10 2 M 178 82 l 10 2 M 204 82 l 9 3 M 214 70 l 8 4" }
+                // The keeled scales, then the labials along the lip.
+                ShapePath {
+                    fillColor: Qt.alpha(U.Palette.viperKeel, 0.1)
+                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.55)
+                    strokeWidth: 0.9
+                    PathSvg { path: hd.crownScales.scales }
                 }
                 Lines {
+                    strokeColor: Qt.alpha(Qt.lighter(U.Palette.viperKeel, 1.2), 0.7)
+                    strokeWidth: 1.1
+                    PathSvg { path: hd.crownScales.keels }
+                }
+                ShapePath {
+                    fillColor: Qt.alpha(U.Palette.viperKeel, 0.8)
+                    strokeColor: U.Palette.viperOutline
+                    strokeWidth: 1.4
+                    joinStyle: ShapePath.RoundJoin
+                    PathSvg { path: hd.upperLabials }
+                }
+                // The heat pit between eye and nostril, rimmed.
+                ShapePath {
+                    fillColor: U.Palette.viperOutline
+                    strokeColor: Qt.alpha(U.Palette.viperKeel, 0.9)
+                    strokeWidth: 1.3
+                    PathSvg { path: "M 199.5 80 a 5.5 4.2 0 1 0 11 0 a 5.5 4.2 0 1 0 -11 0" }
+                }
+                ShapePath {
+                    fillColor: U.Palette.viperBlotch
+                    strokeColor: "transparent"
+                    PathSvg { path: "M 203 80.4 a 2.6 1.9 0 1 0 5.2 0 a 2.6 1.9 0 1 0 -5.2 0" }
+                }
+                // The nostril, in its rimmed scale.
+                ShapePath {
+                    fillColor: "transparent"
                     strokeColor: Qt.alpha(U.Palette.viperOutline, 0.8)
-                    strokeWidth: 2
-                    PathSvg { path: "M 100 95 l 0 -7 M 128 94 l 0 -7 M 156 93 l 0 -7 M 184 92 l 0 -7 M 210 91 l 0 -6" }
+                    strokeWidth: 1
+                    PathSvg { path: "M 222 77 a 6.4 5.4 0 1 0 12.8 0 a 6.4 5.4 0 1 0 -12.8 0" }
                 }
-                // The nostril.
                 ShapePath {
                     fillColor: U.Palette.viperOutline
                     strokeColor: "transparent"
                     PathSvg { path: "M 225 77 a 3.4 2.6 0 1 0 6.8 0 a 3.4 2.6 0 1 0 -6.8 0" }
                 }
-                // The supraocular horns: a small scale, then the tall pointed
-                // horn over the eye, leaning back, ridged across.
+                // The brow ridge overhanging the eye, and on it the
+                // supraocular horn: three stacked keeled scales leaning
+                // back, the middle one tallest, each with a pale ridge.
+                Lines {
+                    strokeColor: Qt.darker(U.Palette.viperBody, 1.1)
+                    strokeWidth: 7
+                    PathSvg { path: "M 138 58 Q 160 49 182 58" }
+                }
+                Lines {
+                    strokeColor: Qt.alpha(Qt.lighter(U.Palette.viperKeel, 1.2), 0.7)
+                    strokeWidth: 1.6
+                    PathSvg { path: "M 139 54.5 Q 160 45.5 181 54.5" }
+                }
                 ShapePath {
-                    fillColor: Qt.darker(U.Palette.viperKeel, 1.25)
+                    fillColor: Qt.darker(U.Palette.viperKeel, 1.15)
                     strokeColor: U.Palette.viperOutline
                     strokeWidth: 2.5
                     joinStyle: ShapePath.RoundJoin
-                    PathSvg { path: "M 130 54 C 131 46 131 39 130 32 C 136 38 142 46 147 53 Z" }
+                    PathSvg { path: "M 128 54 C 129 45 129 36 127 26 C 135 34 141 43 146 52 Z M 160 52 C 162 44 162 37 161 28 C 168 35 173 43 177 51 Z" }
                 }
                 ShapePath {
-                    fillColor: U.Palette.viperKeel
+                    fillColor: Qt.lighter(U.Palette.viperKeel, 1.12)
                     strokeColor: U.Palette.viperOutline
                     strokeWidth: 3
                     joinStyle: ShapePath.RoundJoin
-                    PathSvg { path: "M 145 54 C 147 40 147 24 145 4 C 156 18 165 34 172 52 Z" }
+                    PathSvg { path: "M 143 54 C 145 40 145 24 143 4 C 154 18 163 34 170 52 Z" }
+                }
+                Lines {
+                    strokeColor: Qt.alpha(Qt.lighter(U.Palette.viperEye, 1.08), 0.85)
+                    strokeWidth: 1.2
+                    PathSvg { path: "M 131 49 L 129.5 32 M 147 50 L 146 12 M 164 48 L 163.5 33" }
                 }
                 Lines {
                     strokeColor: Qt.alpha(U.Palette.viperOutline, 0.55)
-                    strokeWidth: 1.6
-                    PathSvg { path: "M 149 42 l 14 -1 M 148 30 l 9 -1 M 147 18 l 4 0" }
+                    strokeWidth: 1.4
+                    PathSvg { path: "M 148 42 l 13 -1 M 147 31 l 8 -1 M 146 20 l 4 0 M 130 42 l 7 -1 M 162 42 l 6 -1" }
                 }
-                // The eye: dark ring, pale iris, slit pupil, a catch-light.
+                // The eye: dark ring, a pale iris shading to slate at its
+                // edge and finely streaked, the slit pupil, the brow's
+                // shadow across its top, and two catch-lights.
                 ShapePath {
                     fillColor: U.Palette.viperOutline
                     strokeColor: "transparent"
-                    PathSvg { path: "M 149 66 a 11 11 0 1 0 22 0 a 11 11 0 1 0 -22 0" }
+                    PathSvg { path: "M 148 66 a 12 12 0 1 0 24 0 a 12 12 0 1 0 -24 0" }
                 }
                 ShapePath {
-                    fillColor: U.Palette.viperEye
                     strokeColor: "transparent"
-                    PathSvg { path: "M 151.5 66 a 8.5 8.5 0 1 0 17 0 a 8.5 8.5 0 1 0 -17 0" }
+                    fillGradient: RadialGradient {
+                        centerX: 160; centerY: 66; centerRadius: 9.5
+                        focalX: 160; focalY: 66
+                        GradientStop { position: 0.3; color: Qt.lighter(U.Palette.viperEye, 1.06) }
+                        GradientStop { position: 0.85; color: U.Palette.viperKeel }
+                        GradientStop { position: 1; color: Qt.darker(U.Palette.viperKeel, 1.5) }
+                    }
+                    PathSvg { path: "M 150.5 66 a 9.5 9.5 0 1 0 19 0 a 9.5 9.5 0 1 0 -19 0" }
+                }
+                Lines {
+                    strokeColor: Qt.alpha(Qt.darker(U.Palette.viperKeel, 1.1), 0.9)
+                    strokeWidth: 0.8
+                    PathSvg { path: "M 153 60 L 156 62.5 M 167 60 L 164 62.5 M 152 70.5 L 155.5 69.5 M 168 71 L 164.5 69.5 M 160 57.5 L 160 60 M 160 74.5 L 160 72" }
                 }
                 ShapePath {
-                    fillColor: U.Palette.viperOutline
+                    fillColor: "#050608"
                     strokeColor: "transparent"
-                    PathSvg { path: "M 160 57 C 162.6 61.5 162.6 70.5 160 75 C 157.4 70.5 157.4 61.5 160 57 Z" }
+                    PathSvg { path: "M 160 57 C 162.8 61.5 162.8 70.5 160 75 C 157.2 70.5 157.2 61.5 160 57 Z" }
+                }
+                Lines {
+                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.7)
+                    strokeWidth: 3
+                    PathSvg { path: "M 150 59 Q 160 53.5 170 59" }
                 }
                 ShapePath {
                     fillColor: U.Palette.bright
                     strokeColor: "transparent"
-                    PathSvg { path: "M 153.6 61.5 a 2.2 2.2 0 1 0 4.4 0 a 2.2 2.2 0 1 0 -4.4 0" }
+                    PathSvg { path: "M 153.4 61.6 a 2.3 2.3 0 1 0 4.6 0 a 2.3 2.3 0 1 0 -4.6 0" }
                 }
-                // The fangs' roots on the maxilla, then the fangs: long
-                // curved sabres swung forward, pale, clearing at the tips.
                 ShapePath {
-                    fillColor: U.Palette.viperEye
-                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.5)
-                    strokeWidth: 1.5
-                    PathSvg { path: "M 200 94 C 202 86 220 85 222 92 Z M 181 96 C 183 89 197 88 199 94 Z" }
+                    fillColor: Qt.alpha(U.Palette.bright, 0.5)
+                    strokeColor: "transparent"
+                    PathSvg { path: "M 163.6 70.6 a 1 1 0 1 0 2 0 a 1 1 0 1 0 -2 0" }
                 }
+                // The fangs: long curved sabres swung forward, opaque at
+                // the root and clearing to a translucent tip, the forward
+                // one with its venom groove; then the pale fleshy sheath
+                // folded over their roots.
                 ShapePath {
                     strokeColor: Qt.alpha(U.Palette.viperOutline, 0.6)
                     strokeWidth: 2.2
@@ -648,10 +842,21 @@ Item {
                     fillGradient: LinearGradient {
                         x1: 190; y1: 94; x2: 220; y2: 146
                         GradientStop { position: 0; color: U.Palette.bright }
-                        GradientStop { position: 0.6; color: U.Palette.bright }
-                        GradientStop { position: 1; color: Qt.alpha(U.Palette.viperEye, 0.75) }
+                        GradientStop { position: 0.55; color: Qt.alpha(U.Palette.bright, 0.95) }
+                        GradientStop { position: 1; color: Qt.alpha(U.Palette.viperEye, 0.3) }
                     }
                     PathSvg { path: "M 183 95 L 196 94 C 202 105 206 121 203 140 C 198 123 192 110 183 100 Z M 203 93 L 218 92 C 225 105 230 124 228 146 C 222 128 214 112 203 98 Z" }
+                }
+                Lines {
+                    strokeColor: Qt.alpha(U.Palette.viperKeel, 0.95)
+                    strokeWidth: 1.1
+                    PathSvg { path: "M 210 97 C 217 108 223 122 226 138" }
+                }
+                ShapePath {
+                    fillColor: Qt.alpha(U.Palette.viperKeel, 0.9)
+                    strokeColor: Qt.alpha(U.Palette.viperOutline, 0.5)
+                    strokeWidth: 1.2
+                    PathSvg { path: "M 180 95 Q 190 108 200 94.5 Q 210 108 223 92 Z" }
                 }
             }
         }
@@ -779,7 +984,8 @@ Item {
         }
 
         // The drop: a teardrop, its tip up, lit from the upper left, over a
-        // dark under-shadow, with a thin dark rim.
+        // dark under-shadow, with a thin slate rim; inside, a highlight, the
+        // dark band light refracts into near its foot, and a bright lip.
         Shape {
             visible: drop.hanging
             opacity: 1 - drop.fading
@@ -794,8 +1000,8 @@ Item {
                 PathSvg { path: "M 0.9 -6.2 C 3.3 -2.6 4.9 -0.2 4.9 1.8 C 4.9 4.1 3.1 5.2 0.9 5.2 C -1.3 5.2 -3.1 4.1 -3.1 1.8 C -3.1 -0.2 -1.5 -2.6 0.9 -6.2 Z" }
             }
             ShapePath {
-                strokeColor: Qt.alpha(U.Palette.viperOutline, 0.55)
-                strokeWidth: 0.7
+                strokeColor: U.Palette.viperBody
+                strokeWidth: 0.6
                 fillGradient: RadialGradient {
                     centerX: -1.2; centerY: -1; centerRadius: 6
                     focalX: -1.2; focalY: -1
@@ -804,6 +1010,25 @@ Item {
                     GradientStop { position: 1; color: U.Palette.viperKeel }
                 }
                 PathSvg { path: "M 0 -7.4 C 2.4 -3.8 4 -1.4 4 0.6 C 4 2.9 2.2 4 0 4 C -2.2 4 -4 2.9 -4 0.6 C -4 -1.4 -2.4 -3.8 0 -7.4 Z" }
+            }
+            ShapePath {
+                fillColor: "transparent"
+                strokeColor: Qt.alpha(U.Palette.viperBody, 0.75)
+                strokeWidth: 0.55
+                capStyle: ShapePath.RoundCap
+                PathSvg { path: "M -2.9 1.5 Q 0 3.3 2.9 1.5" }
+            }
+            ShapePath {
+                fillColor: "transparent"
+                strokeColor: Qt.alpha("#ffffff", 0.8)
+                strokeWidth: 0.4
+                capStyle: ShapePath.RoundCap
+                PathSvg { path: "M -2 3.1 Q 0 4 2 3.1" }
+            }
+            ShapePath {
+                fillColor: "#ffffff"
+                strokeColor: "transparent"
+                PathSvg { path: "M -2.2 -0.8 a 0.75 1.25 0 1 0 1.5 0 a 0.75 1.25 0 1 0 -1.5 0" }
             }
         }
 

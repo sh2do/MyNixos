@@ -5,12 +5,15 @@
 //
 // The art is laid out in design units, 64 from the crown's line to the perch
 // line, and scaled to `size` px; the perch line is at `perchY`, the feet at
-// `footX`. Parts, back to front: the far leg, the near leg, then the torso
-// (the tail fan; the body, with the mantle's sheen; the folded wing:
-// coverts, secondaries and five primaries, with its sheen; and the head:
-// throat hackles, eye, nictitating membrane and lid, nasal bristles, and
-// the upper and lower beak, hinged at the gape). The sheen is the raven's
-// own faint blue-violet-green iridescence, the only colour on it.
+// `footX`. Parts, back to front: the far leg, the near leg (scuted, the
+// claws curled over the perch), then the torso (the wedge tail; the body,
+// its mantle scalloped, with the mantle's sheen; the folded wing: coverts,
+// scapulars, secondaries and five primaries, each with its rachis and barbs,
+// with its sheen; the scapulars a preen lifts; and the head: two layers of
+// throat hackles, crown and nape feathering, the gape line, eye, nictitating
+// membrane and lid, nasal bristles, and the upper and lower beak, hinged at
+// the gape, the culmen lit). Every feather has its slate edge. The sheen is
+// the raven's own faint blue-violet-green iridescence, the only colour on it.
 //
 // The pose properties are plain numbers; the owner animates them.
 import QtQuick
@@ -69,6 +72,8 @@ Item {
     property real tailAngle: 0
     // Legs swung back and toes curled, in the air, 0-1.
     property real tuck: 0
+    // Feathers lifted at the shoulder for the beak to work in (preening), 0-1.
+    property real preen: 0
     // The silent caw's two arcs, 0-1 through their spread.
     property real caw: 0
     // The iridescence: opacity, and how far its colours have drifted (0-1).
@@ -110,6 +115,48 @@ Item {
                     strokeColor: "transparent"
                     fillColor: root.deep
                     PathSvg { path: "M41.4,53.3 C42.2,56.9 42.8,59.9 43,62.5 L44.7,62.3 C44.4,59.3 43.9,56.1 43.4,53.1 Z" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                    strokeWidth: 0.26
+                    fillColor: "transparent"
+                    PathSvg { path: "M41.84,54.7 Q42.64,55.15 43.39,54.5" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                    strokeWidth: 0.26
+                    fillColor: "transparent"
+                    PathSvg { path: "M42.06,55.78 Q42.86,56.23 43.61,55.58" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                    strokeWidth: 0.26
+                    fillColor: "transparent"
+                    PathSvg { path: "M42.27,56.86 Q43.07,57.31 43.82,56.66" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                    strokeWidth: 0.26
+                    fillColor: "transparent"
+                    PathSvg { path: "M42.49,57.94 Q43.29,58.39 44.04,57.74" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                    strokeWidth: 0.26
+                    fillColor: "transparent"
+                    PathSvg { path: "M42.7,59.02 Q43.5,59.47 44.25,58.82" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                    strokeWidth: 0.26
+                    fillColor: "transparent"
+                    PathSvg { path: "M42.92,60.1 Q43.72,60.55 44.47,59.9" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                    strokeWidth: 0.26
+                    fillColor: "transparent"
+                    PathSvg { path: "M43.14,61.18 Q43.94,61.63 44.69,60.98" }
                 }
                 ShapePath {
                     strokeColor: root.deep
@@ -164,34 +211,46 @@ Item {
                     PathSvg { path: "M38.4,53.8 C39.2,57.4 39.8,60.4 40,63 L41.7,62.8 C41.4,59.8 40.9,56.6 40.4,53.6 Z" }
                 }
                 ShapePath {
-                    strokeColor: Qt.alpha(root.edgeColor, 0.5)
-                    strokeWidth: 0.28
+                    strokeColor: Qt.alpha(root.edgeColor, 0.6)
+                    strokeWidth: 0.26
                     fillColor: "transparent"
-                    PathSvg { path: "M39.38,56.4 L40.88,56.15" }
+                    PathSvg { path: "M38.84,55.2 Q39.64,55.65 40.39,55" }
                 }
                 ShapePath {
-                    strokeColor: Qt.alpha(root.edgeColor, 0.5)
-                    strokeWidth: 0.28
+                    strokeColor: Qt.alpha(root.edgeColor, 0.6)
+                    strokeWidth: 0.26
                     fillColor: "transparent"
-                    PathSvg { path: "M39.64,57.7 L41.14,57.45" }
+                    PathSvg { path: "M39.06,56.28 Q39.86,56.73 40.61,56.08" }
                 }
                 ShapePath {
-                    strokeColor: Qt.alpha(root.edgeColor, 0.5)
-                    strokeWidth: 0.28
+                    strokeColor: Qt.alpha(root.edgeColor, 0.6)
+                    strokeWidth: 0.26
                     fillColor: "transparent"
-                    PathSvg { path: "M39.9,59 L41.4,58.75" }
+                    PathSvg { path: "M39.27,57.36 Q40.07,57.81 40.82,57.16" }
                 }
                 ShapePath {
-                    strokeColor: Qt.alpha(root.edgeColor, 0.5)
-                    strokeWidth: 0.28
+                    strokeColor: Qt.alpha(root.edgeColor, 0.6)
+                    strokeWidth: 0.26
                     fillColor: "transparent"
-                    PathSvg { path: "M40.16,60.3 L41.66,60.05" }
+                    PathSvg { path: "M39.49,58.44 Q40.29,58.89 41.04,58.24" }
                 }
                 ShapePath {
-                    strokeColor: Qt.alpha(root.edgeColor, 0.5)
-                    strokeWidth: 0.28
+                    strokeColor: Qt.alpha(root.edgeColor, 0.6)
+                    strokeWidth: 0.26
                     fillColor: "transparent"
-                    PathSvg { path: "M40.42,61.6 L41.92,61.35" }
+                    PathSvg { path: "M39.7,59.52 Q40.5,59.97 41.25,59.32" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.6)
+                    strokeWidth: 0.26
+                    fillColor: "transparent"
+                    PathSvg { path: "M39.92,60.6 Q40.72,61.05 41.47,60.4" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.6)
+                    strokeWidth: 0.26
+                    fillColor: "transparent"
+                    PathSvg { path: "M40.14,61.68 Q40.94,62.13 41.69,61.48" }
                 }
                 ShapePath {
                     strokeColor: root.beakColor
@@ -234,6 +293,27 @@ Item {
                     capStyle: ShapePath.RoundCap
                     fillColor: "transparent"
                     PathSvg { path: "M44.8,63.9 C45.7,64.2 45.9,64.9 45.5,65.8" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.7)
+                    strokeWidth: 0.2
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M33.55,63.9 Q33.15,64.4 33.35,65" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.7)
+                    strokeWidth: 0.2
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M36.95,63.6 Q36.55,64.1 36.75,64.7" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.7)
+                    strokeWidth: 0.2
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M45.75,64 Q45.35,64.5 45.55,65.1" }
                 }
                 ShapePath {
                     strokeColor: Qt.alpha(root.edgeColor, 0.6)
@@ -292,20 +372,32 @@ Item {
                             GradientStop { position: 0.55; color: root.bodyColor }
                             GradientStop { position: 1; color: root.deep }
                         }
-                        PathSvg { path: "M-1,-0.04 C10.33,-0.41 15.99,0.55 21.65,0.55 C22.67,0.55 23.5,1.38 23.5,2.4 C23.5,3.42 22.67,4.25 21.65,4.25 C15.99,4.25 10.33,3.29 -1,2.92 Z" }
+                        PathSvg { path: "M-1,0.14 C9.57,-0.23 14.86,0.85 20.15,0.85 C21.17,0.85 22,1.68 22,2.7 C22,3.72 21.17,4.55 20.15,4.55 C14.86,4.55 9.57,3.47 -1,3.1 Z" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.55)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M-1,0.14 C9.57,-0.23 14.86,0.85 20.15,0.85 C21.17,0.85 22,1.68 22,2.7 C22,3.72 21.17,4.55 20.15,4.55 C14.86,4.55 9.57,3.47 -1,3.1 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeWidth: 0.14
+                        fillColor: "transparent"
+                        PathSvg { path: "M3.75,1.86 L5.04,0.43 M3.75,1.86 L5.04,3.3 M4.69,1.91 L6.04,0.41 M4.69,1.91 L6.04,3.41 M5.63,1.96 L7.03,0.4 M5.63,1.96 L7.03,3.52 M6.57,2.01 L8.01,0.4 M6.57,2.01 L8.01,3.61 M7.51,2.05 L8.98,0.42 M7.51,2.05 L8.98,3.69 M8.45,2.1 L9.94,0.45 M8.45,2.1 L9.94,3.76 M9.39,2.15 L10.89,0.49 M9.39,2.15 L10.89,3.82 M10.33,2.2 L11.82,0.54 M10.33,2.2 L11.82,3.86 M11.27,2.25 L12.75,0.6 M11.27,2.25 L12.75,3.89 M12.21,2.29 L13.66,0.68 M12.21,2.29 L13.66,3.91 M13.15,2.34 L14.57,0.77 M13.15,2.34 L14.57,3.92 M14.09,2.39 L15.46,0.87 M14.09,2.39 L15.46,3.92 M15.03,2.44 L16.34,0.97 M15.03,2.44 L16.34,3.9 M15.97,2.49 L17.22,1.09 M15.97,2.49 L17.22,3.88 M16.91,2.53 L18.09,1.22 M16.91,2.53 L18.09,3.85 M17.85,2.58 L18.96,1.35 M17.85,2.58 L18.96,3.82 M18.79,2.63 L19.82,1.48 M18.79,2.63 L19.82,3.78" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.6)
                         strokeWidth: 0.45
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
-                        PathSvg { path: "M20.54,0.62 L21.65,0.55 C22.67,0.55 23.5,1.38 23.5,2.4 C23.5,3.42 22.67,4.25 21.65,4.25 L19.43,4.21" }
+                        PathSvg { path: "M19.04,0.92 L20.15,0.85 C21.17,0.85 22,1.68 22,2.7 C22,3.72 21.17,4.55 20.15,4.55 L17.93,4.51" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.22)
-                        strokeWidth: 0.25
+                        strokeColor: Qt.alpha(root.edgeColor, 0.4)
+                        strokeWidth: 0.24
                         fillColor: "transparent"
-                        PathSvg { path: "M1.45,1.54 L21.28,2.49" }
+                        PathSvg { path: "M1.3,1.73 L19.78,2.79" }
                     }
                     ShapePath {
                         strokeColor: "transparent"
@@ -315,20 +407,32 @@ Item {
                             GradientStop { position: 0.55; color: root.bodyColor }
                             GradientStop { position: 1; color: root.deep }
                         }
-                        PathSvg { path: "M-1,-0.64 C11.58,-1.01 17.86,-0.45 24.15,-0.45 C25.17,-0.45 26,0.38 26,1.4 C26,2.42 25.17,3.25 24.15,3.25 C17.86,3.25 11.58,2.69 -1,2.32 Z" }
+                        PathSvg { path: "M-1,-0.52 C11.18,-0.89 17.26,-0.25 23.35,-0.25 C24.37,-0.25 25.2,0.58 25.2,1.6 C25.2,2.62 24.37,3.45 23.35,3.45 C17.26,3.45 11.18,2.81 -1,2.44 Z" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.55)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M-1,-0.52 C11.18,-0.89 17.26,-0.25 23.35,-0.25 C24.37,-0.25 25.2,0.58 25.2,1.6 C25.2,2.62 24.37,3.45 23.35,3.45 C17.26,3.45 11.18,2.81 -1,2.44 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeWidth: 0.14
+                        fillColor: "transparent"
+                        PathSvg { path: "M4.31,1.1 L5.6,-0.33 M4.31,1.1 L5.6,2.53 M5.24,1.12 L6.57,-0.36 M5.24,1.12 L6.57,2.61 M6.17,1.15 L7.55,-0.39 M6.17,1.15 L7.55,2.68 M7.09,1.17 L8.51,-0.4 M7.09,1.17 L8.51,2.75 M8.02,1.2 L9.47,-0.42 M8.02,1.2 L9.47,2.81 M8.95,1.22 L10.42,-0.42 M8.95,1.22 L10.42,2.86 M9.88,1.25 L11.37,-0.41 M9.88,1.25 L11.37,2.9 M10.8,1.27 L12.3,-0.39 M10.8,1.27 L12.3,2.93 M11.73,1.29 L13.23,-0.37 M11.73,1.29 L13.23,2.96 M12.66,1.32 L14.15,-0.33 M12.66,1.32 L14.15,2.97 M13.59,1.34 L15.06,-0.29 M13.59,1.34 L15.06,2.98 M14.51,1.37 L15.96,-0.24 M14.51,1.37 L15.96,2.97 M15.44,1.39 L16.85,-0.18 M15.44,1.39 L16.85,2.96 M16.37,1.42 L17.74,-0.11 M16.37,1.42 L17.74,2.94 M17.3,1.44 L18.62,-0.03 M17.3,1.44 L18.62,2.91 M18.22,1.47 L19.5,0.05 M18.22,1.47 L19.5,2.88 M19.15,1.49 L20.37,0.14 M19.15,1.49 L20.37,2.84 M20.08,1.51 L21.23,0.23 M20.08,1.51 L21.23,2.8 M21.01,1.54 L22.1,0.33 M21.01,1.54 L22.1,2.75 M21.94,1.56 L22.96,0.43 M21.94,1.56 L22.96,2.7" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.6)
                         strokeWidth: 0.45
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
-                        PathSvg { path: "M23.04,-0.38 L24.15,-0.45 C25.17,-0.45 26,0.38 26,1.4 C26,2.42 25.17,3.25 24.15,3.25 L21.93,3.21" }
+                        PathSvg { path: "M22.24,-0.18 L23.35,-0.25 C24.37,-0.25 25.2,0.58 25.2,1.6 C25.2,2.62 24.37,3.45 23.35,3.45 L21.13,3.41" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.22)
-                        strokeWidth: 0.25
+                        strokeColor: Qt.alpha(root.edgeColor, 0.4)
+                        strokeWidth: 0.24
                         fillColor: "transparent"
-                        PathSvg { path: "M1.7,0.9 L23.78,1.49" }
+                        PathSvg { path: "M1.62,1.02 L22.98,1.69" }
                     }
                     ShapePath {
                         strokeColor: "transparent"
@@ -338,20 +442,32 @@ Item {
                             GradientStop { position: 0.55; color: root.bodyColor }
                             GradientStop { position: 1; color: root.deep }
                         }
-                        PathSvg { path: "M-1,-1.24 C12.77,-1.61 19.66,-1.45 26.55,-1.45 C27.57,-1.45 28.4,-0.62 28.4,0.4 C28.4,1.42 27.57,2.25 26.55,2.25 C19.66,2.25 12.77,2.09 -1,1.72 Z" }
+                        PathSvg { path: "M-1,-1.18 C12.68,-1.55 19.51,-1.35 26.35,-1.35 C27.37,-1.35 28.2,-0.52 28.2,0.5 C28.2,1.52 27.37,2.35 26.35,2.35 C19.51,2.35 12.68,2.15 -1,1.78 Z" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.55)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M-1,-1.18 C12.68,-1.55 19.51,-1.35 26.35,-1.35 C27.37,-1.35 28.2,-0.52 28.2,0.5 C28.2,1.52 27.37,2.35 26.35,2.35 C19.51,2.35 12.68,2.15 -1,1.78 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeWidth: 0.14
+                        fillColor: "transparent"
+                        PathSvg { path: "M4.83,0.34 L6.11,-1.08 M4.83,0.34 L6.11,1.76 M5.75,0.35 L7.07,-1.12 M5.75,0.35 L7.07,1.82 M6.66,0.36 L8.02,-1.16 M6.66,0.36 L8.02,1.87 M7.57,0.36 L8.97,-1.19 M7.57,0.36 L8.97,1.92 M8.48,0.37 L9.91,-1.22 M8.48,0.37 L9.91,1.96 M9.39,0.38 L10.85,-1.24 M9.39,0.38 L10.85,2 M10.3,0.38 L11.78,-1.26 M10.3,0.38 L11.78,2.02 M11.22,0.39 L12.71,-1.27 M11.22,0.39 L12.71,2.05 M12.13,0.4 L13.63,-1.27 M12.13,0.4 L13.63,2.06 M13.04,0.4 L14.54,-1.26 M13.04,0.4 L14.54,2.07 M13.95,0.41 L15.44,-1.25 M13.95,0.41 L15.44,2.07 M14.86,0.42 L16.34,-1.23 M14.86,0.42 L16.34,2.06 M15.77,0.42 L17.24,-1.2 M15.77,0.42 L17.24,2.05 M16.69,0.43 L18.12,-1.17 M16.69,0.43 L18.12,2.03 M17.6,0.44 L19.01,-1.13 M17.6,0.44 L19.01,2 M18.51,0.44 L19.88,-1.08 M18.51,0.44 L19.88,1.97 M19.42,0.45 L20.75,-1.03 M19.42,0.45 L20.75,1.93 M20.33,0.46 L21.62,-0.97 M20.33,0.46 L21.62,1.89 M21.24,0.46 L22.48,-0.91 M21.24,0.46 L22.48,1.84 M22.16,0.47 L23.34,-0.85 M22.16,0.47 L23.34,1.79 M23.07,0.48 L24.2,-0.78 M23.07,0.48 L24.2,1.73 M23.98,0.48 L25.05,-0.71 M23.98,0.48 L25.05,1.67 M24.89,0.49 L25.9,-0.64 M24.89,0.49 L25.9,1.61" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.6)
                         strokeWidth: 0.45
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
-                        PathSvg { path: "M25.44,-1.38 L26.55,-1.45 C27.57,-1.45 28.4,-0.62 28.4,0.4 C28.4,1.42 27.57,2.25 26.55,2.25 L24.33,2.21" }
+                        PathSvg { path: "M25.24,-1.28 L26.35,-1.35 C27.37,-1.35 28.2,-0.52 28.2,0.5 C28.2,1.52 27.37,2.35 26.35,2.35 L24.13,2.31" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.22)
-                        strokeWidth: 0.25
+                        strokeColor: Qt.alpha(root.edgeColor, 0.4)
+                        strokeWidth: 0.24
                         fillColor: "transparent"
-                        PathSvg { path: "M1.94,0.26 L26.18,0.49" }
+                        PathSvg { path: "M1.92,0.32 L25.98,0.59" }
                     }
                     ShapePath {
                         strokeColor: "transparent"
@@ -361,20 +477,32 @@ Item {
                             GradientStop { position: 0.55; color: root.bodyColor }
                             GradientStop { position: 1; color: root.deep }
                         }
-                        PathSvg { path: "M-1,-1.84 C13.77,-2.21 21.16,-2.45 28.55,-2.45 C29.57,-2.45 30.4,-1.62 30.4,-0.6 C30.4,0.42 29.57,1.25 28.55,1.25 C21.16,1.25 13.77,1.49 -1,1.12 Z" }
+                        PathSvg { path: "M-1,-1.84 C13.88,-2.21 21.31,-2.45 28.75,-2.45 C29.77,-2.45 30.6,-1.62 30.6,-0.6 C30.6,0.42 29.77,1.25 28.75,1.25 C21.31,1.25 13.88,1.49 -1,1.12 Z" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.55)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M-1,-1.84 C13.88,-2.21 21.31,-2.45 28.75,-2.45 C29.77,-2.45 30.6,-1.62 30.6,-0.6 C30.6,0.42 29.77,1.25 28.75,1.25 C21.31,1.25 13.88,1.49 -1,1.12 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeWidth: 0.14
+                        fillColor: "transparent"
+                        PathSvg { path: "M5.27,-0.41 L6.54,-1.83 M5.27,-0.41 L6.54,1.01 M6.19,-0.42 L7.5,-1.88 M6.19,-0.42 L7.5,1.05 M7.1,-0.43 L8.46,-1.93 M7.1,-0.43 L8.46,1.08 M8.02,-0.43 L9.41,-1.98 M8.02,-0.43 L9.41,1.11 M8.93,-0.44 L10.35,-2.02 M8.93,-0.44 L10.35,1.14 M9.85,-0.45 L11.29,-2.05 M9.85,-0.45 L11.29,1.16 M10.76,-0.45 L12.23,-2.09 M10.76,-0.45 L12.23,1.18 M11.68,-0.46 L13.16,-2.11 M11.68,-0.46 L13.16,1.19 M12.59,-0.47 L14.09,-2.13 M12.59,-0.47 L14.09,1.19 M13.51,-0.48 L15.01,-2.14 M13.51,-0.48 L15.01,1.19 M14.42,-0.48 L15.92,-2.15 M14.42,-0.48 L15.92,1.18 M15.34,-0.49 L16.83,-2.15 M15.34,-0.49 L16.83,1.17 M16.26,-0.5 L17.74,-2.14 M16.26,-0.5 L17.74,1.15 M17.17,-0.51 L18.63,-2.13 M17.17,-0.51 L18.63,1.12 M18.09,-0.51 L19.53,-2.12 M18.09,-0.51 L19.53,1.09 M19,-0.52 L20.42,-2.09 M19,-0.52 L20.42,1.05 M19.92,-0.53 L21.3,-2.07 M19.92,-0.53 L21.3,1.01 M20.83,-0.54 L22.18,-2.03 M20.83,-0.54 L22.18,0.96 M21.75,-0.54 L23.06,-2 M21.75,-0.54 L23.06,0.91 M22.66,-0.55 L23.93,-1.96 M22.66,-0.55 L23.93,0.85 M23.58,-0.56 L24.8,-1.91 M23.58,-0.56 L24.8,0.8 M24.49,-0.57 L25.66,-1.86 M24.49,-0.57 L25.66,0.73 M25.41,-0.57 L26.53,-1.81 M25.41,-0.57 L26.53,0.67 M26.32,-0.58 L27.39,-1.76 M26.32,-0.58 L27.39,0.6 M27.24,-0.59 L28.25,-1.71 M27.24,-0.59 L28.25,0.53" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.6)
                         strokeWidth: 0.45
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
-                        PathSvg { path: "M27.44,-2.38 L28.55,-2.45 C29.57,-2.45 30.4,-1.62 30.4,-0.6 C30.4,0.42 29.57,1.25 28.55,1.25 L26.33,1.21" }
+                        PathSvg { path: "M27.64,-2.38 L28.75,-2.45 C29.77,-2.45 30.6,-1.62 30.6,-0.6 C30.6,0.42 29.77,1.25 28.75,1.25 L26.53,1.21" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.22)
-                        strokeWidth: 0.25
+                        strokeColor: Qt.alpha(root.edgeColor, 0.4)
+                        strokeWidth: 0.24
                         fillColor: "transparent"
-                        PathSvg { path: "M2.14,-0.38 L28.18,-0.51" }
+                        PathSvg { path: "M2.16,-0.38 L28.38,-0.51" }
                     }
                     ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.35)
@@ -532,6 +660,111 @@ Item {
                     PathSvg { path: "M30.04,48.7 C30.44,50.2 32.64,50.2 33.04,48.7" }
                 }
                 ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M28.7,18.9 C29.21,20.22 31.59,20.22 32.1,18.9" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M31.59,20.51 C32.1,21.83 34.48,21.83 34.99,20.51" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M34.48,22.13 C34.99,23.45 37.37,23.45 37.88,22.13" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M37.37,23.74 C37.88,25.07 40.26,25.07 40.77,23.74" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M29.7,22.1 C30.27,23.54 32.93,23.54 33.5,22.1" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M32.93,23.9 C33.5,25.35 36.16,25.35 36.73,23.9" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M36.16,25.71 C36.73,27.15 39.39,27.15 39.96,25.71" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M39.39,27.51 C39.96,28.96 42.62,28.96 43.19,27.51" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M32.4,25.3 C33,26.8 35.8,26.8 36.4,25.3" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M35.8,27.2 C36.4,28.7 39.2,28.7 39.8,27.2" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M39.2,29.1 C39.8,30.6 42.6,30.6 43.2,29.1" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M42.6,31 C43.2,32.5 46,32.5 46.6,31" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M36.3,28.5 C36.93,30.06 39.87,30.06 40.5,28.5" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M39.87,30.5 C40.5,32.06 43.44,32.06 44.07,30.5" }
+                }
+                ShapePath {
+                    strokeColor: Qt.alpha(root.edgeColor, 0.32)
+                    strokeWidth: 0.3
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    PathSvg { path: "M43.44,32.49 C44.07,34.05 47.01,34.05 47.64,32.49" }
+                }
+                ShapePath {
                     strokeColor: Qt.alpha(root.edgeColor, 0.55)
                     strokeWidth: 0.6
                     capStyle: ShapePath.RoundCap
@@ -648,15 +881,27 @@ Item {
                             PathSvg { path: "M22,-1.02 C35.71,-1.4 42.57,-1.7 49.42,-1.7 C51.89,-1.51 53.13,-0.27 53.6,0.39 C52.94,1.34 51.7,2.1 49.42,2.1 C42.57,2.1 35.71,2.4 22,2.02 Z" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.62)
+                            strokeColor: Qt.alpha(root.edgeColor, 0.55)
+                            strokeWidth: 0.26
+                            fillColor: "transparent"
+                            PathSvg { path: "M22,-1.02 C35.71,-1.4 42.57,-1.7 49.42,-1.7 C51.89,-1.51 53.13,-0.27 53.6,0.39 C52.94,1.34 51.7,2.1 49.42,2.1 C42.57,2.1 35.71,2.4 22,2.02 Z" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.24)
+                            strokeWidth: 0.14
+                            fillColor: "transparent"
+                            PathSvg { path: "M27.85,0.44 L29.16,-1.02 M27.85,0.44 L29.16,1.89 M28.76,0.43 L30.12,-1.08 M28.76,0.43 L30.12,1.94 M29.68,0.42 L31.08,-1.14 M29.68,0.42 L31.08,1.97 M30.59,0.41 L32.03,-1.19 M30.59,0.41 L32.03,2 M31.51,0.4 L32.98,-1.24 M31.51,0.4 L32.98,2.03 M32.42,0.39 L33.92,-1.28 M32.42,0.39 L33.92,2.05 M33.33,0.38 L34.85,-1.31 M33.33,0.38 L34.85,2.06 M34.25,0.37 L35.78,-1.33 M34.25,0.37 L35.78,2.07 M35.16,0.36 L36.7,-1.35 M35.16,0.36 L36.7,2.06 M36.08,0.35 L37.61,-1.36 M36.08,0.35 L37.61,2.06 M36.99,0.34 L38.52,-1.37 M36.99,0.34 L38.52,2.04 M37.9,0.33 L39.42,-1.36 M37.9,0.33 L39.42,2.02 M38.82,0.32 L40.32,-1.35 M38.82,0.32 L40.32,1.98 M39.73,0.31 L41.21,-1.33 M39.73,0.31 L41.21,1.95 M40.65,0.3 L42.09,-1.31 M40.65,0.3 L42.09,1.9 M41.56,0.29 L42.97,-1.28 M41.56,0.29 L42.97,1.85 M42.47,0.28 L43.84,-1.24 M42.47,0.28 L43.84,1.8 M43.39,0.27 L44.71,-1.2 M43.39,0.27 L44.71,1.73 M44.3,0.26 L45.57,-1.16 M44.3,0.26 L45.57,1.67 M45.22,0.25 L46.43,-1.11 M45.22,0.25 L46.43,1.6 M46.13,0.24 L47.29,-1.05 M46.13,0.24 L47.29,1.53 M47.04,0.23 L48.15,-1 M47.04,0.23 L48.15,1.45 M47.96,0.22 L49,-0.94 M47.96,0.22 L49,1.37" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.65)
                             strokeWidth: 0.48
                             capStyle: ShapePath.RoundCap
                             fillColor: "transparent"
                             PathSvg { path: "M45.62,-1.64 L49.42,-1.7 C51.89,-1.51 53.13,-0.27 53.6,0.39" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.2)
-                            strokeWidth: 0.24
+                            strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                            strokeWidth: 0.26
                             fillColor: "transparent"
                             PathSvg { path: "M25.16,0.47 L49.04,0.3" }
                         }
@@ -677,15 +922,27 @@ Item {
                             PathSvg { path: "M22.8,-0.33 C34.67,-0.7 40.6,-0.35 46.53,-0.35 C48.94,-0.16 50.14,1.04 50.6,1.69 C49.95,2.61 48.75,3.35 46.53,3.35 C40.6,3.35 34.67,3 22.8,2.63 Z" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.62)
+                            strokeColor: Qt.alpha(root.edgeColor, 0.55)
+                            strokeWidth: 0.26
+                            fillColor: "transparent"
+                            PathSvg { path: "M22.8,-0.33 C34.67,-0.7 40.6,-0.35 46.53,-0.35 C48.94,-0.16 50.14,1.04 50.6,1.69 C49.95,2.61 48.75,3.35 46.53,3.35 C40.6,3.35 34.67,3 22.8,2.63 Z" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.24)
+                            strokeWidth: 0.14
+                            fillColor: "transparent"
+                            PathSvg { path: "M27.98,1.23 L29.26,-0.2 M27.98,1.23 L29.26,2.65 M28.88,1.24 L30.22,-0.24 M28.88,1.24 L30.22,2.72 M29.78,1.25 L31.16,-0.28 M29.78,1.25 L31.16,2.79 M30.69,1.27 L32.11,-0.31 M30.69,1.27 L32.11,2.84 M31.59,1.28 L33.04,-0.33 M31.59,1.28 L33.04,2.89 M32.5,1.29 L33.97,-0.35 M32.5,1.29 L33.97,2.93 M33.4,1.31 L34.89,-0.35 M33.4,1.31 L34.89,2.96 M34.3,1.32 L35.8,-0.34 M34.3,1.32 L35.8,2.98 M35.21,1.33 L36.7,-0.33 M35.21,1.33 L36.7,3 M36.11,1.35 L37.6,-0.31 M36.11,1.35 L37.6,3 M37.02,1.36 L38.49,-0.27 M37.02,1.36 L38.49,2.99 M37.92,1.37 L39.36,-0.23 M37.92,1.37 L39.36,2.98 M38.82,1.39 L40.24,-0.18 M38.82,1.39 L40.24,2.96 M39.73,1.4 L41.1,-0.13 M39.73,1.4 L41.1,2.92 M40.63,1.41 L41.96,-0.06 M40.63,1.41 L41.96,2.89 M41.54,1.43 L42.81,0.01 M41.54,1.43 L42.81,2.84 M42.44,1.44 L43.66,0.09 M42.44,1.44 L43.66,2.79 M43.34,1.45 L44.5,0.17 M43.34,1.45 L44.5,2.74 M44.25,1.47 L45.34,0.26 M44.25,1.47 L45.34,2.68 M45.15,1.48 L46.17,0.34 M45.15,1.48 L46.17,2.61" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.65)
                             strokeWidth: 0.48
                             capStyle: ShapePath.RoundCap
                             fillColor: "transparent"
                             PathSvg { path: "M42.83,-0.29 L46.53,-0.35 C48.94,-0.16 50.14,1.04 50.6,1.69" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.2)
-                            strokeWidth: 0.24
+                            strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                            strokeWidth: 0.26
                             fillColor: "transparent"
                             PathSvg { path: "M25.58,1.18 L46.16,1.59" }
                         }
@@ -706,15 +963,27 @@ Item {
                             PathSvg { path: "M23.6,0.31 C33.62,-0.05 38.63,0.9 43.64,0.9 C45.98,1.08 47.15,2.25 47.6,2.88 C46.97,3.78 45.8,4.5 43.64,4.5 C38.63,4.5 33.62,3.55 23.6,3.19 Z" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.62)
+                            strokeColor: Qt.alpha(root.edgeColor, 0.55)
+                            strokeWidth: 0.26
+                            fillColor: "transparent"
+                            PathSvg { path: "M23.6,0.31 C33.62,-0.05 38.63,0.9 43.64,0.9 C45.98,1.08 47.15,2.25 47.6,2.88 C46.97,3.78 45.8,4.5 43.64,4.5 C38.63,4.5 33.62,3.55 23.6,3.19 Z" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.24)
+                            strokeWidth: 0.14
+                            fillColor: "transparent"
+                            PathSvg { path: "M28.15,1.97 L29.41,0.56 M28.15,1.97 L29.41,3.37 M29.09,2.01 L30.41,0.54 M29.09,2.01 L30.41,3.48 M30.04,2.06 L31.41,0.53 M30.04,2.06 L31.41,3.58 M30.98,2.1 L32.39,0.53 M30.98,2.1 L32.39,3.67 M31.92,2.14 L33.36,0.55 M31.92,2.14 L33.36,3.74 M32.87,2.19 L34.32,0.57 M32.87,2.19 L34.32,3.8 M33.81,2.23 L35.27,0.61 M33.81,2.23 L35.27,3.85 M34.75,2.28 L36.2,0.67 M34.75,2.28 L36.2,3.89 M35.69,2.32 L37.12,0.74 M35.69,2.32 L37.12,3.91 M36.64,2.37 L38.03,0.82 M36.64,2.37 L38.03,3.92 M37.58,2.41 L38.93,0.91 M37.58,2.41 L38.93,3.92 M38.52,2.46 L39.82,1.01 M38.52,2.46 L39.82,3.9 M39.47,2.5 L40.7,1.13 M39.47,2.5 L40.7,3.88 M40.41,2.55 L41.58,1.25 M40.41,2.55 L41.58,3.84 M41.35,2.59 L42.44,1.38 M41.35,2.59 L42.44,3.8 M42.3,2.64 L43.31,1.51 M42.3,2.64 L43.31,3.76" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.65)
                             strokeWidth: 0.48
                             capStyle: ShapePath.RoundCap
                             fillColor: "transparent"
                             PathSvg { path: "M40.04,0.95 L43.64,0.9 C45.98,1.08 47.15,2.25 47.6,2.88" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.2)
-                            strokeWidth: 0.24
+                            strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                            strokeWidth: 0.26
                             fillColor: "transparent"
                             PathSvg { path: "M26,1.85 L43.28,2.79" }
                         }
@@ -735,15 +1004,27 @@ Item {
                             PathSvg { path: "M24.4,0.85 C32.58,0.5 36.66,1.95 40.75,1.95 C43.03,2.13 44.16,3.26 44.6,3.88 C43.99,4.75 42.85,5.45 40.75,5.45 C36.66,5.45 32.58,4 24.4,3.65 Z" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.62)
+                            strokeColor: Qt.alpha(root.edgeColor, 0.55)
+                            strokeWidth: 0.26
+                            fillColor: "transparent"
+                            PathSvg { path: "M24.4,0.85 C32.58,0.5 36.66,1.95 40.75,1.95 C43.03,2.13 44.16,3.26 44.6,3.88 C43.99,4.75 42.85,5.45 40.75,5.45 C36.66,5.45 32.58,4 24.4,3.65 Z" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.24)
+                            strokeWidth: 0.14
+                            fillColor: "transparent"
+                            PathSvg { path: "M28.28,2.59 L29.52,1.22 M28.28,2.59 L29.52,3.97 M29.21,2.68 L30.52,1.23 M29.21,2.68 L30.52,4.13 M30.15,2.76 L31.5,1.25 M30.15,2.76 L31.5,4.27 M31.08,2.84 L32.48,1.29 M31.08,2.84 L32.48,4.39 M32.01,2.93 L33.43,1.35 M32.01,2.93 L33.43,4.5 M32.95,3.01 L34.36,1.43 M32.95,3.01 L34.36,4.58 M33.88,3.09 L35.28,1.54 M33.88,3.09 L35.28,4.65 M34.82,3.17 L36.18,1.65 M34.82,3.17 L36.18,4.69 M35.75,3.26 L37.07,1.79 M35.75,3.26 L37.07,4.72 M36.69,3.34 L37.94,1.95 M36.69,3.34 L37.94,4.73 M37.62,3.42 L38.8,2.11 M37.62,3.42 L38.8,4.73 M38.55,3.51 L39.65,2.29 M38.55,3.51 L39.65,4.72 M39.49,3.59 L40.49,2.48 M39.49,3.59 L40.49,4.7" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.65)
                             strokeWidth: 0.48
                             capStyle: ShapePath.RoundCap
                             fillColor: "transparent"
                             PathSvg { path: "M37.25,2 L40.75,1.95 C43.03,2.13 44.16,3.26 44.6,3.88" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.2)
-                            strokeWidth: 0.24
+                            strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                            strokeWidth: 0.26
                             fillColor: "transparent"
                             PathSvg { path: "M26.42,2.4 L40.4,3.79" }
                         }
@@ -764,15 +1045,27 @@ Item {
                             PathSvg { path: "M25.2,1.29 C31.63,0.95 34.85,2.8 38.06,2.8 C40.27,2.97 41.38,4.08 41.8,4.67 C41.21,5.52 40.1,6.2 38.06,6.2 C34.85,6.2 31.63,4.35 25.2,4.01 Z" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.62)
+                            strokeColor: Qt.alpha(root.edgeColor, 0.55)
+                            strokeWidth: 0.26
+                            fillColor: "transparent"
+                            PathSvg { path: "M25.2,1.29 C31.63,0.95 34.85,2.8 38.06,2.8 C40.27,2.97 41.38,4.08 41.8,4.67 C41.21,5.52 40.1,6.2 38.06,6.2 C34.85,6.2 31.63,4.35 25.2,4.01 Z" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.24)
+                            strokeWidth: 0.14
+                            fillColor: "transparent"
+                            PathSvg { path: "M28.45,3.12 L29.67,1.76 M28.45,3.12 L29.67,4.48 M29.39,3.25 L30.68,1.81 M29.39,3.25 L30.68,4.69 M30.32,3.39 L31.67,1.89 M30.32,3.39 L31.67,4.89 M31.26,3.52 L32.63,1.99 M31.26,3.52 L32.63,5.05 M32.19,3.66 L33.56,2.13 M32.19,3.66 L33.56,5.18 M33.13,3.79 L34.47,2.3 M33.13,3.79 L34.47,5.28 M34.06,3.92 L35.35,2.5 M34.06,3.92 L35.35,5.35 M35,4.06 L36.2,2.72 M35,4.06 L36.2,5.4 M35.93,4.19 L37.04,2.96 M35.93,4.19 L37.04,5.42 M36.87,4.33 L37.86,3.22 M36.87,4.33 L37.86,5.43" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.65)
                             strokeWidth: 0.48
                             capStyle: ShapePath.RoundCap
                             fillColor: "transparent"
                             PathSvg { path: "M34.66,2.85 L38.06,2.8 C40.27,2.97 41.38,4.08 41.8,4.67" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.2)
-                            strokeWidth: 0.24
+                            strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                            strokeWidth: 0.26
                             fillColor: "transparent"
                             PathSvg { path: "M26.86,2.84 L37.72,4.59" }
                         }
@@ -791,11 +1084,29 @@ Item {
                         PathSvg { path: "M23.2,0.2 C30.45,-0.3 34.08,2.9 37.7,2.9 C39.08,2.9 40.2,4.02 40.2,5.4 C40.2,6.78 39.08,7.9 37.7,7.9 C34.08,7.9 30.45,4.7 23.2,4.2 Z" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.46)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.45)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M23.2,0.2 C30.45,-0.3 34.08,2.9 37.7,2.9 C39.08,2.9 40.2,4.02 40.2,5.4 C40.2,6.78 39.08,7.9 37.7,7.9 C34.08,7.9 30.45,4.7 23.2,4.2 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.18)
+                        strokeWidth: 0.14
+                        fillColor: "transparent"
+                        PathSvg { path: "M26.7,2.97 L28.48,1 M26.7,2.97 L28.48,4.95 M27.59,3.17 L29.47,1.08 M27.59,3.17 L29.47,5.26 M28.49,3.37 L30.44,1.19 M28.49,3.37 L30.44,5.54 M29.38,3.56 L31.38,1.34 M29.38,3.56 L31.38,5.79 M30.27,3.76 L32.3,1.51 M30.27,3.76 L32.3,6.01 M31.16,3.96 L33.18,1.72 M31.16,3.96 L33.18,6.2 M32.06,4.15 L34.03,1.96 M32.06,4.15 L34.03,6.35 M32.95,4.35 L34.86,2.23 M32.95,4.35 L34.86,6.48 M33.84,4.55 L35.66,2.52 M33.84,4.55 L35.66,6.57 M34.73,4.75 L36.44,2.85 M34.73,4.75 L36.44,6.64 M35.63,4.94 L37.21,3.19 M35.63,4.94 L37.21,6.7 M36.52,5.14 L37.95,3.54 M36.52,5.14 L37.95,6.74" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
                         strokeWidth: 0.45
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M36.2,3 L37.7,2.9 C39.08,2.9 40.2,4.02 40.2,5.4 C40.2,6.78 39.08,7.9 37.7,7.9 L34.7,7.85" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                        strokeWidth: 0.22
+                        fillColor: "transparent"
+                        PathSvg { path: "M24.9,2.52 L37.2,5.53" }
                     }
                     ShapePath {
                         strokeColor: "transparent"
@@ -808,11 +1119,29 @@ Item {
                         PathSvg { path: "M18.4,2.4 C25.65,1.9 29.28,5.1 32.9,5.1 C34.28,5.1 35.4,6.22 35.4,7.6 C35.4,8.98 34.28,10.1 32.9,10.1 C29.28,10.1 25.65,6.9 18.4,6.4 Z" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.46)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.45)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M18.4,2.4 C25.65,1.9 29.28,5.1 32.9,5.1 C34.28,5.1 35.4,6.22 35.4,7.6 C35.4,8.98 34.28,10.1 32.9,10.1 C29.28,10.1 25.65,6.9 18.4,6.4 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.18)
+                        strokeWidth: 0.14
+                        fillColor: "transparent"
+                        PathSvg { path: "M21.9,5.17 L23.68,3.2 M21.9,5.17 L23.68,7.15 M22.79,5.37 L24.67,3.28 M22.79,5.37 L24.67,7.46 M23.69,5.57 L25.64,3.39 M23.69,5.57 L25.64,7.74 M24.58,5.76 L26.58,3.54 M24.58,5.76 L26.58,7.99 M25.47,5.96 L27.5,3.71 M25.47,5.96 L27.5,8.21 M26.36,6.16 L28.38,3.92 M26.36,6.16 L28.38,8.4 M27.26,6.35 L29.23,4.16 M27.26,6.35 L29.23,8.55 M28.15,6.55 L30.06,4.43 M28.15,6.55 L30.06,8.68 M29.04,6.75 L30.86,4.72 M29.04,6.75 L30.86,8.77 M29.93,6.95 L31.64,5.05 M29.93,6.95 L31.64,8.84 M30.83,7.14 L32.41,5.39 M30.83,7.14 L32.41,8.9 M31.72,7.34 L33.15,5.74 M31.72,7.34 L33.15,8.94" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
                         strokeWidth: 0.45
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M31.4,5.2 L32.9,5.1 C34.28,5.1 35.4,6.22 35.4,7.6 C35.4,8.98 34.28,10.1 32.9,10.1 L29.9,10.05" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                        strokeWidth: 0.22
+                        fillColor: "transparent"
+                        PathSvg { path: "M20.1,4.72 L32.4,7.73" }
                     }
                     ShapePath {
                         strokeColor: "transparent"
@@ -825,11 +1154,29 @@ Item {
                         PathSvg { path: "M13.4,3.8 C20.65,3.3 24.28,6.5 27.9,6.5 C29.28,6.5 30.4,7.62 30.4,9 C30.4,10.38 29.28,11.5 27.9,11.5 C24.28,11.5 20.65,8.3 13.4,7.8 Z" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.46)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.45)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M13.4,3.8 C20.65,3.3 24.28,6.5 27.9,6.5 C29.28,6.5 30.4,7.62 30.4,9 C30.4,10.38 29.28,11.5 27.9,11.5 C24.28,11.5 20.65,8.3 13.4,7.8 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.18)
+                        strokeWidth: 0.14
+                        fillColor: "transparent"
+                        PathSvg { path: "M16.9,6.57 L18.68,4.6 M16.9,6.57 L18.68,8.55 M17.79,6.77 L19.67,4.68 M17.79,6.77 L19.67,8.86 M18.69,6.97 L20.64,4.79 M18.69,6.97 L20.64,9.14 M19.58,7.16 L21.58,4.94 M19.58,7.16 L21.58,9.39 M20.47,7.36 L22.5,5.11 M20.47,7.36 L22.5,9.61 M21.36,7.56 L23.38,5.32 M21.36,7.56 L23.38,9.8 M22.26,7.75 L24.23,5.56 M22.26,7.75 L24.23,9.95 M23.15,7.95 L25.06,5.83 M23.15,7.95 L25.06,10.08 M24.04,8.15 L25.86,6.12 M24.04,8.15 L25.86,10.17 M24.93,8.35 L26.64,6.45 M24.93,8.35 L26.64,10.24 M25.83,8.54 L27.41,6.79 M25.83,8.54 L27.41,10.3 M26.72,8.74 L28.15,7.14 M26.72,8.74 L28.15,10.34" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
                         strokeWidth: 0.45
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M26.4,6.6 L27.9,6.5 C29.28,6.5 30.4,7.62 30.4,9 C30.4,10.38 29.28,11.5 27.9,11.5 L24.9,11.45" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                        strokeWidth: 0.22
+                        fillColor: "transparent"
+                        PathSvg { path: "M15.1,6.12 L27.4,9.13" }
                     }
                     ShapePath {
                         strokeColor: "transparent"
@@ -842,11 +1189,29 @@ Item {
                         PathSvg { path: "M8,4.6 C15.25,4.1 18.88,7.3 22.5,7.3 C23.88,7.3 25,8.42 25,9.8 C25,11.18 23.88,12.3 22.5,12.3 C18.88,12.3 15.25,9.1 8,8.6 Z" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.46)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.45)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M8,4.6 C15.25,4.1 18.88,7.3 22.5,7.3 C23.88,7.3 25,8.42 25,9.8 C25,11.18 23.88,12.3 22.5,12.3 C18.88,12.3 15.25,9.1 8,8.6 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.18)
+                        strokeWidth: 0.14
+                        fillColor: "transparent"
+                        PathSvg { path: "M11.5,7.37 L13.28,5.4 M11.5,7.37 L13.28,9.35 M12.39,7.57 L14.27,5.48 M12.39,7.57 L14.27,9.66 M13.29,7.77 L15.24,5.59 M13.29,7.77 L15.24,9.94 M14.18,7.96 L16.18,5.74 M14.18,7.96 L16.18,10.19 M15.07,8.16 L17.1,5.91 M15.07,8.16 L17.1,10.41 M15.96,8.36 L17.98,6.12 M15.96,8.36 L17.98,10.6 M16.86,8.55 L18.83,6.36 M16.86,8.55 L18.83,10.75 M17.75,8.75 L19.66,6.63 M17.75,8.75 L19.66,10.88 M18.64,8.95 L20.46,6.92 M18.64,8.95 L20.46,10.97 M19.53,9.15 L21.24,7.25 M19.53,9.15 L21.24,11.04 M20.43,9.34 L22.01,7.59 M20.43,9.34 L22.01,11.1 M21.32,9.54 L22.75,7.94 M21.32,9.54 L22.75,11.14" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
                         strokeWidth: 0.45
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M21,7.4 L22.5,7.3 C23.88,7.3 25,8.42 25,9.8 C25,11.18 23.88,12.3 22.5,12.3 L19.5,12.25" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                        strokeWidth: 0.22
+                        fillColor: "transparent"
+                        PathSvg { path: "M9.7,6.92 L22,9.93" }
                     }
                     ShapePath {
                         strokeColor: "transparent"
@@ -859,11 +1224,29 @@ Item {
                         PathSvg { path: "M2.4,4.8 C9.65,4.3 13.27,7.5 16.9,7.5 C18.28,7.5 19.4,8.62 19.4,10 C19.4,11.38 18.28,12.5 16.9,12.5 C13.27,12.5 9.65,9.3 2.4,8.8 Z" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.46)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.45)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M2.4,4.8 C9.65,4.3 13.27,7.5 16.9,7.5 C18.28,7.5 19.4,8.62 19.4,10 C19.4,11.38 18.28,12.5 16.9,12.5 C13.27,12.5 9.65,9.3 2.4,8.8 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.18)
+                        strokeWidth: 0.14
+                        fillColor: "transparent"
+                        PathSvg { path: "M5.9,7.57 L7.68,5.6 M5.9,7.57 L7.68,9.55 M6.79,7.77 L8.67,5.68 M6.79,7.77 L8.67,9.86 M7.69,7.97 L9.64,5.79 M7.69,7.97 L9.64,10.14 M8.58,8.16 L10.58,5.94 M8.58,8.16 L10.58,10.39 M9.47,8.36 L11.5,6.11 M9.47,8.36 L11.5,10.61 M10.36,8.56 L12.38,6.32 M10.36,8.56 L12.38,10.8 M11.26,8.75 L13.23,6.56 M11.26,8.75 L13.23,10.95 M12.15,8.95 L14.06,6.83 M12.15,8.95 L14.06,11.08 M13.04,9.15 L14.86,7.12 M13.04,9.15 L14.86,11.17 M13.93,9.35 L15.64,7.45 M13.93,9.35 L15.64,11.24 M14.83,9.54 L16.41,7.79 M14.83,9.54 L16.41,11.3 M15.72,9.74 L17.15,8.14 M15.72,9.74 L17.15,11.34" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
                         strokeWidth: 0.45
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M15.4,7.6 L16.9,7.5 C18.28,7.5 19.4,8.62 19.4,10 C19.4,11.38 18.28,12.5 16.9,12.5 L13.9,12.45" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.3)
+                        strokeWidth: 0.22
+                        fillColor: "transparent"
+                        PathSvg { path: "M4.1,7.12 L16.4,10.13" }
                     }
                     ShapePath {
                         strokeColor: "transparent"
@@ -872,6 +1255,12 @@ Item {
                     }
                     ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.42)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M20.6,-3.04 C26.2,-3.4 29,-2.8 31.8,-2.8 C32.79,-2.8 33.6,-1.99 33.6,-1 C33.6,-0.01 32.79,0.8 31.8,0.8 C29,0.8 26.2,0.2 20.6,-0.16 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.46)
                         strokeWidth: 0.4
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
@@ -884,6 +1273,12 @@ Item {
                     }
                     ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.42)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M14.4,-3.64 C20,-4 22.8,-3.4 25.6,-3.4 C26.59,-3.4 27.4,-2.59 27.4,-1.6 C27.4,-0.61 26.59,0.2 25.6,0.2 C22.8,0.2 20,-0.4 14.4,-0.76 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.46)
                         strokeWidth: 0.4
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
@@ -896,6 +1291,12 @@ Item {
                     }
                     ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.42)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M8.4,-4.04 C14,-4.4 16.8,-3.8 19.6,-3.8 C20.59,-3.8 21.4,-2.99 21.4,-2 C21.4,-1.01 20.59,-0.2 19.6,-0.2 C16.8,-0.2 14,-0.8 8.4,-1.16 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.46)
                         strokeWidth: 0.4
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
@@ -904,6 +1305,12 @@ Item {
                     ShapePath {
                         strokeColor: "transparent"
                         fillColor: root.mid
+                        PathSvg { path: "M23.6,1.2 C26.23,0.85 27.54,1.25 28.85,1.25 C29.82,1.25 30.6,2.03 30.6,3 C30.6,3.97 29.82,4.75 28.85,4.75 C27.54,4.75 26.23,4.35 23.6,4 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
                         PathSvg { path: "M23.6,1.2 C26.23,0.85 27.54,1.25 28.85,1.25 C29.82,1.25 30.6,2.03 30.6,3 C30.6,3.97 29.82,4.75 28.85,4.75 C27.54,4.75 26.23,4.35 23.6,4 Z" }
                     }
                     ShapePath {
@@ -919,6 +1326,12 @@ Item {
                         PathSvg { path: "M20.2,2.6 C22.83,2.25 24.14,2.65 25.45,2.65 C26.42,2.65 27.2,3.43 27.2,4.4 C27.2,5.37 26.42,6.15 25.45,6.15 C24.14,6.15 22.83,5.75 20.2,5.4 Z" }
                     }
                     ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M20.2,2.6 C22.83,2.25 24.14,2.65 25.45,2.65 C26.42,2.65 27.2,3.43 27.2,4.4 C27.2,5.37 26.42,6.15 25.45,6.15 C24.14,6.15 22.83,5.75 20.2,5.4 Z" }
+                    }
+                    ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.34)
                         strokeWidth: 0.42
                         capStyle: ShapePath.RoundCap
@@ -928,6 +1341,12 @@ Item {
                     ShapePath {
                         strokeColor: "transparent"
                         fillColor: root.mid
+                        PathSvg { path: "M16.8,3.8 C19.43,3.45 20.74,3.85 22.05,3.85 C23.02,3.85 23.8,4.63 23.8,5.6 C23.8,6.57 23.02,7.35 22.05,7.35 C20.74,7.35 19.43,6.95 16.8,6.6 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
                         PathSvg { path: "M16.8,3.8 C19.43,3.45 20.74,3.85 22.05,3.85 C23.02,3.85 23.8,4.63 23.8,5.6 C23.8,6.57 23.02,7.35 22.05,7.35 C20.74,7.35 19.43,6.95 16.8,6.6 Z" }
                     }
                     ShapePath {
@@ -943,6 +1362,12 @@ Item {
                         PathSvg { path: "M13.4,4.6 C16.02,4.25 17.34,4.65 18.65,4.65 C19.62,4.65 20.4,5.43 20.4,6.4 C20.4,7.37 19.62,8.15 18.65,8.15 C17.34,8.15 16.02,7.75 13.4,7.4 Z" }
                     }
                     ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M13.4,4.6 C16.02,4.25 17.34,4.65 18.65,4.65 C19.62,4.65 20.4,5.43 20.4,6.4 C20.4,7.37 19.62,8.15 18.65,8.15 C17.34,8.15 16.02,7.75 13.4,7.4 Z" }
+                    }
+                    ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.34)
                         strokeWidth: 0.42
                         capStyle: ShapePath.RoundCap
@@ -952,6 +1377,12 @@ Item {
                     ShapePath {
                         strokeColor: "transparent"
                         fillColor: root.mid
+                        PathSvg { path: "M10,5 C12.63,4.65 13.94,5.05 15.25,5.05 C16.22,5.05 17,5.83 17,6.8 C17,7.77 16.22,8.55 15.25,8.55 C13.94,8.55 12.63,8.15 10,7.8 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
                         PathSvg { path: "M10,5 C12.63,4.65 13.94,5.05 15.25,5.05 C16.22,5.05 17,5.83 17,6.8 C17,7.77 16.22,8.55 15.25,8.55 C13.94,8.55 12.63,8.15 10,7.8 Z" }
                     }
                     ShapePath {
@@ -967,6 +1398,12 @@ Item {
                         PathSvg { path: "M6.6,5 C9.23,4.65 10.54,5.05 11.85,5.05 C12.82,5.05 13.6,5.83 13.6,6.8 C13.6,7.77 12.82,8.55 11.85,8.55 C10.54,8.55 9.23,8.15 6.6,7.8 Z" }
                     }
                     ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M6.6,5 C9.23,4.65 10.54,5.05 11.85,5.05 C12.82,5.05 13.6,5.83 13.6,6.8 C13.6,7.77 12.82,8.55 11.85,8.55 C10.54,8.55 9.23,8.15 6.6,7.8 Z" }
+                    }
+                    ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.34)
                         strokeWidth: 0.42
                         capStyle: ShapePath.RoundCap
@@ -976,6 +1413,12 @@ Item {
                     ShapePath {
                         strokeColor: "transparent"
                         fillColor: root.bodyColor
+                        PathSvg { path: "M15.8,-1.36 C17.68,-1.65 18.61,-1.25 19.55,-1.25 C20.35,-1.25 21,-0.6 21,0.2 C21,1 20.35,1.65 19.55,1.65 C18.61,1.65 17.68,1.25 15.8,0.96 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
                         PathSvg { path: "M15.8,-1.36 C17.68,-1.65 18.61,-1.25 19.55,-1.25 C20.35,-1.25 21,-0.6 21,0.2 C21,1 20.35,1.65 19.55,1.65 C18.61,1.65 17.68,1.25 15.8,0.96 Z" }
                     }
                     ShapePath {
@@ -991,6 +1434,12 @@ Item {
                         PathSvg { path: "M12.8,0.04 C14.68,-0.25 15.61,0.15 16.55,0.15 C17.35,0.15 18,0.8 18,1.6 C18,2.4 17.35,3.05 16.55,3.05 C15.61,3.05 14.68,2.65 12.8,2.36 Z" }
                     }
                     ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M12.8,0.04 C14.68,-0.25 15.61,0.15 16.55,0.15 C17.35,0.15 18,0.8 18,1.6 C18,2.4 17.35,3.05 16.55,3.05 C15.61,3.05 14.68,2.65 12.8,2.36 Z" }
+                    }
+                    ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.3)
                         strokeWidth: 0.42
                         capStyle: ShapePath.RoundCap
@@ -1000,6 +1449,12 @@ Item {
                     ShapePath {
                         strokeColor: "transparent"
                         fillColor: root.bodyColor
+                        PathSvg { path: "M9.8,1.24 C11.68,0.95 12.61,1.35 13.55,1.35 C14.35,1.35 15,2 15,2.8 C15,3.6 14.35,4.25 13.55,4.25 C12.61,4.25 11.68,3.85 9.8,3.56 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
                         PathSvg { path: "M9.8,1.24 C11.68,0.95 12.61,1.35 13.55,1.35 C14.35,1.35 15,2 15,2.8 C15,3.6 14.35,4.25 13.55,4.25 C12.61,4.25 11.68,3.85 9.8,3.56 Z" }
                     }
                     ShapePath {
@@ -1015,6 +1470,12 @@ Item {
                         PathSvg { path: "M6.8,2.04 C8.68,1.75 9.61,2.15 10.55,2.15 C11.35,2.15 12,2.8 12,3.6 C12,4.4 11.35,5.05 10.55,5.05 C9.61,5.05 8.68,4.65 6.8,4.36 Z" }
                     }
                     ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M6.8,2.04 C8.68,1.75 9.61,2.15 10.55,2.15 C11.35,2.15 12,2.8 12,3.6 C12,4.4 11.35,5.05 10.55,5.05 C9.61,5.05 8.68,4.65 6.8,4.36 Z" }
+                    }
+                    ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.3)
                         strokeWidth: 0.42
                         capStyle: ShapePath.RoundCap
@@ -1024,6 +1485,12 @@ Item {
                     ShapePath {
                         strokeColor: "transparent"
                         fillColor: root.bodyColor
+                        PathSvg { path: "M3.8,2.44 C5.68,2.15 6.61,2.55 7.55,2.55 C8.35,2.55 9,3.2 9,4 C9,4.8 8.35,5.45 7.55,5.45 C6.61,5.45 5.68,5.05 3.8,4.76 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
                         PathSvg { path: "M3.8,2.44 C5.68,2.15 6.61,2.55 7.55,2.55 C8.35,2.55 9,3.2 9,4 C9,4.8 8.35,5.45 7.55,5.45 C6.61,5.45 5.68,5.05 3.8,4.76 Z" }
                     }
                     ShapePath {
@@ -1039,6 +1506,12 @@ Item {
                         PathSvg { path: "M1,2.64 C2.88,2.35 3.81,2.75 4.75,2.75 C5.55,2.75 6.2,3.4 6.2,4.2 C6.2,5 5.55,5.65 4.75,5.65 C3.81,5.65 2.88,5.25 1,4.96 Z" }
                     }
                     ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M1,2.64 C2.88,2.35 3.81,2.75 4.75,2.75 C5.55,2.75 6.2,3.4 6.2,4.2 C6.2,5 5.55,5.65 4.75,5.65 C3.81,5.65 2.88,5.25 1,4.96 Z" }
+                    }
+                    ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.3)
                         strokeWidth: 0.42
                         capStyle: ShapePath.RoundCap
@@ -1048,6 +1521,12 @@ Item {
                     ShapePath {
                         strokeColor: "transparent"
                         fillColor: root.bodyColor
+                        PathSvg { path: "M9.4,-2.92 C10.63,-3.15 11.24,-2.75 11.85,-2.75 C12.48,-2.75 13,-2.23 13,-1.6 C13,-0.97 12.48,-0.45 11.85,-0.45 C11.24,-0.45 10.63,-0.85 9.4,-1.08 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
                         PathSvg { path: "M9.4,-2.92 C10.63,-3.15 11.24,-2.75 11.85,-2.75 C12.48,-2.75 13,-2.23 13,-1.6 C13,-0.97 12.48,-0.45 11.85,-0.45 C11.24,-0.45 10.63,-0.85 9.4,-1.08 Z" }
                     }
                     ShapePath {
@@ -1063,6 +1542,12 @@ Item {
                         PathSvg { path: "M6.8,-1.92 C8.03,-2.15 8.64,-1.75 9.25,-1.75 C9.88,-1.75 10.4,-1.23 10.4,-0.6 C10.4,0.03 9.88,0.55 9.25,0.55 C8.64,0.55 8.03,0.15 6.8,-0.08 Z" }
                     }
                     ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M6.8,-1.92 C8.03,-2.15 8.64,-1.75 9.25,-1.75 C9.88,-1.75 10.4,-1.23 10.4,-0.6 C10.4,0.03 9.88,0.55 9.25,0.55 C8.64,0.55 8.03,0.15 6.8,-0.08 Z" }
+                    }
+                    ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.26)
                         strokeWidth: 0.42
                         capStyle: ShapePath.RoundCap
@@ -1072,6 +1557,12 @@ Item {
                     ShapePath {
                         strokeColor: "transparent"
                         fillColor: root.bodyColor
+                        PathSvg { path: "M4.2,-0.92 C5.43,-1.15 6.04,-0.75 6.65,-0.75 C7.28,-0.75 7.8,-0.23 7.8,0.4 C7.8,1.03 7.28,1.55 6.65,1.55 C6.04,1.55 5.43,1.15 4.2,0.92 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
                         PathSvg { path: "M4.2,-0.92 C5.43,-1.15 6.04,-0.75 6.65,-0.75 C7.28,-0.75 7.8,-0.23 7.8,0.4 C7.8,1.03 7.28,1.55 6.65,1.55 C6.04,1.55 5.43,1.15 4.2,0.92 Z" }
                     }
                     ShapePath {
@@ -1087,6 +1578,12 @@ Item {
                         PathSvg { path: "M1.6,-0.12 C2.83,-0.35 3.44,0.05 4.05,0.05 C4.68,0.05 5.2,0.57 5.2,1.2 C5.2,1.83 4.68,2.35 4.05,2.35 C3.44,2.35 2.83,1.95 1.6,1.72 Z" }
                     }
                     ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M1.6,-0.12 C2.83,-0.35 3.44,0.05 4.05,0.05 C4.68,0.05 5.2,0.57 5.2,1.2 C5.2,1.83 4.68,2.35 4.05,2.35 C3.44,2.35 2.83,1.95 1.6,1.72 Z" }
+                    }
+                    ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.26)
                         strokeWidth: 0.42
                         capStyle: ShapePath.RoundCap
@@ -1096,6 +1593,12 @@ Item {
                     ShapePath {
                         strokeColor: "transparent"
                         fillColor: root.bodyColor
+                        PathSvg { path: "M-0.8,0.48 C0.42,0.25 1.04,0.65 1.65,0.65 C2.28,0.65 2.8,1.17 2.8,1.8 C2.8,2.43 2.28,2.95 1.65,2.95 C1.04,2.95 0.42,2.55 -0.8,2.32 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
                         PathSvg { path: "M-0.8,0.48 C0.42,0.25 1.04,0.65 1.65,0.65 C2.28,0.65 2.8,1.17 2.8,1.8 C2.8,2.43 2.28,2.95 1.65,2.95 C1.04,2.95 0.42,2.55 -0.8,2.32 Z" }
                     }
                     ShapePath {
@@ -1111,6 +1614,12 @@ Item {
                         PathSvg { path: "M6.8,-3.92 C8.03,-4.15 8.64,-3.75 9.25,-3.75 C9.88,-3.75 10.4,-3.23 10.4,-2.6 C10.4,-1.97 9.88,-1.45 9.25,-1.45 C8.64,-1.45 8.03,-1.85 6.8,-2.08 Z" }
                     }
                     ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M6.8,-3.92 C8.03,-4.15 8.64,-3.75 9.25,-3.75 C9.88,-3.75 10.4,-3.23 10.4,-2.6 C10.4,-1.97 9.88,-1.45 9.25,-1.45 C8.64,-1.45 8.03,-1.85 6.8,-2.08 Z" }
+                    }
+                    ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.26)
                         strokeWidth: 0.42
                         capStyle: ShapePath.RoundCap
@@ -1120,6 +1629,12 @@ Item {
                     ShapePath {
                         strokeColor: "transparent"
                         fillColor: root.bodyColor
+                        PathSvg { path: "M3.2,-2.72 C4.43,-2.95 5.04,-2.55 5.65,-2.55 C6.28,-2.55 6.8,-2.03 6.8,-1.4 C6.8,-0.77 6.28,-0.25 5.65,-0.25 C5.04,-0.25 4.43,-0.65 3.2,-0.88 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.38)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
                         PathSvg { path: "M3.2,-2.72 C4.43,-2.95 5.04,-2.55 5.65,-2.55 C6.28,-2.55 6.8,-2.03 6.8,-1.4 C6.8,-0.77 6.28,-0.25 5.65,-0.25 C5.04,-0.25 4.43,-0.65 3.2,-0.88 Z" }
                     }
                     ShapePath {
@@ -1155,6 +1670,104 @@ Item {
                 }
             }
 
+            // Preening: scapulars lifted on the back, over the beak's tip.
+            Item {
+                z: 3.5
+                visible: root.preen > 0
+                opacity: root.preen
+                Shape {
+                    preferredRendererType: Shape.CurveRenderer
+                    ShapePath {
+                        strokeColor: "transparent"
+                        fillGradient: LinearGradient {
+                            x1: 50.4; y1: 27.4; x2: 50.4; y2: 35.4
+                            GradientStop { position: 0; color: root.mid }
+                            GradientStop { position: 1; color: root.bodyColor }
+                        }
+                        PathSvg { path: "M49.31,32.82 C49.45,31.89 49.66,31.49 49.87,31.09 C50.96,29.38 52.31,28.97 52.98,28.88 C53.41,29.72 53.48,30.9 52.61,32.55 C52.4,32.94 52.19,33.34 51.49,33.98 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M49.31,32.82 C49.45,31.89 49.66,31.49 49.87,31.09 C50.96,29.38 52.31,28.97 52.98,28.88 C53.41,29.72 53.48,30.9 52.61,32.55 C52.4,32.94 52.19,33.34 51.49,33.98 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.6)
+                        strokeWidth: 0.36
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M48.46,33.85 L49.87,31.09 C50.96,29.38 52.31,28.97 52.98,28.88" }
+                    }
+                    ShapePath {
+                        strokeColor: "transparent"
+                        fillGradient: LinearGradient {
+                            x1: 52.4; y1: 29; x2: 52.4; y2: 37
+                            GradientStop { position: 0; color: root.mid }
+                            GradientStop { position: 1; color: root.bodyColor }
+                        }
+                        PathSvg { path: "M51.54,34.11 C52.18,33.06 52.61,32.64 53.04,32.22 C54.6,30.94 56.02,30.96 56.68,31.09 C56.83,32.02 56.53,33.16 55.2,34.45 C54.76,34.87 54.33,35.29 53.26,35.89 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M51.54,34.11 C52.18,33.06 52.61,32.64 53.04,32.22 C54.6,30.94 56.02,30.96 56.68,31.09 C56.83,32.02 56.53,33.16 55.2,34.45 C54.76,34.87 54.33,35.29 53.26,35.89 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.6)
+                        strokeWidth: 0.36
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M50.85,34.41 L53.04,32.22 C54.6,30.94 56.02,30.96 56.68,31.09" }
+                    }
+                    ShapePath {
+                        strokeColor: "transparent"
+                        fillGradient: LinearGradient {
+                            x1: 54.2; y1: 31; x2: 54.2; y2: 39
+                            GradientStop { position: 0; color: root.mid }
+                            GradientStop { position: 1; color: root.bodyColor }
+                        }
+                        PathSvg { path: "M53.66,35.89 C54.5,35.13 54.99,34.89 55.49,34.65 C57.37,33.91 58.71,34.37 59.3,34.69 C59.16,35.62 58.52,36.62 56.85,37.43 C56.35,37.67 55.86,37.92 54.74,38.11 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M53.66,35.89 C54.5,35.13 54.99,34.89 55.49,34.65 C57.37,33.91 58.71,34.37 59.3,34.69 C59.16,35.62 58.52,36.62 56.85,37.43 C56.35,37.67 55.86,37.92 54.74,38.11 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.6)
+                        strokeWidth: 0.36
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M52.72,36.05 L55.49,34.65 C57.37,33.91 58.71,34.37 59.3,34.69" }
+                    }
+                    ShapePath {
+                        strokeColor: "transparent"
+                        fillGradient: LinearGradient {
+                            x1: 55.4; y1: 33.2; x2: 55.4; y2: 41.2
+                            GradientStop { position: 0; color: root.mid }
+                            GradientStop { position: 1; color: root.bodyColor }
+                        }
+                        PathSvg { path: "M55.23,37.97 C55.87,37.57 56.21,37.52 56.56,37.47 C58.57,37.35 59.71,38.2 60.18,38.69 C59.75,39.53 58.83,40.28 56.99,40.54 C56.65,40.59 56.3,40.64 55.57,40.43 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.5)
+                        strokeWidth: 0.26
+                        fillColor: "transparent"
+                        PathSvg { path: "M55.23,37.97 C55.87,37.57 56.21,37.52 56.56,37.47 C58.57,37.35 59.71,38.2 60.18,38.69 C59.75,39.53 58.83,40.28 56.99,40.54 C56.65,40.59 56.3,40.64 55.57,40.43 Z" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.6)
+                        strokeWidth: 0.36
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M53.5,37.95 L56.56,37.47 C58.57,37.35 59.71,38.2 60.18,38.69" }
+                    }
+                }
+            }
+
             Item {
                 id: head
                 z: root.headTucked ? 1 : 3
@@ -1186,11 +1799,16 @@ Item {
                         ShapePath {
                             strokeColor: "transparent"
                             fillGradient: LinearGradient {
-                                x1: 22; y1: 20; x2: 24; y2: 32
+                                x1: 22; y1: 20; x2: 24; y2: 33
                                 GradientStop { position: 0; color: root.bodyColor }
                                 GradientStop { position: 1; color: root.deep }
                             }
-                            PathSvg { path: "M17.8,19.4 C17.0,21.0 16.8,22.8 17.2,24.6 L18.3,23.6 C18.1,25.2 18.2,26.6 18.8,28.2 L19.8,26.8 C20.0,28.2 20.5,29.6 21.3,30.8 L22.1,29.2 C22.7,30.5 23.4,31.4 24.4,32.2 L24.8,30.2 C25.6,31.0 26.6,31.5 27.7,31.7 L27.4,29.6 C28.4,29.8 29.5,29.6 30.4,29.1 L30.8,25 C26.2,24.8 21.6,22.8 17.8,19.4 Z" }
+                            PathSvg { path: "M17.8,19.4 C17.0,21.0 16.6,23.2 16.8,25.6 L18.2,23.8 C17.9,26.0 18.1,27.8 18.6,29.6 L19.8,27.0 C20.0,29.0 20.6,30.8 21.4,32.4 L22.2,29.4 C22.8,31.0 23.6,32.6 24.6,33.8 L24.9,30.4 C25.8,31.6 26.9,32.6 28.0,33.0 L27.6,29.8 C28.6,30.2 29.6,30.2 30.6,29.8 L30.8,25 C26.2,24.8 21.6,22.8 17.8,19.4 Z" }
+                        }
+                        ShapePath {
+                            strokeColor: "transparent"
+                            fillColor: root.bodyColor
+                            PathSvg { path: "M18.6,20.6 C18.2,22.4 18.4,24.2 19.0,25.8 L19.8,24.6 C20.0,26.2 20.6,27.6 21.4,28.8 L22.0,27.0 C22.6,28.4 23.4,29.4 24.4,30.2 L24.6,28.2 C25.6,29.0 26.6,29.4 27.6,29.4 L28,25.6 C24.8,25.2 21.4,23.4 18.6,20.6 Z" }
                         }
                         ShapePath {
                             strokeColor: Qt.alpha(root.edgeColor, 0.5)
@@ -1235,11 +1853,18 @@ Item {
                             PathSvg { path: "M27.2,25 Q28.3,26.95 30,28.9" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.45)
+                            strokeColor: Qt.alpha(root.edgeColor, 0.5)
                             strokeWidth: 0.36
                             capStyle: ShapePath.RoundCap
                             fillColor: "transparent"
-                            PathSvg { path: "M17.2,24.6 L18.3,23.6 C18.1,25.2 18.2,26.6 18.8,28.2 L19.8,26.8 C20.0,28.2 20.5,29.6 21.3,30.8 L22.1,29.2 C22.7,30.5 23.4,31.4 24.4,32.2 L24.8,30.2 C25.6,31.0 26.6,31.5 27.7,31.7 L27.4,29.6 C28.4,29.8 29.5,29.6 30.4,29.1" }
+                            PathSvg { path: "M16.8,25.6 L18.2,23.8 C17.9,26.0 18.1,27.8 18.6,29.6 L19.8,27.0 C20.0,29.0 20.6,30.8 21.4,32.4 L22.2,29.4 C22.8,31.0 23.6,32.6 24.6,33.8 L24.9,30.4 C25.8,31.6 26.9,32.6 28.0,33.0 L27.6,29.8 C28.6,30.2 29.6,30.2 30.6,29.8" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.4)
+                            strokeWidth: 0.3
+                            capStyle: ShapePath.RoundCap
+                            fillColor: "transparent"
+                            PathSvg { path: "M19.0,25.8 L19.8,24.6 C20.0,26.2 20.6,27.6 21.4,28.8 L22.0,27.0 C22.6,28.4 23.4,29.4 24.4,30.2 L24.6,28.2 C25.6,29.0 26.6,29.4 27.6,29.4" }
                         }
                     }
                 }
@@ -1263,74 +1888,130 @@ Item {
                         PathSvg { path: "M18.6,7.6 C20.4,5.8 22.6,5.1 24.8,5.1 C28.8,5.1 32.3,6.8 34.2,9.9 C35.6,12.2 36.3,15 36.3,18" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
+                        strokeWidth: 0.3
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M21,6.3 C21.36,7.5 23.04,7.5 23.4,6.3" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
                         strokeWidth: 0.3
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M22.9,6.9 C23.38,8.1 25.62,8.1 26.1,6.9" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
                         strokeWidth: 0.3
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M26.3,7.3 C26.81,8.5 29.19,8.5 29.7,7.3" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
                         strokeWidth: 0.3
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M29.6,9.1 C30.08,10.3 32.32,10.3 32.8,9.1" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
                         strokeWidth: 0.3
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M25,9.3 C25.42,10.5 27.38,10.5 27.8,9.3" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
                         strokeWidth: 0.3
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M28.1,11.3 C28.55,12.5 30.65,12.5 31.1,11.3" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
                         strokeWidth: 0.3
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M31.1,12.7 C31.55,13.9 33.65,13.9 34.1,12.7" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
+                        strokeWidth: 0.3
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M33.4,15.1 C33.76,16.3 35.44,16.3 35.8,15.1" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
                         strokeWidth: 0.3
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M26.2,14.1 C26.62,15.3 28.58,15.3 29,14.1" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
                         strokeWidth: 0.3
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M29.1,15.9 C29.55,17.1 31.65,17.1 32.1,15.9" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
                         strokeWidth: 0.3
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M32.2,16.7 C32.62,17.9 34.58,17.9 35,16.7" }
                     }
                     ShapePath {
-                        strokeColor: Qt.alpha(root.edgeColor, 0.2)
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
                         strokeWidth: 0.3
                         capStyle: ShapePath.RoundCap
                         fillColor: "transparent"
                         PathSvg { path: "M23.9,16.3 C24.29,17.5 26.11,17.5 26.5,16.3" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
+                        strokeWidth: 0.3
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M27,18.5 C27.42,19.7 29.38,19.7 29.8,18.5" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
+                        strokeWidth: 0.3
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M30.3,19.9 C30.69,21.1 32.51,21.1 32.9,19.9" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
+                        strokeWidth: 0.3
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M24.8,20.5 C25.16,21.7 26.84,21.7 27.2,20.5" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.28)
+                        strokeWidth: 0.3
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M21.9,18.5 C22.23,19.7 23.77,19.7 24.1,18.5" }
+                    }
+                    ShapePath {
+                        strokeColor: root.deep
+                        strokeWidth: 0.45
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M18.2,16.6 C19.6,16.4 21.0,15.8 22.4,14.8" }
+                    }
+                    ShapePath {
+                        strokeColor: Qt.alpha(root.edgeColor, 0.45)
+                        strokeWidth: 0.22
+                        capStyle: ShapePath.RoundCap
+                        fillColor: "transparent"
+                        PathSvg { path: "M18.4,17.1 C19.8,16.9 21.2,16.3 22.5,15.4" }
                     }
                     ShapePath {
                         strokeColor: Qt.alpha(root.edgeColor, 0.5)
@@ -1390,8 +2071,15 @@ Item {
                         preferredRendererType: Shape.CurveRenderer
                         ShapePath {
                             strokeColor: "transparent"
-                            fillColor: Qt.alpha(root.membraneColor, 0.92)
+                            fillColor: Qt.alpha(root.membraneColor, 0.88)
                             PathSvg { path: "M20.85,11 a1.55,1.55 0 1,0 3.1,0 a1.55,1.55 0 1,0 -3.1,0 Z" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.eyeColor, 0.9)
+                            strokeWidth: 0.24
+                            capStyle: ShapePath.RoundCap
+                            fillColor: "transparent"
+                            PathSvg { path: "M22.4,9.45 C23.5,10.1 23.6,11.9 22.4,12.55" }
                         }
                     }
                 }
@@ -1473,11 +2161,18 @@ Item {
                             PathSvg { path: "M17.6,9.5 C13.4,9.7 8.6,11.5 5.0,14.9 C3.6,16.3 2.6,17.8 2.3,19.3 C2.2,20.1 2.8,20.5 3.4,19.9 C3.8,19.4 4.4,19.0 5.2,18.7 C9.0,17.3 13.4,16.5 18.4,16.3 Z" }
                         }
                         ShapePath {
-                            strokeColor: Qt.alpha(root.edgeColor, 0.75)
-                            strokeWidth: 0.5
+                            strokeColor: Qt.alpha(root.edgeColor, 0.85)
+                            strokeWidth: 0.6
                             capStyle: ShapePath.RoundCap
                             fillColor: "transparent"
                             PathSvg { path: "M17,9.95 C12.8,10.3 8.4,12.1 5.0,15.3 C3.9,16.4 3.1,17.6 2.7,18.7" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.eyeColor, 0.25)
+                            strokeWidth: 0.2
+                            capStyle: ShapePath.RoundCap
+                            fillColor: "transparent"
+                            PathSvg { path: "M14.6,10.5 C11.6,11.1 8.6,12.6 6.2,14.8" }
                         }
                         ShapePath {
                             strokeColor: root.deep
@@ -1492,50 +2187,62 @@ Item {
                         ShapePath {
                             strokeColor: "transparent"
                             fillColor: root.bodyColor
-                            PathSvg { path: "M18.8,9.2 Q14.4,9.3 10.6,11.1 Q14.6,10.25 18.8,10.45 Z" }
+                            PathSvg { path: "M18.8,9 Q14.4,9.1 9.8,10.9 Q14.6,10.05 18.8,10.25 Z" }
                         }
                         ShapePath {
                             strokeColor: Qt.alpha(root.edgeColor, 0.55)
                             strokeWidth: 0.26
                             capStyle: ShapePath.RoundCap
                             fillColor: "transparent"
-                            PathSvg { path: "M18.4,9.5 Q14.4,9.6 10.6,11.1" }
+                            PathSvg { path: "M18.4,9.3 Q14.4,9.4 9.8,10.9" }
                         }
                         ShapePath {
                             strokeColor: "transparent"
                             fillColor: root.bodyColor
-                            PathSvg { path: "M18.8,9.95 Q14.4,10.05 11.9,11.95 Q14.6,11 18.8,11.2 Z" }
+                            PathSvg { path: "M18.8,9.7 Q14.4,9.8 11.05,11.7 Q14.6,10.75 18.8,10.95 Z" }
                         }
                         ShapePath {
                             strokeColor: Qt.alpha(root.edgeColor, 0.55)
                             strokeWidth: 0.26
                             capStyle: ShapePath.RoundCap
                             fillColor: "transparent"
-                            PathSvg { path: "M18.4,10.25 Q14.4,10.35 11.9,11.95" }
+                            PathSvg { path: "M18.4,10 Q14.4,10.1 11.05,11.7" }
                         }
                         ShapePath {
                             strokeColor: "transparent"
                             fillColor: root.bodyColor
-                            PathSvg { path: "M18.8,10.7 Q14.4,10.8 13.2,12.8 Q14.6,11.75 18.8,11.95 Z" }
+                            PathSvg { path: "M18.8,10.4 Q14.4,10.5 12.3,12.5 Q14.6,11.45 18.8,11.65 Z" }
                         }
                         ShapePath {
                             strokeColor: Qt.alpha(root.edgeColor, 0.55)
                             strokeWidth: 0.26
                             capStyle: ShapePath.RoundCap
                             fillColor: "transparent"
-                            PathSvg { path: "M18.4,11 Q14.4,11.1 13.2,12.8" }
+                            PathSvg { path: "M18.4,10.7 Q14.4,10.8 12.3,12.5" }
                         }
                         ShapePath {
                             strokeColor: "transparent"
                             fillColor: root.bodyColor
-                            PathSvg { path: "M18.8,11.45 Q14.4,11.55 14.5,13.65 Q14.6,12.5 18.8,12.7 Z" }
+                            PathSvg { path: "M18.8,11.1 Q14.4,11.2 13.55,13.3 Q14.6,12.15 18.8,12.35 Z" }
                         }
                         ShapePath {
                             strokeColor: Qt.alpha(root.edgeColor, 0.55)
                             strokeWidth: 0.26
                             capStyle: ShapePath.RoundCap
                             fillColor: "transparent"
-                            PathSvg { path: "M18.4,11.75 Q14.4,11.85 14.5,13.65" }
+                            PathSvg { path: "M18.4,11.4 Q14.4,11.5 13.55,13.3" }
+                        }
+                        ShapePath {
+                            strokeColor: "transparent"
+                            fillColor: root.bodyColor
+                            PathSvg { path: "M18.8,11.8 Q14.4,11.9 14.8,14.1 Q14.6,12.85 18.8,13.05 Z" }
+                        }
+                        ShapePath {
+                            strokeColor: Qt.alpha(root.edgeColor, 0.55)
+                            strokeWidth: 0.26
+                            capStyle: ShapePath.RoundCap
+                            fillColor: "transparent"
+                            PathSvg { path: "M18.4,12.1 Q14.4,12.2 14.8,14.1" }
                         }
                     }
                 }
