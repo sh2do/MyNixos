@@ -1,7 +1,7 @@
 // The hanging viper's skin, drawn once as a straight strip for its Serpent
 // body to bend (HangingViper.qml): u along the body (the neck at the left,
 // the tail end, hidden behind the island, at the right), v across it. Laid
-// out in body pixels and stretched 2× into the strip, like PythonSkin.qml.
+// out in body pixels and stretched 2× into the strip.
 //
 // The desert viper's side view on the detail sheet, in the viper slate:
 // irregular dark blotches saddling the back, each with a pale rim and a dark

@@ -52,8 +52,8 @@ PanelWindow {
     }
     // Level with Status, so the row's edge is a line in this window.
     margins {
-        bottom: 14
-        right: 20
+        bottom: status.margins.bottom
+        right: status.margins.right
     }
     implicitWidth: 180
     implicitHeight: 120
@@ -71,15 +71,16 @@ PanelWindow {
 
     // Layout, in window coordinates: the perch line just above the row's
     // glyphs, the feet gripping its left end, the hoard behind the tail.
-    readonly property real perchY: height - status.height + 5
-    readonly property real rowLeft: width - status.width
+    readonly property real rowTop: height + margins.bottom - status.margins.bottom - status.height
+    readonly property real perchY: rowTop + 5
+    readonly property real rowLeft: width + margins.right - status.margins.right - status.width
     readonly property real homeX: rowLeft + 6
     function slotX(slot) {
         return Math.min(homeX + 46 + slot * 11, width - 6);
     }
     // This window's top-left on the screen.
-    readonly property real originX: (screen?.width ?? 0) - 20 - width
-    readonly property real originY: (screen?.height ?? 0) - 14 - height
+    readonly property real originX: (screen?.width ?? 0) - margins.right - width
+    readonly property real originY: (screen?.height ?? 0) - margins.bottom - height
 
     // The pose (RavenBody's), and where the bird stands: hopX from home,
     // hopY up from the perch, facing 1 left and -1 right.
@@ -108,6 +109,9 @@ PanelWindow {
 
     // The hoard (Mood.hoardAdd/hoardStep) and each slot's kind of trinket.
     property var hoard: []
+    // Each slot's opacity as it fades: updated without rebuilding the
+    // hoard's items, which change only when one comes or goes.
+    property var fades: [1, 1, 1]
     property var slotRing: [true, false, true]
     // Something in the beak, and whether it is a ring (or a coin).
     property bool holding: false
@@ -245,7 +249,11 @@ PanelWindow {
         stepDrop(t);
         if (t - life.hoardAt >= 5 && hoard.length > 0) {
             life.hoardAt = t;
-            hoard = Mood.hoardStep(hoard, Date.now());
+            const stepped = Mood.hoardStep(hoard, Date.now());
+            if (stepped.length !== hoard.length)
+                setHoard(stepped);
+            else
+                fades = fadesOf(stepped);
         }
         habits(t, dt);
         rate();
@@ -436,10 +444,15 @@ PanelWindow {
 
     // Snap round to the island and caw.
     function cawAtIsland() {
+        // Unseen (and it would play late, once the clock runs again).
+        if (!running)
+            return;
         if (life.catching) {
             life.cawsWaiting++;
             return;
         }
+        // Woken, it first lifts its head out of the wing.
+        const d = life.asleep ? 0.45 : 0;
         if (life.asleep || root.night) {
             life.awakeUntil = life.t + 20;
             if (life.asleep)
@@ -449,7 +462,6 @@ PanelWindow {
         interrupt();
         busy(4);
         const a = islandAngle();
-        const d = life.asleep ? 0.45 : 0;
         if (headFlip < 0.9)
             turnHead(1, 0.15, d);
         tween("headAngle", a, 0.12, d, 1000);
@@ -528,6 +540,12 @@ PanelWindow {
     readonly property real arcFor: 0.32
 
     function trinketFrom(at) {
+        // Nobody sees it fall, and a stopped clock would leave its window
+        // hanging: it goes straight into the hoard.
+        if (!running) {
+            stash(Math.random() < 0.5);
+            return;
+        }
         if (life.catching) {
             life.queued = life.queued.concat([at]);
             return;
@@ -649,12 +667,80 @@ PanelWindow {
         if (u >= 1) {
             life.drop = null;
             dropping = false;
-            const kinds = slotRing.slice();
-            kinds[d.slot] = dropRing;
-            slotRing = kinds;
-            hoard = d.next;
+            setHoard(d.next, d.slot, dropRing);
         }
     }
+
+    // A new hoard; a new trinket's kind goes into its slot.
+    function setHoard(next, slot, ring) {
+        if (slot !== undefined) {
+            const kinds = slotRing.slice();
+            kinds[slot] = ring;
+            slotRing = kinds;
+        }
+        fades = fadesOf(next);
+        hoard = next;
+    }
+    function fadesOf(h) {
+        const f = [1, 1, 1];
+        for (const it of h)
+            f[it.slot] = it.opacity;
+        return f;
+    }
+
+    // Straight into the hoard, unseen: for a notice gone while the clock is
+    // stopped.
+    function stash(ring) {
+        const next = Mood.hoardAdd(hoard, Date.now());
+        setHoard(next, next[next.length - 1].slot, ring);
+    }
+
+    // The clock stopped (fullscreen, locked, screen off) in the middle of a
+    // catch: what was falling, held or dropping goes straight into the hoard,
+    // and so does anything waiting; nothing (above all the trinket's window)
+    // is left hanging, and the raven is back on its perch.
+    function settleNow() {
+        if (!life.catching)
+            return;
+        if (life.drop)
+            setHoard(life.drop.next, life.drop.slot, dropRing);
+        else if (life.flight)
+            stash(flightRing);
+        else if (holding)
+            stash(heldRing);
+        for (let i = 0; i < life.queued.length; i++)
+            stash(Math.random() < 0.5);
+        life.queued = [];
+        life.cawsWaiting = 0;
+        life.flight = null;
+        life.drop = null;
+        life.hop = null;
+        life.catching = false;
+        life.tweens = [];
+        life.events = [];
+        life.busyUntil = life.t;
+        flying = false;
+        holding = false;
+        dropping = false;
+        hopX = 0;
+        hopY = 0;
+        facing = 1;
+        tuck = 0;
+        wingLift = 0;
+        lean = 0;
+        tailAngle = 0;
+        beakOpen = 0;
+        hackles = 0;
+        caw = 0;
+        headAngle = 0;
+        headFlip = 1;
+        headDrop = 0;
+        headTucked = false;
+        gazeX = 0;
+        gazeY = 0;
+        need = 0;
+    }
+    onRunningChanged: if (!running) settleNow()
 
     function nextTrinket() {
         life.catching = false;
@@ -781,7 +867,7 @@ PanelWindow {
             x: root.slotX(modelData.slot)
             y: root.perchY - 3
             ring: root.slotRing[modelData.slot]
-            opacity: modelData.opacity
+            opacity: root.fades[modelData.slot]
         }
     }
 
