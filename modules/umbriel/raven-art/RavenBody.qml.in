@@ -1,0 +1,291 @@
+// A raven perched on a line, facing left: drawn once (CurveRenderer Shapes)
+// as jointed parts that only ever move by transform. Shared by Umbriel's
+// corner raven (Raven.qml) and the niri bar's, so it takes every colour as a
+// property and knows nothing of either shell.
+//
+// The art is laid out in design units, 64 from the crown's line to the perch
+// line, and scaled to `size` px; the perch line is at `perchY`, the feet at
+// `footX`. Parts, back to front: the far leg, the near leg (scuted, the
+// claws curled over the perch), then the torso (the wedge tail; the body,
+// its mantle scalloped, with the mantle's sheen; the folded wing: coverts,
+// scapulars, secondaries and five primaries, each with its rachis and barbs,
+// with its sheen; the scapulars a preen lifts; and the head: two layers of
+// throat hackles, crown and nape feathering, the gape line, eye, nictitating
+// membrane and lid, nasal bristles, and the upper and lower beak, hinged at
+// the gape, the culmen lit). Every feather has its slate edge. The sheen is
+// the raven's own faint blue-violet-green iridescence, the only colour on it.
+//
+// The pose properties are plain numbers; the owner animates them.
+import QtQuick
+import QtQuick.Shapes
+
+Item {
+    id: root
+
+    // Colours. The darker and lighter tones are derived from these.
+    required property color bodyColor
+    required property color edgeColor
+    required property color beakColor
+    required property color eyeColor
+    required property color membraneColor
+    property list<color> sheenColors: ["#2f4fb8", "#5b3db0", "#23866a"]
+    readonly property color deep: Qt.darker(bodyColor, 1.9)
+    readonly property color mid: Qt.tint(bodyColor, Qt.alpha(edgeColor, 0.22))
+    readonly property color iris: Qt.darker(bodyColor, 3)
+    readonly property color beakHi: Qt.tint(beakColor, Qt.alpha(edgeColor, 0.3))
+
+    // Size: px from the crown's line to the perch line.
+    property real size: 64
+    readonly property real k: size / 64
+    readonly property real perchY: 64 * k
+    readonly property real footX: 40.8 * k
+    implicitWidth: 88 * k
+    implicitHeight: 66 * k
+
+    // Pose.
+    // Chest swell (1 at rest) and fluffed-up feathers (0 sleek, 0.08 asleep).
+    property real breath: 1
+    property real puff: 0
+    // The whole bird leaning about its feet, degrees (negative: forward).
+    property real lean: 0
+    // Head: degrees about the neck (positive raises the beak), facing (1
+    // forward, -1 turned right round, between: turning), and lowered by
+    // `headDrop` design units. `headTucked` puts it under the wing's edge.
+    property real headAngle: 0
+    property real headFlip: 1
+    property real headDrop: 0
+    property bool headTucked: false
+    // 0 shut, 1 a caw's full gape.
+    property real beakOpen: 0
+    // Throat hackles raised, 0-1.
+    property real hackles: 0
+    // The nictitating membrane across the eye, 0-1.
+    property real blink: 0
+    // The eye shut (asleep), 0-1.
+    property real lid: 0
+    // Where the eye looks, -1..1 each way.
+    property real gazeX: 0
+    property real gazeY: 0
+    // The wing raised (and its primaries spread) for a flap, 0-1.
+    property real wingLift: 0
+    // The tail's flick, degrees (positive: down).
+    property real tailAngle: 0
+    // Legs swung back and toes curled, in the air, 0-1.
+    property real tuck: 0
+    // Feathers lifted at the shoulder for the beak to work in (preening), 0-1.
+    property real preen: 0
+    // The silent caw's two arcs, 0-1 through their spread.
+    property real caw: 0
+    // The iridescence: opacity, and how far its colours have drifted (0-1).
+    property real sheen: 0.16
+    property real sheenShift: 0
+
+    // Where something held in the beak goes (it follows the lower mandible).
+    readonly property alias beakSlot: slot
+
+    Item {
+        id: art
+        width: 88
+        height: 66
+        scale: root.k
+        transformOrigin: Item.TopLeft
+
+        // A primary spreads from its base in a flap, the outermost most.
+        component Primary: Item {
+            required property int index
+            transform: Rotation {
+                origin.x: 22
+                origin.y: 2
+                angle: -root.wingLift * (4 - index) * 7
+            }
+        }
+
+        component Leg: Item {
+            transform: Rotation {
+                origin.x: 39.4
+                origin.y: 54
+                angle: root.tuck * 32
+            }
+        }
+
+        Leg {
+//@shape farLeg
+        }
+        Leg {
+//@shape nearLeg
+        }
+
+        Item {
+            id: torso
+            transform: [
+                Scale {
+                    origin.x: 38
+                    origin.y: 55
+                    xScale: root.breath + root.puff
+                    yScale: 1 + (root.breath - 1) * 0.6 + root.puff * 0.7
+                },
+                Rotation {
+                    origin.x: 40.8
+                    origin.y: 63
+                    angle: root.lean
+                }
+            ]
+
+            Item {
+                id: tail
+                transform: [
+                    Rotation {
+                        angle: 32.6 + root.tailAngle
+                    },
+                    Translate {
+                        x: 57
+                        y: 47
+                    }
+                ]
+//@shape tail
+            }
+
+//@shape body
+//@shape mantleSheen opacity: root.sheen
+
+            Item {
+                id: wing
+                z: 2
+                transform: [
+                    Rotation {
+                        angle: 39.7 - root.wingLift * 58
+                    },
+                    Translate {
+                        x: 31
+                        y: 24
+                    }
+                ]
+
+//@shape wingBase
+                Primary {
+                    index: 0
+//@shape primary0
+                }
+                Primary {
+                    index: 1
+//@shape primary1
+                }
+                Primary {
+                    index: 2
+//@shape primary2
+                }
+                Primary {
+                    index: 3
+//@shape primary3
+                }
+                Primary {
+                    index: 4
+//@shape primary4
+                }
+//@shape wingFront
+//@shape wingSheen opacity: root.sheen
+            }
+
+            // Preening: scapulars lifted on the back, over the beak's tip.
+            Item {
+                z: 3.5
+                visible: root.preen > 0
+                opacity: root.preen
+//@shape preenTuft
+            }
+
+            Item {
+                id: head
+                z: root.headTucked ? 1 : 3
+                transform: [
+                    Scale {
+                        origin.x: 31
+                        origin.y: 21
+                        xScale: root.headFlip
+                    },
+                    Rotation {
+                        origin.x: 31
+                        origin.y: 21
+                        angle: root.headAngle
+                    },
+                    Translate {
+                        y: root.headDrop
+                    }
+                ]
+
+                Item {
+                    transform: Scale {
+                        origin.x: 21
+                        origin.y: 21
+                        xScale: 1 + root.hackles * 0.12
+                        yScale: 1 + root.hackles * 0.3
+                    }
+//@shape hackles
+                }
+//@shape head
+//@shape eye
+                Item {
+                    transform: Translate {
+                        x: root.gazeX * 0.45
+                        y: root.gazeY * 0.35
+                    }
+//@shape catchLight
+                }
+                Item {
+                    visible: root.blink > 0
+                    transform: Scale {
+                        origin.x: 20.85
+                        origin.y: 11
+                        xScale: root.blink
+                        yScale: Math.sqrt(root.blink * (2 - root.blink))
+                    }
+//@shape membrane
+                }
+Item {
+                    visible: root.lid > 0
+                    opacity: root.lid
+//@shape lid
+                }
+//@shape mouth visible: root.beakOpen > 0
+                Item {
+                    transform: Rotation {
+                        origin.x: 18.4
+                        origin.y: 16.5
+                        angle: -root.beakOpen * 27
+                    }
+//@shape beakLower
+                    Item {
+                        id: slot
+                        x: 4.6
+                        y: 18.6
+                    }
+                }
+                Item {
+                    transform: Rotation {
+                        origin.x: 18.4
+                        origin.y: 16.5
+                        angle: root.beakOpen * 7
+                    }
+//@shape beakUpper
+//@shape bristles
+                }
+                Item {
+                    visible: root.caw > 0 && root.caw < 1
+                    opacity: Math.sin(Math.PI * root.caw)
+                    transform: [
+                        Scale {
+                            origin.x: 2
+                            origin.y: 18
+                            xScale: 0.6 + 0.7 * root.caw
+                            yScale: 0.6 + 0.7 * root.caw
+                        },
+                        Translate {
+                            x: -3 * root.caw
+                        }
+                    ]
+//@shape cawArcs
+                }
+            }
+        }
+    }
+}
