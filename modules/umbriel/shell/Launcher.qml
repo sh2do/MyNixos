@@ -4,7 +4,7 @@
 //
 // Typing filters (fuzzy.js), Up/Down move, Enter or a click launches: the
 // viper strikes at the row first, then the app starts and the panel closes.
-// Esc or a click outside closes. Terminal=true apps open in Umbriel's foot.
+// Esc or a click outside closes. Terminal=true apps open in Umbriel's kitty.
 //
 // It lives inside the island's pill (Island.qml makes the pill this size and
 // takes the keyboard while it's open). The rows leave two gaps, `bands`, for
@@ -94,9 +94,9 @@ Item {
             return;
         if (entry.runInTerminal) {
             const dir = (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/umbriel-term";
-            const cfg = dir + "/foot.ini";
+            // kitty takes the program as its trailing arguments (no -e).
             Quickshell.execDetached({
-                command: ["env", "STARSHIP_CONFIG=" + dir + "/starship.toml", "foot", "--config", cfg, "-e"].concat(Array.from(entry.command)),
+                command: ["env", "STARSHIP_CONFIG=" + dir + "/starship.toml", "kitty", "--class", "umbriel-term", "--config", dir + "/kitty.conf"].concat(Array.from(entry.command)),
                 workingDirectory: entry.workingDirectory
             });
         } else {

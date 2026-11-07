@@ -46,7 +46,18 @@ test_umbriel_starship_only_on_its_own_terminals() {
   assert_eq "$env" 'null'
   bind=$(hm_eval programs.umbriel.settings.keybinds --apply 'b: builtins.toJSON b."Mod+T"')
   assert_contains "$bind" "STARSHIP_CONFIG="
-  assert_contains "$(cat "$FLAKE/modules/umbriel/shell/Launcher.qml")" "STARSHIP_CONFIG="
+  assert_contains "$bind" "kitty --class umbriel-term --config"
+  local launcher
+  launcher=$(cat "$FLAKE/modules/umbriel/shell/Launcher.qml")
+  assert_contains "$launcher" "STARSHIP_CONFIG="
+  assert_contains "$launcher" '"kitty", "--class", "umbriel-term"'
+}
+
+# Umbriel's kitty floats at the size niri gives foot (modules/niri/rules.kdl).
+test_umbriel_terminal_floats_like_foot() {
+  assert_eq "$(hm_eval programs.umbriel.settings.window_rule --apply 'rs: builtins.filter (r: r.match.app_id == "^umbriel-term$") rs')" \
+    '[{"default_floating":true,"default_floating_size_px":{"height":680,"width":1100},"match":{"app_id":"^umbriel-term$"}}]'
+  assert_contains "$(hm_eval 'xdg.configFile."umbriel-term/kitty.conf".source' | jq -r . | xargs cat)" "background           #0a0b0e"
 }
 
 test_umbriel_keeps_clipboard_history() {
@@ -76,7 +87,7 @@ test_menus_are_dripping_glass() {
 }
 
 for t in test_polkit_agent_runs_in_every_graphical_session test_look_is_declared test_leftovers_are_gone \
-  test_umbriel_starship_only_on_its_own_terminals test_umbriel_keeps_clipboard_history test_umbriel_shell_restarts_on_switch \
+  test_umbriel_starship_only_on_its_own_terminals test_umbriel_terminal_floats_like_foot test_umbriel_keeps_clipboard_history test_umbriel_shell_restarts_on_switch \
   test_menus_are_dripping_glass; do
   run_test "$t"
 done

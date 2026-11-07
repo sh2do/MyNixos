@@ -63,7 +63,7 @@ A second session next to niri, on the [Umbriel](https://github.com/noctalia-dev/
 | `Mod+Space` | launcher |
 | `Mod+Ctrl+W` | wallpaper picker |
 | `Mod+Alt+V` / `Mod+Shift+Q` | clipboard history / power menu (the rofi menus) |
-| `Mod+T` | foot, with the slate theme |
+| `Mod+T` | kitty, floating, with the slate theme |
 | `Mod+F` / `Mod+Shift+F` | maximise / fullscreen |
 | `Super+Alt+L` | lock (the shared `rice-lock`) |
 | `Mod+Shift+E` | quit the session |

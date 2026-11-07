@@ -48,7 +48,7 @@ in
   imports = [ inputs.umbriel.homeModules.default ];
 
   # slurp: the region screenshot bind (grim and wl-copy are already installed).
-  home.packages = [ pkgs.slurp pkgs.kew pkgs.cava umbriel-wall ];
+  home.packages = [ pkgs.slurp pkgs.kitty pkgs.kew pkgs.cava umbriel-wall ];
 
   home.file = lib.mapAttrs' (name: hash:
     lib.nameValuePair ".local/share/wallpapers/umbriel/${name}" { source = wallhaven name hash; }
@@ -57,13 +57,13 @@ in
   # The Quickshell config "umbriel", started by autostart below.
   xdg.configFile."quickshell/umbriel".source = shell;
 
-  # Slate terminal stack. foot, starship and cava are only pointed at these
-  # inside Umbriel: STARSHIP_CONFIG is set on Umbriel's own foot launches (the
+  # Slate terminal stack. kitty, starship and cava are only pointed at these
+  # inside Umbriel: STARSHIP_CONFIG is set on Umbriel's own kitty launches (the
   # Mod+T bind and the launcher), never in Umbriel's `environment`, which goes to
   # the systemd user manager and would leak into a niri login after it. kew has
   # no path switch, so its theme sits in its own themes dir and is picked inside
   # kew.
-  xdg.configFile."umbriel-term/foot.ini".source = ./foot-umbriel.ini;
+  xdg.configFile."umbriel-term/kitty.conf".source = ./kitty-umbriel.conf;
   xdg.configFile."umbriel-term/starship.toml".source = ./starship-umbriel.toml;
   xdg.configFile."umbriel-term/kew.conf".source = ./kew.conf;
   xdg.configFile."umbriel-term/cava.conf".source = ./cava.conf;
@@ -123,6 +123,15 @@ in
         };
       };
       keybinds = import ./binds.nix { inherit lib term; };
+
+      # Umbriel's terminal (class umbriel-term) floats, centred, at niri's foot size.
+      window_rule = [
+        {
+          match.app_id = "^umbriel-term$";
+          default_floating = true;
+          default_floating_size_px = { width = 1100; height = 680; };
+        }
+      ];
 
       # Film grain over the screen (static, see grain.glsl), and windows that
       # open and close through smoke. The shell switches the grain off on

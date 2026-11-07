@@ -11,7 +11,7 @@ These checks need a real Umbriel login, which can't be tested from inside a niri
 - [ ] `pgrep -f '[q]s -c umbriel'` finds the shell; `pgrep -f '[q]s -c rice'` finds nothing; `systemctl --user is-active awww` says `inactive`.
 
 ## Keys and terminal
-- [ ] Mod+T opens foot in slate with the monochrome prompt.
+- [ ] Mod+T opens kitty, floating and centred at 1100×680 like niri's foot, in slate with the monochrome prompt. `umbriel focused-window` says `umbriel-term`.
 - [ ] Spot-check Mod+D, Super+E, the volume and brightness keys, Print, and Mod+1..9.
 - [ ] Mod+Alt+V shows clipboard history from this session after you copy something.
 - [ ] `pkexec true` prompts for a password.
@@ -25,7 +25,7 @@ These checks need a real Umbriel login, which can't be tested from inside a niri
 - [ ] The volume and brightness keys show the OSD in the island. Brightness may lag up to 0.5 s.
 - [ ] Mod+Space drops the launcher out of the island and the viper slides out. Typing `fir` then Enter makes the viper strike, and Firefox launches.
 - [ ] Gibberish gives an empty list, and Enter does nothing.
-- [ ] A `Terminal=true` app such as btop opens in the slate foot.
+- [ ] A `Terminal=true` app such as btop opens in the slate kitty, floating at the same size, and Mod+Q closes it without a confirm prompt.
 - [ ] Clicking outside the launcher closes it. Also try with a fullscreen window focused.
 - [ ] The viper's horns aren't cut off at the top edge.
 
