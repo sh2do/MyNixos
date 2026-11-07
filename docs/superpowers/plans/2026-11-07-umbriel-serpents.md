@@ -302,6 +302,67 @@
   - `top`, both serpents idle, 20 s: **≤ 4%**. Record it.
 - [ ] **Step 7:** Commit with the message `umbriel: the viper drips venom from the island`.
 
+### Task 4R: The raven (replaces Tasks 3–4's python)
+
+The spec's "Revision" section is the authority. Tasks 3–4 (the python) are superseded: Task 3 was committed and Task 4 was abandoned (stashed).
+
+**Files:**
+- Delete:
+  - `modules/umbriel/shell/Python.qml`, `PythonSkin.qml`, `PythonHead.qml`, `python-pose.js`, `StatusRow.qml`
+  - `tests/python-pose-test.js`
+  - the python palette roles
+- Restore: `modules/umbriel/shell/Status.qml` as it was at 52e9ffc (`git show 52e9ffc:modules/umbriel/shell/Status.qml`), and its use in `shell.qml`.
+- Create:
+  - `modules/umbriel/shell/Raven.qml` (PanelWindow)
+  - `modules/umbriel/shell/RavenBody.qml` (the parts, drawn once)
+  - `modules/umbriel/shell/raven-mood.js`
+- Modify:
+  - `Island.qml`: emit `noticeShown()` and `noticeGone(point at)` (screen coords, bottom-centre). Only when a notice actually leaves, not when it's replaced in place.
+  - `shell.qml`
+  - `Palette.qml`: raven roles: `ravenBody #121419`, `ravenEdge #3a404b`, `ravenBeak #1b1e24`, `ravenEye #c7ccd4`, `ravenMembrane #8b94a3`, `trinket` = `bright`.
+- Test: `tests/raven-mood-test.js`
+
+**Interfaces (pure, `raven-mood.js`):**
+- `isNight(date) -> bool`: 21:00–06:00, local time.
+- `nextIdle(kind, now, rand) -> ms`. Kinds: blink 4–9 s, look 6–14 s, ruffle 2–4 min, preen 5–10 min.
+- `watchState(state, pointer: {x, y, still: ms} | null, dt) -> {phase: "idle"|"watch"|"hop"|"peck"|"settle", target}`:
+  - "watch" at still ≥ 2000;
+  - "hop" at still ≥ 5000, then "peck" 300 ms, then "settle" 600 ms, then idle;
+  - a moving pointer (still reset) goes from watch back to idle.
+- `hoardAdd(hoard, now) -> hoard`: capped at 3, dropping the oldest.
+- `hoardStep(hoard, now) -> hoard`: each item's opacity is `1 - age/600000`, removed at ≤ 0.
+- `clamp dt` per clock rate, the same as the viper's.
+
+- [ ] **Step 1: Write the failing tests:**
+  - `test_night_window`: 20:59 is false; 21:00, 03:00 and 05:59 are true; 06:00 is false.
+  - `test_idle_intervals_in_range`: 200 rolls per kind fall within that kind's range.
+  - `test_watch_sequence`: still 1.9 s is idle; 2 s is watch; 5 s is hop, then peck, then settle, then idle.
+  - `test_watch_calms_when_pointer_moves`
+  - `test_hoard_caps_at_three_and_fades`: four adds leave 3, the oldest dropped; after 10 min all are gone; a past-due step removes once and doesn't throw.
+- [ ] **Step 2:** Run `nix run nixpkgs#nodejs -- tests/raven-mood-test.js`. Expected: FAIL.
+- [ ] **Step 3: Implement `raven-mood.js`.** Run again. Expected: PASS.
+- [ ] **Step 4: Remove the python and restore Status** (files above). Run `nix build` of the toplevel. Expected: it builds, and `grep -r Python modules/umbriel` finds nothing.
+- [ ] **Step 5: Implement `RavenBody.qml`.** The parts are Shapes (CurveRenderer), drawn once. Each part is an Item with its pivot at its joint:
+  - layered scalloped feathers;
+  - the iridescent overlay (a pre-drawn gradient Shape, clipped to wing and back, with opacity 0.10–0.22 drifting);
+  - beak upper and lower hinged at the gape;
+  - hackles that scale on a caw;
+  - an eye with a catch-light;
+  - the membrane, which slides across for blinks;
+  - legs and toes gripping a y-line.
+
+  Leave the plan with screenshots of rest, caw, preen, sleep and hop.
+- [ ] **Step 6: Implement `Raven.qml`:**
+  - the window, the mask, the multi-rate clock, and the behaviours from the spec;
+  - the trinket in its own small top-layer window, existing only while in flight;
+  - debug: `UMBRIEL_RAVEN_DEBUG=1` makes ruffle and preen every 20 s and treats every hour as night for 30 s every 2 minutes.
+- [ ] **Step 7: Check in nested Umbriel:**
+  - `notify-send hi` ×3 gives three caws and three trinkets in the hoard;
+  - a still pointer gives watch, then hop and peck;
+  - screenshots of each;
+  - `top` idle 20 s: the raven's delta is ≤ 1%, and the whole shell is ≤ 4%. Record both.
+- [ ] **Step 8:** Commit with the message `umbriel: a raven and its hoard replace the python`.
+
 ### Task 6: Docs and final checks
 
 **Files:**

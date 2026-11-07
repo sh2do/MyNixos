@@ -110,3 +110,33 @@ The niri python was expensive because it rebuilt geometry on the CPU every tick.
 - The shader code.
 - The mesh resolution, if the budget needs it.
 - The exact timing curves.
+
+## Revision (2026-11-07, morning): a raven replaces the python
+
+The user had second thoughts about the python and chose a **raven** for the bottom-right status corner instead. The viper, the venom and the GPU body are unchanged. Everything in "The python (bottom-right)" above is superseded by this section. The python's code (Python.qml, PythonSkin.qml, PythonHead.qml, python-pose.js and its test) is removed, and Status goes back to a plain corner window that the raven perches beside.
+
+- **Look.** A slate raven, about 64 px tall, perched on the top edge of the status row, facing left toward the screen.
+  - It is drawn **once** as layered parts, the same way the python's head was: body, folded wing, tail fan, legs gripping the row's edge, head, upper and lower beak (hinged), throat hackles, eye and nictitating membrane.
+  - Feathers are shapes with overlapping scalloped edges: wing coverts, primaries and tail feathers.
+  - The **only colour** is the raven's real iridescence: a faint blue-violet-green sheen on the wing and back. It's a pre-drawn overlay whose opacity and offset drift slowly. This replaces the python's sheen as "the only colour on the desktop".
+  - The palette is the Umbriel slate roles: near-black body, a slate edge highlight, a pale eye catch-light.
+- **How it moves.** No geometry is rebuilt, ever. Every part moves by transform (rotation about its joint, translate, scale, opacity). The clock is the multi-rate one from the viper:
+  - an idle tick at 10 Hz;
+  - 30 Hz for head turns;
+  - the display's rate only during a hop, a caw or a wing flap.
+  - It pauses when hidden, on fullscreen, when locked and when outputs are off.
+- **Always alive:**
+  - breathing, a 1.5% chest swell every ~4 s;
+  - a blink with the pale nictitating membrane every 4–9 s;
+  - a head tilt or turn every 6–14 s, sometimes a quick double-take;
+  - a feather ruffle, with the body puffed 6% and settled, every 2–4 min;
+  - a preen, beak tucked into the wing for ~2 s, every 5–10 min.
+- **Notifications, the hoard.**
+  1. When the island shows a notice, the raven snaps its head toward the island and **caws**: beak open, hackles puffed, two small pale arcs from the beak, in silence.
+  2. When the notice leaves, a small glinting **trinket** (a pale ring or coin with a glint, glow pre-blurred) drops from the island down the right edge.
+  3. The raven hops to meet it, catches it in its beak and sets it on the status row behind it.
+  4. Up to **3 trinkets** sit in its hoard. Each fades over ~10 minutes, oldest first.
+- **The pointer.** If the pointer rests near the raven (within its window) for 2 s, it cocks its head to watch it, tracking it with the eye. If the pointer stays still another 3 s, it hops once toward it and pecks the air. Moving the pointer away makes it lose interest.
+- **After dark (21:00–06:00):** it fluffs up 8% and tucks its head under its wing to sleep. Only the slow breathing moves. A notice wakes it for the caw, then it settles back after ~20 s.
+- **Window.** A bottom-right `PanelWindow` of about 180 × 120, beside and above the status row. It's click-through except for the raven's body (the input mask), so it can see the pointer, and it hides on fullscreen like Status.
+- **Budget.** Idle, it adds **≤ 1%** to `qs -c umbriel`, and the whole shell with the raven and the viper stays ≤ 4%.
