@@ -363,6 +363,47 @@ The spec's "Revision" section is the authority. Tasks 3–4 (the python) are sup
   - `top` idle 20 s: the raven's delta is ≤ 1%, and the whole shell is ≤ 4%. Record both.
 - [ ] **Step 8:** Commit with the message `umbriel: a raven and its hoard replace the python`.
 
+### Task 5D: Detail pass on the viper and the raven
+
+The user asked to "go much more detailed on the viper and the raven". The approved art is the canvas boards **ViperDetail** and **RavenDetail** (sources `serpents/project/ViperDetail.dc.html` and `RavenDetail.dc.html` in the session scratchpad). Detail drawn once is free at runtime, so add as much as reads well at 1×.
+
+**Files:**
+- Modify: `HangingViper.qml`, `HangingViperSkin.qml`, `RavenBody.qml`, `Raven.qml` (only where a pose needs new parts).
+- Optional: shader tweaks in `serpent.frag` for the keeled-scale highlight.
+
+**Viper**, per the ViperDetail board:
+- keeled dorsal scales with a light ridge, and blotches with pale edging, in the skin strip;
+- ventral plates on the underside where the S turns (the belly band in the strip);
+- labial scales along the lips, a heat pit, a brow ridge and supraocular horn scales;
+- an eye with a vertical slit pupil and a catch-light;
+- pale mouth lining with the glottis and tongue sheath;
+- sabre fangs with translucent tips and a venom groove;
+- a venom bead with an internal highlight and a dark refraction band;
+- on pale wallpapers, a 2 px outline, a soft shadow and a slate rim on the venom;
+- a forked tongue flick every 10–20 s. The tongue is a once-drawn part, translated and scaled, at the display's rate only during the ~250 ms flick.
+
+**Raven**, per the RavenDetail board:
+- a heavy beak with the culmen ridge, nasal bristles and the gape line;
+- shaggy throat hackles;
+- the nictitating membrane;
+- layered feathers: crown, nape, mantle, scapulars, coverts, and primaries with barb lines;
+- a wedge-shaped tail;
+- scaled legs with scutes and curved claws gripping the row;
+- the blue-violet-green iridescence on the wing and mantle;
+- a slate edge (#3a404b) on every feather.
+
+Improve the preen pose: the board's weakest thumbnail.
+
+**Constraints:**
+- Colours stay properties of RavenBody, because niri reuses it (Task 4N).
+- No new per-frame cost. Measure the shell's idle CPU before and after; the delta must be within noise.
+
+**Steps:**
+- [ ] **Step 1: Viper art.** Take screenshots at 1× and zoomed, on dark and pale wallpapers, and compare them by eye with ViperDetail. Iterate.
+- [ ] **Step 2: Raven art.** Take screenshots of rest, caw, preen, sleep, hop and hoard at 1× and zoomed, and compare with RavenDetail. Iterate.
+- [ ] **Step 3: Measure.** Expected: all tests pass, the build succeeds, and the CPU delta is within noise.
+- [ ] **Step 4: Commit** with the message `umbriel: detailed viper and raven art`.
+
 ### Task 4N: The raven on niri too (replaces the niri python)
 
 The user: "we're removing the python for the raven on both fronts". On niri the koi stay the default mascot. `RICE_MASCOT=raven` replaces `RICE_MASCOT=python`.
