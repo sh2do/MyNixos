@@ -125,6 +125,16 @@ Item {
         }
     }
 
+    // A hidden window drops its scene graph, and the strip's texture with it
+    // (it is not live): draw the strip again whenever the window shows.
+    Connections {
+        target: serpent.Window.window
+        function onVisibleChanged() {
+            if (serpent.Window.window?.visible)
+                strip.scheduleUpdate();
+        }
+    }
+
     // The skin strip, drawn once.
     ShaderEffectSource {
         id: strip

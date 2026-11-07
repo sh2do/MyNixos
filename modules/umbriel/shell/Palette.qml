@@ -25,6 +25,8 @@ Singleton {
     readonly property color viperKeel: "#8b94a3"
     readonly property color viperOutline: "#0d0f12"
     readonly property color viperEye: "#c7ccd4"
+    // The hanging viper's venom: the accent, always with a glow.
+    readonly property color venom: bright
 
     // The python
     readonly property color pyBody: "#5a6070"

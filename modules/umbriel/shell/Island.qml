@@ -11,7 +11,8 @@
 // openLauncher() / closeLauncher() / expanded: the pill grows down into the
 // launcher's panel (Launcher.qml), with the viper wound around it, and takes
 // the keyboard while open. anchorBottom is the underside centre in
-// screen coordinates (the spider hangs from it).
+// screen coordinates (the spider hangs from it). The hanging viper
+// (HangingViper.qml) hangs 30 px right of it.
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
@@ -49,16 +50,20 @@ PanelWindow {
     }
     readonly property bool critical: view === "notify" && (item?.critical ?? false)
 
-    visible: !UmbrielIpc.fullscreen || critical || expanded
+    // The hanging viper keeps it shown while it hisses and pulls up for a
+    // fullscreen window.
+    visible: !UmbrielIpc.fullscreen || critical || expanded || hanging.holdsIsland
 
     // The pill sits 14 px down the window, which starts at the screen's top
     // edge: room for the viper's head over the launcher's corner.
     anchors.top: true
     margins.top: 0
     // Room for the largest view, the launcher with the viper around it, and
-    // the spring's overshoot; only the pill takes the pointer.
+    // the spring's overshoot, and down the whole screen for the hanging
+    // viper's venom to fall onto the windows below; only the pill takes the
+    // pointer.
     implicitWidth: 360
-    implicitHeight: 400
+    implicitHeight: Math.max(400, screen?.height ?? 0)
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
@@ -242,6 +247,12 @@ PanelWindow {
         bands: launcher.bands
         x: Math.round((root.width - panelW) / 2)
         y: pill.y
+    }
+
+    // The viper hanging from under the pill, and its venom.
+    U.HangingViper {
+        id: hanging
+        island: root
     }
 
     // A faint wider outline: the accent's glow, for critical notices.
