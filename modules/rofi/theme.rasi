@@ -93,6 +93,7 @@ entry {
 
 listview {
     lines: 7;
+    fixed-height: false;
     spacing: 0;
     scrollbar: false;
 }
@@ -100,6 +101,7 @@ listview {
 /* 44 px rows: a 38 px pill and room below it for the selected row's drop */
 element {
     padding: 8px 12px 14px;
+    height: 44px;
     border-radius: 10px;
     spacing: 12px;
 }
