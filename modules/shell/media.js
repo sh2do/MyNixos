@@ -39,15 +39,28 @@ function progress(position, length) {
 }
 
 // The pill's two lines: the title on top, "artist · album" below. Without a
-// title the artist moves up; without an artist it is the title alone.
-function fmtArtist(title, artist, album) {
+// title the artist moves up; without an artist it is the title alone. With
+// neither, `windowTitle` or else `identity` (the player's name) stands in, so a
+// player with no metadata still shows something.
+function fmtArtist(title, artist, album, windowTitle, identity) {
     title = title || "";
     artist = artist || "";
+    if (!title && !artist)
+        return { top: windowTitle || identity || "", bottom: "" };
     if (!title)
         return { top: artist, bottom: "" };
     if (!artist)
         return { top: title, bottom: "" };
     return { top: title, bottom: album ? artist + " · " + album : artist };
+}
+
+// Whether a cava exit means it can't run. `wanted`: the pill still wants it;
+// `stopAsked`: we stopped it ourselves (a re-show can land before the exit
+// signal); `runMs`: how long it ran.
+function cavaFailed(wanted, stopAsked, code, runMs) {
+    if (!wanted || stopAsked)
+        return false;
+    return code !== 0 || runMs < 1000;
 }
 
 // A gentle stand-in for the visualiser when cava can't run: each bar breathes

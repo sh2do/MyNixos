@@ -63,6 +63,25 @@ const tests = {
     assert.deepStrictEqual({ ...Media.fmtArtist("", "Hiroshi Yoshimura") }, { top: "Hiroshi Yoshimura", bottom: "" });
   },
 
+  test_text_fallback() {
+    assert.deepStrictEqual({ ...Media.fmtArtist("", "", "", "Firefox", "Spotify") }, { top: "Firefox", bottom: "" });
+    assert.deepStrictEqual({ ...Media.fmtArtist("", "", "", "", "Spotify") }, { top: "Spotify", bottom: "" });
+    assert.deepStrictEqual({ ...Media.fmtArtist(undefined, undefined, undefined, undefined, undefined) }, { top: "", bottom: "" });
+    assert.deepStrictEqual({ ...Media.fmtArtist("T", "", "", "Firefox", "Spotify") }, { top: "T", bottom: "" });
+  },
+
+  test_cava_failed() {
+    // Exited while wanted, nonzero, never asked to stop: broken or missing.
+    assert.strictEqual(Media.cavaFailed(true, false, 127, 20), true);
+    assert.strictEqual(Media.cavaFailed(true, false, 0, 50), true, "quick clean exit is a failure too");
+    // We stopped it (a re-show raced the exit signal): not a failure.
+    assert.strictEqual(Media.cavaFailed(true, true, 143, 400), false);
+    // Not wanted any more.
+    assert.strictEqual(Media.cavaFailed(false, false, 1, 400), false);
+    // Ran a long time then ended cleanly: not a start failure.
+    assert.strictEqual(Media.cavaFailed(true, false, 0, 60000), false);
+  },
+
   test_pulse_stays_in_range_and_moves() {
     const a = plain(Media.pulse(10, 5)), b = plain(Media.pulse(10.3, 5));
     assert.strictEqual(a.length, 5);

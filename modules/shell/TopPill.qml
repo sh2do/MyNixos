@@ -39,10 +39,11 @@ PanelWindow {
         id: pauseGrace
         interval: 4000
     }
-    readonly property string text: playing
-        ? [player.trackArtist, player.trackTitle].filter(s => s && s.length).join(" — ")
-        : Niri.focusedTitle
-    readonly property var lines: playing ? Media.fmtArtist(player.trackTitle, player.trackArtist, player.trackAlbum) : ({ top: "", bottom: "" })
+    // Without a title or artist the window title or the player's name stands in.
+    readonly property var lines: playing
+        ? Media.fmtArtist(player.trackTitle, player.trackArtist, player.trackAlbum, Niri.focusedTitle, player.identity)
+        : ({ top: "", bottom: "" })
+    readonly property string text: playing ? lines.top : Niri.focusedTitle
     readonly property string artUrl: playing ? (player.trackArtUrl ?? "") : ""
     readonly property bool hovered: hover.hovered
 
@@ -50,7 +51,7 @@ PanelWindow {
     readonly property string track: player ? [player.trackArtist, player.trackTitle].join("\n") : ""
     readonly property int workspace: Niri.workspaces.find(w => w.isFocused)?.id ?? -1
     onTrackChanged: {
-        cavaOk = true;
+        Cava.reset();
         if (playing)
             peek();
     }
@@ -84,43 +85,23 @@ PanelWindow {
     }
 
     // ---- The visualiser: cava's raw output, only while it plays and shows.
-    readonly property int bars: 5
+    readonly property int bars: Cava.bars
     readonly property bool live: isPlaying && shown
-    property var levels: Media.parseCava("", bars)
-    // False once cava has failed for this track; then the bars pulse gently.
-    property bool cavaOk: true
-    function setLevels(v) {
-        if (v.some((x, i) => Math.abs(x - levels[i]) > 0.01))
-            levels = v;
-    }
-    onLiveChanged: if (!live) levels = Media.parseCava("", bars)
-
-    Process {
-        id: cava
-        running: root.live && root.cavaOk
-        command: ["sh", "-c", [
-            'f="${XDG_RUNTIME_DIR:-/tmp}/rice-pill-cava.conf"',
-            'printf "%s\\n" "[general]" "framerate = 10" "bars = ' + root.bars + '" ' +
-                '"[output]" "method = raw" "raw_target = /dev/stdout" "data_format = ascii" ' +
-                '"ascii_max_range = ' + Media.CAVA_MAX + '" "bar_delimiter = 59" "frame_delimiter = 10" "channels = mono" > "$f"',
-            'exec cava -p "$f"'
-        ].join("\n")]
-        stdout: SplitParser {
-            onRead: data => root.setLevels(Media.parseCava(data, root.bars))
-        }
-        // Exiting while still wanted means cava is missing or broken.
-        onExited: if (root.live) root.cavaOk = false
-    }
+    // cava's shared levels, or a gentle pulse while cava can't run.
+    property var pulseLevels: Media.parseCava("", bars)
+    readonly property var levels: Cava.ok ? Cava.levels : pulseLevels
+    onLiveChanged: live ? Cava.acquire() : Cava.release()
+    Component.onDestruction: if (live) Cava.release()
 
     // Without cava: a pulse that follows the playback position.
     property real pulseT: 0
     Timer {
         interval: 100
         repeat: true
-        running: root.live && !root.cavaOk
+        running: root.live && !Cava.ok
         onTriggered: {
             root.pulseT += interval / 1000;
-            root.setLevels(Media.pulse(root.pulseT, root.bars));
+            root.pulseLevels = Media.pulse(root.pulseT, root.bars);
         }
     }
 
@@ -144,9 +125,27 @@ PanelWindow {
         depth: 0
         rescaleSize: 16
     }
+    // False from a track change until its colour arrives, so the glow never
+    // shows the previous track's colour (it is the theme colour meanwhile).
+    property bool glowReady: false
+    onArtUrlChanged: {
+        glowReady = false;
+        glowWait.restart();
+    }
+    Timer {
+        id: glowWait
+        interval: 600
+        onTriggered: root.glowReady = true
+    }
+    Connections {
+        target: quant
+        function onColorsChanged() {
+            root.glowReady = true;
+        }
+    }
     readonly property color glowColour: {
         const c = quant.colors.length ? quant.colors[0] : null;
-        if (!c || !root.artUrl.startsWith("file://"))
+        if (!glowReady || !c || !root.artUrl.startsWith("file://"))
             return Theme.primary;
         // Lift dark or grey art so the glow still reads on a dark wall.
         return Qt.hsla(c.hslHue < 0 ? 0 : c.hslHue, Math.max(c.hslSaturation, 0.35), Math.max(c.hslLightness, 0.62), 1);
