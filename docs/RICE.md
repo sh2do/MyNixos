@@ -116,8 +116,8 @@ All menus share the wallpaper-coloured rofi theme. Escape always does nothing.
 - **Top pill:** the playing song while music plays, otherwise the focused window's title. It stays tucked above the screen edge and drops in for a few seconds when a song starts or changes, or when you switch workspace; the pointer over it keeps it down. Fullscreen windows hide it.
 - **Bottom bar:** auto-hides into a 3 px strip at the screen edge. Touch the edge to slide it up. `RICE_BAR_PINNED=1 qs -c rice` keeps it up while you restyle it.
 - **The koi** swim inside the bottom bar, under the widgets: a white koi with red patches, one in the wallpaper's own colour, and a gold one. Each has shaded flanks, patches, a dorsal ridge, whiskers and paddling fins, and casts a shadow on the pond floor. They cruise and rest, and now and then rise to the surface with a ring and a few bubbles. The water has drifting caustic light, rain dimpling the surface, a lily pad they swim under, and a wake behind a darting koi. Hold the pointer still and they come up to it; move it fast near one and it darts off. Click open water and they rush to it and nibble. Switching workspace or changing volume or brightness sends a ripple that startles the koi nearby, and the closest comes back to look. They only swim while the bar is up. 
-- **The python** (set `RICE_MASCOT=python` in the session environment to get it instead of the koi) spirals three times around the bottom bar, crossing in front only in the gaps between widget groups, so it never covers a button. Its body is click-through. Its body tapers from a thin tail to a narrower neck, patterned with a dark-edged diamond net and flank eyespots, and casts a soft shadow. The broad wedge head (amber eyes, barred lips) rests over the right end on a neck that bends as it turns. It breathes, now and then shifts its grip and flicks its tongue, looks at the widget under the pointer, and looks and flinches when you switch workspace or change volume or brightness. Hidden for a few minutes, it wakes slowly when the bar comes back.
-- Either one animates only while the bar is visible, ticking at 48 Hz: about 0.3% CPU hidden. Shown, the koi cost about 15% of a core and the python about 17%. Ripples and bubbles run on the koi's 48 Hz clock rather than animations, which would redraw at the display's full rate.
+- **The raven** (set `RICE_MASCOT=raven` in the session environment to get it instead of the koi) perches on the bottom bar's top edge at its right end, about 44 px tall. It is Umbriel's raven (the same art, `RavenBody.qml`, and moods, `raven-mood.js`, copied in from `modules/umbriel/shell`), coloured from the wallpaper: a very dark body, feathers edged in the outline colour, and a faint sheen of the primary and tertiary colours. It breathes, blinks, looks about, now and then ruffles its feathers and preens. A pointer resting on the bar is watched after 2 s, then hopped at and pecked at. Switching workspace or changing volume or brightness makes it turn its head to the change and caw (two silent arcs from the beak). After dark (21:00-06:00) it sleeps with its head tucked in; a change on the bar wakes it for a while. `RICE_RAVEN_DEBUG=1` makes it ruffle and preen every 20 s, and makes it night for 30 s of every 2 minutes.
+- Either one animates only while the bar is visible: about 0.3% CPU hidden. The koi tick at 48 Hz; the raven's clock ticks at 5 Hz at rest, 30 Hz while its head moves and 60 Hz in a hop or a caw. Shown, the koi cost about 6% of a core and the raven about 1%. Ripples and bubbles run on the koi's 48 Hz clock rather than animations, which would redraw at the display's full rate.
 - **Hot reload:** the bar runs as `qs -c rice` (started by niri). `nh os switch` restarts it when its QML changed, because a running bar keeps watching the old store path.
 
 ## Lock, idle and login
@@ -144,7 +144,7 @@ All menus share the wallpaper-coloured rofi theme. Escape always does nothing.
 nh os switch                                  # rebuild and switch
 nix build .#nixosConfigurations.nixos.config.system.build.toplevel --no-link   # build check, no sudo
 for t in tests/*-test.sh; do bash "$t"; done  # script and config tests
-nix run nixpkgs#nodejs -- tests/python-geometry-test.js   # python coil geometry
+nix run nixpkgs#nodejs -- tests/raven-mood-test.js        # raven moods (niri bar and Umbriel)
 nix run nixpkgs#nodejs -- tests/koi-motion-test.js        # koi swimming
 python3 modules/theme/make-koi-svg.py                    # regenerate the fastfetch koi logo template
 niri validate -c ~/.config/niri/config.kdl    # niri config check
@@ -173,7 +173,7 @@ modules/
   theme/             rice-wall, matugen config and templates, wallpaper list, 45-min timer
   terminal/          foot, fastfetch, first-terminal fish hook
   rofi/              theme + rice-menu
-  shell/             Quickshell: TopPill, BottomBar, Koi (+ koi-motion.js), Python (+ python-geometry.js), OSD, notifications, wallpaper picker
+  shell/             Quickshell: TopPill, BottomBar, Koi (+ koi-motion.js), Raven (art and moods from umbriel/shell), OSD, notifications, wallpaper picker
   lock/              Quickshell lock + rice-lock + swayidle
   sddm/              login theme (Qt6, video)
   look/              polkit agent, cursor, icon and GTK themes (GTK colours come from matugen)

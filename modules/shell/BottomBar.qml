@@ -13,8 +13,8 @@ PanelWindow {
 
     // RICE_BAR_PINNED=1 keeps the bar up (handy while restyling it).
     readonly property bool pinned: Quickshell.env("RICE_BAR_PINNED") === "1"
-    // Koi swim inside the bar; RICE_MASCOT=python wraps it in the python instead.
-    readonly property bool python: Quickshell.env("RICE_MASCOT") === "python"
+    // Koi swim inside the bar; RICE_MASCOT=raven perches a raven on it instead.
+    readonly property bool raven: Quickshell.env("RICE_MASCOT") === "raven"
     property bool shown: pinned
 
     anchors.bottom: true
@@ -24,11 +24,9 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "rice-bar"
     color: "transparent"
-    // Room for the python: the pill rests higher (lower loops below it) and the
-    // head rises above it.
-    readonly property int bodyW: Math.round(Theme.barHeight * 0.5)
-    readonly property int restGap: python ? 8 + bodyW + 1 : 8
-    implicitHeight: Theme.barHeight + restGap + (python ? 64 : 4)
+    readonly property int restGap: 8
+    // Room above the pill for the raven (44 px, plus its hops).
+    implicitHeight: Theme.barHeight + restGap + (raven ? 60 : 4)
 
     // Only the visible part takes input; the rest passes clicks through.
     mask: Region {
@@ -49,26 +47,12 @@ PanelWindow {
         }
     }
 
-    Loader {
-        active: root.python
-        sourceComponent: Python {
-            pill: bar
-            gaps: root.gaps
-            side: "back"
-            t: front.item ? front.item.t : 0
-            slide: front.item ? front.item.slide : 0
-            squeeze: front.item ? front.item.squeeze : 0
-            flinch: front.item ? front.item.flinch : 0
-            texture: front.item ? front.item.texture : null
-        }
-    }
-
     Rectangle {
         id: bar
 
         anchors.horizontalCenter: parent.horizontalCenter
         y: root.shown ? parent.height - height - root.restGap : parent.height + 4
-        width: content.implicitWidth + root.leftPad + 12
+        width: content.implicitWidth + 26
         height: Theme.barHeight
         radius: Theme.radius
         color: Qt.alpha(Theme.surface, 0.82)
@@ -90,7 +74,7 @@ PanelWindow {
 
         Koi {
             id: pond
-            visible: !root.python
+            visible: !root.raven
             anchors.fill: parent
             anchors.margins: 1
             running: root.shown && visible
@@ -111,7 +95,7 @@ PanelWindow {
 
         Row {
             id: content
-            x: root.leftPad
+            x: 14
             anchors.verticalCenter: parent.verticalCenter
             spacing: 10
 
@@ -121,14 +105,14 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            CoilGap {}
+            Item { width: 8; height: 1 }
 
             Toggles {
                 id: toggles
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            CoilGap {}
+            Item { width: 8; height: 1 }
 
             Clock {
                 id: clock
@@ -143,23 +127,32 @@ PanelWindow {
         }
     }
 
+    // The raven, its feet on the pill's top edge near the right end; it goes
+    // with the pill as it slides and fades.
     Loader {
-        id: front
-        active: root.python
-        sourceComponent: Python {
-            pill: bar
-            gaps: root.gaps
-            side: "front"
+        id: perched
+        anchors.fill: parent
+        active: root.raven
+        sourceComponent: Raven {
+            readonly property real perchInset: 34
+            perchY: bar.y
+            homeX: bar.x + bar.width - perchInset
+            noticeY: bar.y + bar.height / 2
+            reachLeft: bar.width - 2 * perchInset
+            opacity: bar.opacity
+            visible: opacity > 0
             running: root.shown
-            hoverX: barHover.hovered ? barHover.point.position.x : NaN
+            hoverX: barHover.hovered ? bar.x + barHover.point.position.x : NaN
+            hoverY: barHover.hovered ? bar.y + barHover.point.position.y : NaN
         }
     }
 
     // The mascot reacts to the bar: a workspace you switch to, or a volume or
-    // brightness change, makes the python look and flinch, or the koi startle.
+    // brightness change, makes the raven turn and caw at it, or the koi
+    // startle. x is in pill coordinates.
     function notice(x) {
-        if (front.item)
-            front.item.notice(x);
+        if (perched.item)
+            perched.item.notice(bar.x + x);
         else
             pond.notice(x - 1);
     }
@@ -181,21 +174,4 @@ PanelWindow {
         interval: 600
         onTriggered: root.shown = root.pinned
     }
-
-    // The python's front crossings go in the gaps between widget groups (never
-    // over a widget): one at the left end, and one in each CoilGap, which takes
-    // the place of a separator line.
-    // Without the python they are plain spacing.
-    readonly property int leftPad: python ? bodyW + 19 : 14
-    component CoilGap: Item {
-        width: root.python ? root.bodyW + 6 : 8
-        height: 1
-    }
-
-    // Free spans in pill coordinates; they follow the widgets as they resize.
-    readonly property var gaps: [
-        { x: 8, w: leftPad - 10 },
-        { x: content.x + workspaces.x + workspaces.width + 2, w: toggles.x - workspaces.x - workspaces.width - 4 },
-        { x: content.x + toggles.x + toggles.width + 2, w: clock.x - toggles.x - toggles.width - 4 }
-    ]
 }

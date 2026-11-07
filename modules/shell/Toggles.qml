@@ -11,7 +11,7 @@ Row {
     id: root
     spacing: 6
 
-    // A value on one of the chips changed (the python looks at it).
+    // A value on one of the chips changed (the mascot reacts to it).
     signal poked(Item chip)
 
     function menu(name) {

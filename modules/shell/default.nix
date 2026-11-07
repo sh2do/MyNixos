@@ -6,10 +6,17 @@
   # The top pill's visualiser reads cava's raw output while music plays.
   home.packages = [ pkgs.cava ];
 
-  xdg.configFile."quickshell/rice".source = lib.cleanSourceWith {
-    src = ./.;
-    filter = path: type: type == "directory" || lib.any (ext: lib.hasSuffix ext path) [ ".qml" ".svg" ".js" ];
-  };
+  # The raven (RICE_MASCOT=raven) is Umbriel's: its art and moods are copied in
+  # from there, so both shells draw it from one source.
+  xdg.configFile."quickshell/rice".source = pkgs.runCommand "rice-shell" { } ''
+    cp -r ${lib.cleanSourceWith {
+      src = ./.;
+      filter = path: type: type == "directory" || lib.any (ext: lib.hasSuffix ext path) [ ".qml" ".svg" ".js" ];
+    }} $out
+    chmod -R u+w $out
+    cp ${../umbriel/shell/RavenBody.qml} $out/RavenBody.qml
+    cp ${../umbriel/shell/raven-mood.js} $out/raven-mood.js
+  '';
 
   # A running bar keeps watching the old store path, so a switch never reaches it.
   # Restart it through niri (for the session's environment) when its files changed.
