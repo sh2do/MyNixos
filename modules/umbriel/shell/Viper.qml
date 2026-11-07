@@ -1,9 +1,9 @@
 // The desert horned viper wound twice around the open launcher (the spec's
 // viper-launcher.html, option B), in the slate viper colours. Island places
-// two of these around the panel, like the niri python: side "back" under it
-// (the whole body, hidden where the panel covers it) and side "front" over it
-// (only the crossings, clipped to the gaps the launcher leaves between its
-// rows, plus the head). Coordinates are the panel's, 240×320; the body
+// two of these around the panel: side "back" under it (the whole body,
+// hidden where the panel covers it) and side "front" over it (only the
+// crossings, clipped to the gaps the launcher leaves between its rows, plus
+// the head). Coordinates are the panel's, 240×320; the body
 // reaches outside it.
 //
 // The body and head are shapes built once. Everything that moves is a
