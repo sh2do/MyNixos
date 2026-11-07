@@ -35,11 +35,6 @@ input_path = "~/.config/matugen/templates/koi.svg"
 output_path = "~/.cache/rice/koi.svg"
 post_hook = "rsvg-convert -w 512 \"$HOME/.cache/rice/koi.svg\" -o \"$HOME/.cache/rice/koi.png\""
 
-[templates.python]
-input_path = "~/.config/matugen/templates/python.svg"
-output_path = "~/.cache/rice/python.svg"
-post_hook = "rsvg-convert -w 512 \"$HOME/.cache/rice/python.svg\" -o \"$HOME/.cache/rice/python.png\""
-
 # Water drips on the rofi menu glass (modules/rofi/theme.rasi): the strip under
 # the list and the selected row's pill with its drop.
 [templates.drips]
