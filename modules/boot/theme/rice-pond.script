@@ -1,0 +1,164 @@
+# rice-pond: the boot splash. A dark pond seen from above, two koi circling
+# slowly as the spinner, the raven perched on the rim stones. Colours are
+# fixed (the rice's dark purple-blue): matugen isn't there at boot.
+# Art: modules/boot/make-plymouth-art.py and modules/umbriel/raven-art.
+# A disk passphrase, if asked for, goes on a glass card under the pond, one
+# bead per character. Esc still shows the boot messages (Plymouth's details).
+
+Window.SetBackgroundTopColor(0.082, 0.075, 0.118);
+Window.SetBackgroundBottomColor(0.035, 0.031, 0.051);
+
+screen.w = Window.GetWidth();
+screen.h = Window.GetHeight();
+screen.x = Window.GetX();
+screen.y = Window.GetY();
+
+# The pond's size: a third of the screen's height, at most the art's 400 px.
+size = Math.Int(screen.h * 0.34);
+if (size > 400) size = 400;
+if (size < 120) size = 120;
+
+cx = screen.x + screen.w / 2;
+cy = screen.y + screen.h * 0.44;
+
+# A glow behind the pond and the raven, so the black bird reads.
+haze.image = Image("haze.png").Scale(size * 1.9, size * 1.9);
+haze.sprite = Sprite(haze.image);
+haze.sprite.SetPosition(cx - size * 0.95 + size * 0.12, cy - size * 0.95 - size * 0.1, 0);
+
+pond.image = Image("pond.png").Scale(size, size);
+pond.sprite = Sprite(pond.image);
+pond.sprite.SetPosition(cx - size / 2, cy - size / 2, 1);
+
+# The koi: one image of the pair on their ring, turned about its centre.
+koi.base = Image("koi.png").Scale(size, size);
+koi.sprite = Sprite(koi.base);
+koi.sprite.SetPosition(cx - size / 2, cy - size / 2, 2);
+koi.angle = 0;
+koi.tick = 0;
+
+# The raven: 96 x 68 design units, its perch line at y 64 and its feet near
+# x 41 (49 in from the left edge at -8). Perched on the rim stones up and to the right, facing in.
+raven.w = Math.Int(size * 0.5);
+raven.h = Math.Int(raven.w * 68 / 96);
+raven.image = Image("raven.png").Scale(raven.w, raven.h);
+raven.sprite = Sprite(raven.image);
+raven.perch_x = cx + size * 0.46 * Math.Cos(-0.85);
+raven.perch_y = cy + size * 0.46 * Math.Sin(-0.85);
+raven.sprite.SetPosition(raven.perch_x - raven.w * 49 / 96, raven.perch_y - raven.h * 64 / 68, 3);
+
+# Turn the koi a little each frame: once round in about 14 s (refresh is
+# 50 Hz; a new image every other frame is smooth enough at this pace).
+fun refresh_callback()
+{
+    koi.tick++;
+    if (koi.tick % 2 == 0)
+    {
+        koi.angle -= 2 * Math.Pi / (25 * 14);
+        if (koi.angle < -2 * Math.Pi) koi.angle += 2 * Math.Pi;
+        koi.sprite.SetImage(koi.base.Rotate(koi.angle));
+    }
+}
+Plymouth.SetRefreshFunction(refresh_callback);
+
+#------------------------------------------------ messages
+
+message.sprite = Sprite();
+# Low on the screen, clear of the passphrase card and its drips.
+message.sprite.SetPosition(screen.x, screen.y + screen.h * 0.86, 10);
+
+fun display_message_callback(text)
+{
+    message.image = Image.Text(text, 0.80, 0.77, 0.86, 0.9, "Sans 12");
+    message.sprite.SetImage(message.image);
+    message.sprite.SetX(cx - message.image.GetWidth() / 2);
+    message.sprite.SetOpacity(1);
+}
+fun hide_message_callback(text)
+{
+    message.sprite.SetOpacity(0);
+}
+Plymouth.SetDisplayMessageFunction(display_message_callback);
+Plymouth.SetHideMessageFunction(hide_message_callback);
+
+#------------------------------------------------ passphrase / question
+
+card.base = Image("prompt.png");
+card.w = Math.Int(size * 1.1);
+card.h = Math.Int(card.w * card.base.GetHeight() / card.base.GetWidth());
+card.image = card.base.Scale(card.w, card.h);
+card.x = cx - card.w / 2;
+card.y = cy + size / 2 + 28;
+# The slab is 40 of the art's 58 units high; the rest is drips.
+card.slab = card.h * 40 / 58;
+card.sprite = Sprite(card.image);
+card.sprite.SetPosition(card.x, card.y, 20);
+card.sprite.SetOpacity(0);
+
+label.sprite = Sprite();
+label.sprite.SetPosition(card.x, card.y - 26, 21);
+entry.sprite = Sprite();
+entry.sprite.SetPosition(card.x, card.y, 21);
+
+bead.image = Image("bead.png").Scale(card.slab * 0.3, card.slab * 0.3);
+bead.sprites = [];
+bead.count = 0;
+
+fun show_beads(n)
+{
+    step = bead.image.GetWidth() * 1.25;
+    room = Math.Int((card.w - 40) / step);
+    if (n > room) n = room;
+    left = cx - (n * step) / 2;
+    for (i = 0; i < n || i < bead.count; i++)
+    {
+        if (!bead.sprites[i])
+            bead.sprites[i] = Sprite(bead.image);
+        bead.sprites[i].SetPosition(left + i * step, card.y + card.slab / 2 - bead.image.GetHeight() / 2, 22);
+        if (i < n)
+            bead.sprites[i].SetOpacity(1);
+        else
+            bead.sprites[i].SetOpacity(0);
+    }
+    if (n > bead.count) bead.count = n;
+}
+
+fun show_label(text)
+{
+    label.image = Image.Text(text, 0.80, 0.77, 0.86, 0.85, "Sans 12");
+    label.sprite.SetImage(label.image);
+    label.sprite.SetX(cx - label.image.GetWidth() / 2);
+    label.sprite.SetOpacity(1);
+}
+
+fun display_password_callback(prompt, bullets)
+{
+    card.sprite.SetOpacity(1);
+    entry.sprite.SetOpacity(0);
+    if (prompt == "") prompt = "passphrase";
+    show_label(prompt);
+    show_beads(bullets);
+}
+
+fun display_question_callback(prompt, text)
+{
+    card.sprite.SetOpacity(1);
+    show_label(prompt);
+    show_beads(0);
+    entry.image = Image.Text(text, 0.91, 0.89, 0.94, 1, "Sans 13");
+    entry.sprite.SetImage(entry.image);
+    entry.sprite.SetPosition(cx - entry.image.GetWidth() / 2, card.y + card.slab / 2 - entry.image.GetHeight() / 2, 22);
+    entry.sprite.SetOpacity(1);
+}
+
+fun display_normal_callback()
+{
+    card.sprite.SetOpacity(0);
+    label.sprite.SetOpacity(0);
+    entry.sprite.SetOpacity(0);
+    show_beads(0);
+}
+
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+Plymouth.SetDisplayQuestionFunction(display_question_callback);
+Plymouth.SetDisplayNormalFunction(display_normal_callback);

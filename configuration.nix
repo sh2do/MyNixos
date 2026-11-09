@@ -8,6 +8,7 @@ in
     ./hardware-configuration.nix
     ./modules/desktop.nix
     ./modules/sddm
+    ./modules/boot # Plymouth splash and quiet boot
     inputs.home-manager.nixosModules.default
     inputs.umbriel.nixosModules.default
   ];
