@@ -47,6 +47,8 @@ let
     # The phone link is the niri bar's (modules/shell); both shells poll it.
     cp ${../shell/Phone.qml} $out/Phone.qml
     cp ${../shell/phone.js} $out/phone.js
+    cp ${../shell/Sound.qml} $out/Sound.qml
+    cp ${../shell/sound.js} $out/sound.js
     for f in $out/*.frag $out/*.vert; do
       qsb --qt6 -o "$f.qsb" "$f"
     done

@@ -20,6 +20,10 @@ Scope {
 
     readonly property int timeout: 5000
 
+    Sound {
+        id: sound
+    }
+
     NotificationServer {
         id: server
         keepOnReload: true
@@ -29,6 +33,7 @@ Scope {
         onNotification: n => {
             root.stamps[n.id] = Date.now();
             n.tracked = true;
+            sound.play(n.urgency === NotificationUrgency.Critical ? "critical" : "notify");
             root.forward(n);
         }
     }

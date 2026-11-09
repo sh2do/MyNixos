@@ -116,6 +116,10 @@ PanelWindow {
 
     // Notifications
 
+    Sound {
+        id: sound
+    }
+
     NotificationServer {
         keepOnReload: true
         bodySupported: true
@@ -123,6 +127,7 @@ PanelWindow {
         imageSupported: true
         onNotification: n => {
             n.tracked = true;
+            sound.play(n.urgency === NotificationUrgency.Critical ? "critical" : "notify");
             const id = n.id;
             const life = { closed: false };
             // Sent again on a replacement (replaces_id), which updates the

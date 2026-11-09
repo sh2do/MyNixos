@@ -23,6 +23,12 @@ Scope {
 
     readonly property var sink: Pipewire.defaultAudioSink
 
+    readonly property real born: Date.now()
+
+    Sound {
+        id: sound
+    }
+
     function show(icon, value) {
         root.icon = icon;
         root.value = Math.max(0, Math.min(1, value));
@@ -62,8 +68,12 @@ Scope {
         const first = lastVolume < 0;
         const v = audio.volume;
         const m = audio.muted ? 1 : 0;
-        if (!first && (Math.abs(v - lastVolume) > 0.001 || m !== lastMuted))
+        if (!first && (Math.abs(v - lastVolume) > 0.001 || m !== lastMuted)) {
+            // Not the values settling just after startup.
+            if (!audio.muted && Date.now() - root.born > 3000)
+                sound.play("tick");
             show(audio.muted ? "󰝟" : (v > 0.5 ? "󰕾" : "󰖀"), audio.muted ? 0 : v);
+        }
         lastVolume = v;
         lastMuted = m;
     }

@@ -21,6 +21,8 @@ let
   };
 in
 {
+  imports = [ ./sounds.nix ];
+
   # The top pill's visualiser reads cava's raw output while music plays.
   # zenity: the phone chip's "send a file" picker.
   home.packages = [ pkgs.cava pkgs.zenity phone-alert phone-commands ];
