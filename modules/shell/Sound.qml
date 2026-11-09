@@ -14,6 +14,7 @@ Scope {
 
     readonly property var sink: Pipewire.defaultAudioSink
     property real lastTick: -1e9
+    property real lastDrop: -1e9
 
     PwObjectTracker {
         objects: [root.sink]
@@ -27,12 +28,15 @@ Scope {
             muted: root.sink?.audio?.muted ?? false,
             kind: kind,
             now: now,
-            lastTick: root.lastTick
+            lastTick: root.lastTick,
+            lastDrop: root.lastDrop
         });
         if (!go)
             return;
         if (kind === "tick")
             root.lastTick = now;
+        else if (kind === "notify")
+            root.lastDrop = now;
         Quickshell.execDetached(["rice-sound", Snd.soundFor(kind)]);
     }
 }

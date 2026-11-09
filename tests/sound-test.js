@@ -29,6 +29,12 @@ const tests = {
   test_throttle_only_for_ticks() {
     assert.strictEqual(q({ kind: "notify", now: 1010, lastTick: 1000 }), true);
   },
+  test_drops_coalesce_within_1500ms() {
+    assert.strictEqual(q({ kind: "notify", now: 2000, lastDrop: 1000 }), false);
+    assert.strictEqual(q({ kind: "notify", now: 2500, lastDrop: 1000 }), true);
+    // A critical caw is never held back by a recent drop.
+    assert.strictEqual(q({ kind: "critical", now: 1001, lastDrop: 1000 }), true);
+  },
   test_unknown_kind_is_silent() { assert.strictEqual(q({ kind: "boom" }), false); },
   test_sound_names() {
     assert.strictEqual(S.soundFor("notify"), "drop");
