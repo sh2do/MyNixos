@@ -33,6 +33,9 @@
 // RICE_FAKE_BEAT=1 (or the koi's RICE_KOI_FAKE_BEAT=1) fakes a bass kick
 // every 600 ms as though music played, to see it without a player.
 //
+// In October a carved pumpkin and a candle stand on the rim ahead of it
+// (SeasonTrinkets.qml, Season.qml; RICE_SEASON=october to see it).
+//
 // RICE_RAVEN_DEBUG=1: a ruffle and a preen every 20 s, and night for 30 s of
 // every 2 minutes.
 import QtQuick
@@ -182,6 +185,20 @@ Item {
             life.tick(Mood.clockStep((now - last) / 1000, hz));
             last = now;
         }
+    }
+
+    // October (Season.qml): a pumpkin and a candle on the rim ahead of it,
+    // past the beak (behind the tail the rim already curves down), its
+    // little hoard; it draws over them when it hops that way. The flame
+    // rides the raven's clock.
+    readonly property var season: Season.touch(false)
+    SeasonTrinkets {
+        visible: root.season.trinkets
+        x: root.homeX - 66
+        y: root.perchY
+        clock: visible ? life.t : 0
+        flicker: root.season.flicker
+        tone: Theme.surface
     }
 
     RavenBody {

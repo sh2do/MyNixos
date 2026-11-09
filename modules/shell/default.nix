@@ -53,6 +53,12 @@ in
     cp ${../umbriel/shell/RavenBody.qml} $out/RavenBody.qml
     cp ${../umbriel/shell/RavenLife.qml} $out/RavenLife.qml
     cp ${../umbriel/shell/raven-mood.js} $out/raven-mood.js
+    # The season clock (season.js) and its touches: the pond's sprites and
+    # the raven's October trinkets.
+    cp ${../umbriel/shell/season.js} $out/season.js
+    cp ${../umbriel/shell/Season.qml} $out/Season.qml
+    cp ${../umbriel/shell/SeasonField.qml} $out/SeasonField.qml
+    cp ${../umbriel/shell/SeasonTrinkets.qml} $out/SeasonTrinkets.qml
     # The emoji panel's list: Unicode's own emoji-test.txt.
     cp ${pkgs.unicode-emoji}/share/unicode/emoji/emoji-test.txt $out/emoji-test.txt
   '';

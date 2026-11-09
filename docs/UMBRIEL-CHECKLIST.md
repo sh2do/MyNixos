@@ -46,6 +46,7 @@ These checks need a real Umbriel login, which can't be tested from inside a niri
 - [ ] Rest the pointer near the raven: after 2 s it watches, then hops and pecks, and settles after about 5 s. Does the timing feel right?
 - [ ] The preen (head turned under the wing, nibbling for about 2 s) looks right. To see it every 20 s: `qs kill -c umbriel; UMBRIEL_RAVEN_DEBUG=1 qs -c umbriel`.
 - [ ] At night (21:00-06:00) it sleeps with its head tucked in. A notice wakes it, it caws and catches, then sleeps again after about 20 s. With the debug env var it is night for 30 s of every 2 minutes.
+- [ ] Seasons: `qs kill -c umbriel; RICE_SEASON=october qs -c umbriel` puts a small carved pumpkin and a flickering candle at the far end of the hoard, clear of the trinkets and the tail. `RICE_SEASON=spring` sends a few petals down the right of the desktop, behind windows, settling near the raven; `december` sparse snow that melts; `summer` with `UMBRIEL_NIGHT=1` a few blinking fireflies. `RICE_WEATHER=rain` or focus mode clears them, and maximised windows over the right half stop its clock (CPU back to the idle figure). Is it gentle enough? Then restart it plainly.
 - [ ] Locking (Super+Alt+L) and screen-off stop both: the shell's CPU drops. Fullscreen hides the raven, and it redraws afterwards.
 - [ ] CPU in the real session: with windows maximised and idle for 60 s, the whole shell stays under about 4% (nested measurement was 3.3-4%). Also watch the compositor while a trinket falls and while the taller island window is up.
 

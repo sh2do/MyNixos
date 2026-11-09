@@ -28,6 +28,9 @@
 // trinket's fall. UMBRIEL_SERPENT_FPS caps it. It stops while hidden
 // (fullscreen), locked or with the screen off.
 //
+// In October a carved pumpkin and a candle stand at the hoard's far end
+// (SeasonTrinkets.qml, Season.qml; RICE_SEASON=october to see it).
+//
 // UMBRIEL_RAVEN_DEBUG=1: a ruffle and a preen every 20 s, and night for
 // 30 s of every 2 minutes.
 import QtQuick
@@ -504,6 +507,18 @@ PanelWindow {
             ring: root.slotRing[modelData.slot]
             opacity: root.fades[modelData.slot]
         }
+    }
+
+    // October (Season.qml): a pumpkin and a candle at the hoard's far end,
+    // past its three slots; the flame rides the raven's own clock.
+    readonly property var season: U.Season.touch(false)
+    SeasonTrinkets {
+        visible: root.season.trinkets
+        x: Math.min(root.slotX(2) + 12, root.width - width - 4)
+        y: Math.round(root.perchY)
+        clock: visible ? life.t : 0
+        flicker: root.season.flicker
+        tone: U.Palette.slate
     }
 
     Trinket {

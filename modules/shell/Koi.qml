@@ -9,6 +9,11 @@
 // rain (Weather) drops ring the water, more the harder it rains, and fog
 // lays a soft veil over it; on a clear day the pond is as it always was.
 // `calm` (focus mode) gives them the night's drift and stills the music.
+// The season (Season.qml) touches it lightly: in spring a few petals drift
+// down and settle on the water, in December sparse snow falls into it and
+// melts in a ring, on summer nights fireflies hover over it, and in October
+// a pumpkin and a candle ride the lily pad. Rain and focus mode clear the
+// sprites; they ride this same tick, and outside a season there are none.
 // Motion comes from koi-motion.js; colours from the wallpaper (Theme).
 import QtQuick
 import QtQuick.Shapes
@@ -336,6 +341,8 @@ Item {
                 }
             }
             root.poses = root.fish.map(Koi.pose);
+            if (season.active)
+                season.step(dt);
             // Rain dimpling the surface now and then; real rain (or snow) at
             // its own rate, small rings all over the water.
             if (root.t > root.nextDrop) {
@@ -473,6 +480,28 @@ Item {
             x: pad.d * 0.3 - 0.8; y: pad.d * 0.62 - 0.8
             color: "#e2a64a"
         }
+        // October: a little pumpkin and a candle afloat on the pad.
+        SeasonTrinkets {
+            visible: root.touch.trinkets
+            k: 0.62
+            x: pad.d / 2 - width / 2
+            y: pad.d / 2 + 3
+            clock: visible ? root.t / 1000 : 0
+            flicker: root.touch.flicker
+            tone: Theme.surface
+        }
+    }
+
+    // The season's sprites, over the koi and under the glass.
+    readonly property var touch: Season.touch(Theme.night > 0.5)
+    SeasonField {
+        id: season
+        z: 3.6
+        anchors.fill: parent
+        touch: root.touch
+        box: ({ x: 8, y: 0, w: root.width - 16, h: root.height, k: 1, drift: 1.5, land: [0.3, 0.85] })
+        petal: Qt.tint("#f2c3d1", Qt.alpha(Theme.surface, 0.12))
+        onSplash: (x, y) => root.ripple(x, y, 6 + Math.random() * 3)
     }
 
     // Bubbles: up from a koi's mouth, a little drift, then they pop.

@@ -2,6 +2,7 @@
 // Later tasks add the launcher here.
 import QtQuick
 import Quickshell
+import "." as U
 
 ShellRoot {
     id: root
@@ -26,6 +27,15 @@ ShellRoot {
     Island {
         id: island
         screen: root.primary
+    }
+
+    // The season's sprites over the desktop (SeasonLayer.qml), only while
+    // there are any: outside a season there is no window and no clock.
+    LazyLoader {
+        active: U.Season.touch(U.Palette.night > 0.5).count > 0
+        SeasonLayer {
+            screen: root.primary
+        }
     }
 
     Raven {
