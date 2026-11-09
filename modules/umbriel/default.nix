@@ -47,6 +47,9 @@ let
     # The phone link is the niri bar's (modules/shell); both shells poll it.
     cp ${../shell/Phone.qml} $out/Phone.qml
     cp ${../shell/phone.js} $out/phone.js
+    # So is the weather (modules/weather), which both scenes follow.
+    cp ${../shell/Weather.qml} $out/Weather.qml
+    cp ${../shell/weather.js} $out/weather.js
     cp ${../shell/Sound.qml} $out/Sound.qml
     cp ${../shell/sound.js} $out/sound.js
     for f in $out/*.frag $out/*.vert; do

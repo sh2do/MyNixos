@@ -1,8 +1,10 @@
 // The wallpaper: a still image cover-cropped to the screen, on the Background
 // layer. Two are live (walls.json `live`): "rain" adds RainFrame over the
 // picture, "storm" swaps the still for StormSky. Their one clock ticks at
-// 30 Hz (15 for the storm) and stops while `paused` (covered, locked or
-// screen off), so a hidden wallpaper costs no frames.
+// 30 Hz while rain falls on them, 15 otherwise (the mist, the storm's drift),
+// and stops while `paused` (covered, locked or screen off), so a hidden
+// wallpaper costs no frames. The real weather (Weather.qml) sets how hard it
+// rains on both: none on a clear day, a slanting downpour in a storm.
 //
 // The current id is umbriel-wall's state file; the picker writes it and this
 // reloads when it changes. The eyes (Eyes.qml) read `wall` and `paused`.
@@ -49,6 +51,11 @@ PanelWindow {
     // Seconds, wrapped hourly (a multiple of every period used) to keep the
     // shader's floats precise.
     property real clock: 0
+    // The rain's own clock: seconds of falling at the usual speed, so easing
+    // the weather's `fall` never jerks the drops.
+    property real fallen: 0
+    readonly property var scene: Weather.scene
+    readonly property bool raining: live === "rain" ? scene.rain > 0.02 : live === "storm" && scene.skyRain > 0.02
 
     anchors {
         top: true
@@ -107,12 +114,17 @@ PanelWindow {
         onTriggered: lockFile.reload()
     }
 
-    // Rain needs 30 Hz to read as falling; the storm's slow drift is smooth at 15.
+    // Rain needs 30 Hz to read as falling; the mist and the storm's slow
+    // drift are smooth at 15.
     Timer {
-        interval: bg.live === "storm" ? 66 : 33
+        interval: bg.raining ? 33 : 66
         repeat: true
         running: bg.live !== "" && !bg.paused
-        onTriggered: bg.clock = (bg.clock + interval / 1000) % 3600
+        onTriggered: {
+            bg.clock = (bg.clock + interval / 1000) % 3600;
+            if (bg.raining)
+                bg.fallen = (bg.fallen + interval / 1000 * bg.scene.fall) % 3600;
+        }
     }
 
     Item {
@@ -137,6 +149,11 @@ PanelWindow {
                 rect: bg.wall.rainRect
                 glow: bg.wall.glow
                 time: bg.clock
+                fallen: bg.fallen
+                amount: bg.scene.rain
+                slant: bg.scene.slant
+                fall: bg.scene.fall
+                mist: bg.scene.mist
             }
         }
 
@@ -148,6 +165,11 @@ PanelWindow {
                 flash: bg.wall.flash
                 time: bg.clock
                 paused: bg.paused
+                fallen: bg.fallen
+                rain: bg.scene.skyRain
+                slant: bg.scene.slant
+                fall: bg.scene.fall
+                flashRate: bg.scene.flash
             }
         }
     }

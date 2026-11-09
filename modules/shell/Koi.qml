@@ -5,13 +5,16 @@
 // While music plays they gather in the middle, under the top pill, flick
 // their tails to the bass and come up when the track changes. At night
 // (Theme.night) they slow to a drift and gather under the lily pad, wander
-// less and come up less often; music still stirs them a little.
+// less and come up less often; music still stirs them a little. In real
+// rain (Weather) drops ring the water, more the harder it rains, and fog
+// lays a soft veil over it; on a clear day the pond is as it always was.
 // Motion comes from koi-motion.js; colours from the wallpaper (Theme).
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
 import "koi-motion.js" as Koi
 import "beat.js" as Beat
+import "weather.js" as W
 
 Item {
     id: root
@@ -330,10 +333,17 @@ Item {
                 }
             }
             root.poses = root.fish.map(Koi.pose);
-            // Rain dimpling the surface now and then.
+            // Rain dimpling the surface now and then; real rain (or snow) at
+            // its own rate, small rings all over the water.
             if (root.t > root.nextDrop) {
-                root.ripple(root.pool.x + Math.random() * root.pool.w, 4 + Math.random() * (root.height - 8), 5 + Math.random() * 5);
-                root.nextDrop = root.t + 700 + Math.random() * 2600;
+                const gap = W.dropGap(Weather.scene.drops, Math.random);
+                if (gap === null) {
+                    root.ripple(root.pool.x + Math.random() * root.pool.w, 4 + Math.random() * (root.height - 8), 5 + Math.random() * 5);
+                    root.nextDrop = root.t + 700 + Math.random() * 2600;
+                } else {
+                    root.ripple(4 + Math.random() * (root.width - 8), 3 + Math.random() * (root.height - 6), 4 + Math.random() * 5);
+                    root.nextDrop = root.t + gap;
+                }
             }
         }
     }
@@ -351,8 +361,9 @@ Item {
             width: root.width + period
             height: root.height
             x: -((root.t * modelData.dx % period + period) % period)
-            // A little brighter the louder the music.
-            opacity: modelData.op * (1 + 0.9 * root.loud)
+            // A little brighter the louder the music, dimmer under fog or
+            // heavy rain.
+            opacity: modelData.op * (1 + 0.9 * root.loud) * (1 - 0.6 * Weather.scene.fog) * (1 - Math.min(0.5, Weather.scene.drops / 28))
             onWidthChanged: requestPaint()
             Connections {
                 target: Theme
@@ -511,9 +522,23 @@ Item {
         }
     }
 
+    // Fog: a pale veil over the water, thicker at the top. Still; it only
+    // changes as the weather eases.
+    Rectangle {
+        z: 3.5
+        anchors.fill: parent
+        radius: Theme.radius
+        visible: Weather.scene.fog > 0.005
+        gradient: Gradient {
+            GradientStop { position: 0; color: Qt.alpha(Theme.text, 0.26 * Weather.scene.fog) }
+            GradientStop { position: 1; color: Qt.alpha(Theme.text, 0.12 * Weather.scene.fog) }
+        }
+    }
+
     Repeater {
         id: ripples
-        model: 12
+        // Enough for a downpour (about 14 drops a second, 1.1 s each).
+        model: 20
 
         // Driven by the koi's clock rather than an animation, so it renders
         // at the tick rate (48 Hz), not every display frame.

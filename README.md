@@ -69,7 +69,7 @@ A second session next to niri, on the [Umbriel](https://github.com/noctalia-dev/
 | `Super+Alt+L` | lock (the shared `rice-lock`) |
 | `Mod+Shift+E` | quit the session |
 
-- **Wallpapers:** `umbriel-wall` remembers which of `~/.local/share/wallpapers/umbriel` the shell shows. There is no rotation. `umbriel-wall list` prints the ids, `umbriel-wall current` the one in use and `umbriel-wall set ID` switches (the picker calls this). `xe9223` (hydrangea in the rain) and `jeyo1m` (storm) are live.
+- **Wallpapers:** `umbriel-wall` remembers which of `~/.local/share/wallpapers/umbriel` the shell shows. There is no rotation. `umbriel-wall list` prints the ids, `umbriel-wall current` the one in use and `umbriel-wall set ID` switches (the picker calls this). `xe9223` (hydrangea in the rain) and `jeyo1m` (storm) are live, and follow the real weather (`rice-weather`, see docs/RICE.md): the hydrangea's rain is light in drizzle, heavier and slanting in a storm, and only mist on a clear day; the ruins get rain over the sky when it rains, and more lightning in a storm. `RICE_WEATHER=storm` forces it.
 - **Check the config:** `umbriel config validate`.
 
 ## Phone link

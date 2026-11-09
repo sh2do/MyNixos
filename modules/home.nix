@@ -9,5 +9,6 @@
     ./lock
     ./look
     ./umbriel
+    ./weather
   ];
 }

@@ -7,6 +7,7 @@ These checks need a real Umbriel login, which can't be tested from inside a niri
 ## Logging in
 - [ ] At SDDM, Left/Right (or a click on the session name under the password field) picks **Umbriel**, and logging in starts it.
 - [ ] The hydrangea wallpaper shows rain only inside the framed picture, and the mist slowly brightens and dims.
+- [ ] The live wallpapers follow the weather (`cat ~/.cache/rice/weather.json`): no rain on a clear day, only the mist. With `RICE_WEATHER=storm qs -c umbriel` the hydrangea's rain is heavy and slanted and the ruins get rain and frequent lightning; `RICE_WEATHER=drizzle` is light.
 - [ ] Chain links sit top-left, the island top-centre, and faint status bottom-right.
 - [ ] `pgrep -f '[q]s -c umbriel'` finds the shell; `pgrep -f '[q]s -c rice'` finds nothing; `systemctl --user is-active awww` says `inactive`.
 
