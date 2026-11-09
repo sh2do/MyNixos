@@ -15,7 +15,9 @@ binds {
 
     // Rice: launcher, menus and wallpapers (see modules/rofi and modules/theme)
     Mod+Space hotkey-overlay-title="Launcher" { spawn "rice-menu" "apps"; }
-    Mod+Alt+V hotkey-overlay-title="Clipboard history" { spawn "rice-menu" "clipboard"; }
+    // The pond-glass clipboard and emoji panel (modules/shell/ClipPicker.qml); rofi if the shell is down.
+    Mod+Alt+V hotkey-overlay-title="Clipboard history" { spawn-sh "qs -c rice ipc call clip clipboard || rice-menu clipboard"; }
+    Mod+Alt+Period hotkey-overlay-title="Emoji" { spawn "qs" "-c" "rice" "ipc" "call" "clip" "emoji"; }
     Mod+Shift+Q hotkey-overlay-title="Power menu" { spawn "rice-menu" "power"; }
     Mod+Alt+W hotkey-overlay-title="Next wallpaper" { spawn "rice-wall" "next"; }
     Mod+Ctrl+W hotkey-overlay-title="Pick a wallpaper" { spawn "qs" "-c" "rice" "ipc" "call" "picker" "toggle"; }

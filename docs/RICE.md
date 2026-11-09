@@ -69,7 +69,8 @@ Use `lib.fakeHash` first; the build error prints the real hash. `rotation` image
 | Key | Action |
 | --- | --- |
 | `Mod+Space` | App launcher |
-| `Mod+Alt+V` | Clipboard history |
+| `Mod+Alt+V` | Clipboard history on a slab of pond glass, like the wallpaper picker (`ClipPicker.qml`, `rice-clip`): type to search, image entries as thumbnails; Enter pastes, Shift+Enter only copies, Delete removes the entry, Tab switches to emoji. Falls back to `rice-menu clipboard` if the shell is down; Umbriel keeps the rofi menu |
+| `Mod+Alt+Period` | The same panel's emoji tab: a searchable grid of Unicode's own list (nixpkgs `unicode-emoji`), with a row of group jumps; Enter copies the emoji and types it with wtype. Mod+Period stays niri's expel-from-column. Loaded only while open, nothing animates once it has slid in |
 | `Mod+Shift+Q` | Power menu |
 | `Mod+Alt+W` | Next wallpaper |
 | `Mod+Alt+F` | Focus mode on / off (`rice-focus`; Umbriel too) |
@@ -248,7 +249,7 @@ modules/
   theme/             rice-wall, matugen config and templates (incl. glass colours and the menu drips), wallpaper list, 45-min timer
   terminal/          foot, fastfetch, first-terminal fish hook
   rofi/              glass theme + rice-menu
-  shell/             Quickshell: TopPill (+ media.js), BottomBar, Koi (+ koi-motion.js), Raven (art and moods from umbriel/shell), Osd, Notifications (+ notify-group.js), wallpaper picker
+  shell/             Quickshell: TopPill (+ media.js), BottomBar, Koi (+ koi-motion.js), Raven (art and moods from umbriel/shell), Osd, Notifications (+ notify-group.js), wallpaper picker, clipboard and emoji panel (ClipPicker + clip.js, emoji.js, rice-clip)
   lock/              Quickshell lock + rice-lock + swayidle
   sddm/              login theme (Qt6, video)
   look/              polkit agent, cursor, icon and GTK themes (GTK colours come from matugen)

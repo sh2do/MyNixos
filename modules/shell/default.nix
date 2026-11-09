@@ -26,13 +26,21 @@ let
     runtimeInputs = with pkgs; [ coreutils gnused jq procps ];
     text = builtins.readFile ./phone-commands.sh;
   };
+
+  # The clipboard and emoji panel's hands (ClipPicker.qml): cliphist, thumbnails,
+  # pasting with wtype.
+  rice-clip = pkgs.writeShellApplication {
+    name = "rice-clip";
+    runtimeInputs = with pkgs; [ cliphist wl-clipboard wtype jq gnused coreutils ];
+    text = builtins.readFile ./rice-clip.sh;
+  };
 in
 {
   imports = [ ./sounds.nix ];
 
   # The top pill's visualiser reads cava's raw output while music plays.
   # zenity: the phone chip's "send a file" picker.
-  home.packages = [ pkgs.cava pkgs.zenity phone-alert phone-commands rice-focus ];
+  home.packages = [ pkgs.cava pkgs.zenity phone-alert phone-commands rice-focus rice-clip ];
 
   # The raven (RICE_MASCOT=raven) is Umbriel's: its art, life and moods are
   # copied in from there, so both shells draw it from one source.
@@ -45,6 +53,8 @@ in
     cp ${../umbriel/shell/RavenBody.qml} $out/RavenBody.qml
     cp ${../umbriel/shell/RavenLife.qml} $out/RavenLife.qml
     cp ${../umbriel/shell/raven-mood.js} $out/raven-mood.js
+    # The emoji panel's list: Unicode's own emoji-test.txt.
+    cp ${pkgs.unicode-emoji}/share/unicode/emoji/emoji-test.txt $out/emoji-test.txt
   '';
 
   # Keep the phone's buttons in step with the list in phone-commands.sh.
