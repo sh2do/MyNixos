@@ -6,10 +6,50 @@
 // Times are ms unless named otherwise; clockStep works in seconds, like the
 // clocks that call it.
 
-// After dark (21:00-06:00, local time) it sleeps.
+// After dark (21:00-06:00, local time) it sleeps. This is the one night clock
+// for both shells: the colours (Theme.qml, Palette.qml), the koi and the
+// hanging viper read it too (tests/night-test.js).
+var forcedNight = null;
 function isNight(date) {
+    if (forcedNight !== null)
+        return forcedNight;
     var h = date.getHours();
     return h >= 21 || h < 6;
+}
+
+// The debug override, for everything in the shell that imports this
+// library: "1" (RICE_NIGHT=1, UMBRIEL_NIGHT=1) is night all day, "0" day all
+// night, anything else the clock.
+function forceNight(env) {
+    forcedNight = env === "1" ? true : env === "0" ? false : null;
+}
+
+// The night factor: 0 by day, 1 by night, moved NIGHT_FADE ms end to end in
+// steps of `dt` ms by the shells' slow timers, never per frame.
+var NIGHT_FADE = 120000;
+function nightFade(f, night, dt) {
+    var step = Math.max(dt, 0) / NIGHT_FADE;
+    return night ? Math.min(1, f + step) : Math.max(0, f - step);
+}
+
+// The fade as the eye sees it: it starts and settles gently.
+function nightEase(f) {
+    var t = Math.min(Math.max(f, 0), 1);
+    return t * t * (3 - 2 * t);
+}
+
+// A colour {r, g, b, a} (0..1; a QML color will do) at night `f`: about 12%
+// darker, mixed a little toward `tone` (the dim surface) and a touch cooler.
+// `k` scales it: 1 for surfaces and accents, TEXT_DUSK for text, so text
+// dims with its surface and keeps its contrast.
+var TEXT_DUSK = 0.2;
+function dusk(c, f, tone, k) {
+    var s = Math.min(Math.max(f, 0), 1) * (k === undefined ? 1 : k);
+    var dim = Math.max(0, 1 - 0.1 * s), mix = Math.min(0.04 * s, 1);
+    function ch(v, t, cool) {
+        return Math.min(Math.max((v + (t - v) * mix) * dim * (1 + cool * s), 0), 1);
+    }
+    return { r: ch(c.r, tone.r, -0.03), g: ch(c.g, tone.g, 0), b: ch(c.b, tone.b, 0.04), a: c.a };
 }
 
 // How long each idle habit waits between turns, [shortest, longest].

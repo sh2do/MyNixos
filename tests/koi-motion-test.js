@@ -189,6 +189,65 @@ const tests = {
     for (let i = 0; i < 2000; i++) Koi.steer(k, dt, 100 + 30 * Math.cos(i / 20), 19 + 8 * Math.sin(i / 20), 25);
     assert.ok(k.a > -Math.PI - 1e-9 && k.a <= Math.PI + 1e-9, `heading ${k.a}`);
   },
+
+  test_night_by_day_is_the_day_pond() {
+    const quiet = Koi.nightMood(0, false), music = Koi.nightMood(0, true);
+    assert.deepStrictEqual(
+      { speed: quiet.speed, rest: quiet.rest, spread: quiet.spread, reach: quiet.reach, kiss: quiet.kiss, lull: quiet.lull },
+      { speed: 1, rest: 0.3, spread: 1, reach: 300, kiss: 1, lull: 1 });
+    assert.strictEqual(music.speed, 1.35, "livelier to the music");
+    assert.strictEqual(music.rest, 0.1);
+    assert.strictEqual(music.spread, 0.3);
+    assert.strictEqual(music.toPad, 0, "music gathers them in the middle by day");
+  },
+
+  test_night_slows_them_and_they_wander_less_and_rest_more() {
+    const day = Koi.nightMood(0, false), night = Koi.nightMood(1, false);
+    assert.ok(night.speed <= day.speed * 0.5, `speed ${night.speed}`);
+    assert.ok(night.rest > day.rest, `rest chance ${night.rest}`);
+    assert.ok(night.lull > day.lull, `rests last ${night.lull}x`);
+    assert.ok(night.reach < day.reach * 0.5, `reach ${night.reach}`);
+    assert.ok(night.kiss >= 2, `surface rises ${night.kiss}x rarer`);
+    assert.ok(night.spread <= 0.3, `gathered ${night.spread}`);
+    assert.strictEqual(night.toPad, 1, "under the lily pad");
+  },
+
+  test_music_still_stirs_them_a_little_at_night() {
+    const still = Koi.nightMood(1, false), music = Koi.nightMood(1, true), day = Koi.nightMood(0, true);
+    assert.ok(music.speed > still.speed, `${music.speed} vs ${still.speed}`);
+    assert.ok(music.speed < day.speed, "but not to the day's pace");
+    assert.ok(music.spread > still.spread, "a little looser");
+    assert.ok(music.toPad > 0.5, "still near the pad");
+  },
+
+  test_night_mood_eases_between_day_and_night() {
+    const a = Koi.nightMood(0, false), m = Koi.nightMood(0.5, false), b = Koi.nightMood(1, false);
+    for (const k of ["speed", "rest", "reach", "kiss", "spread", "lull"])
+      assert.ok((m[k] - a[k]) * (b[k] - m[k]) >= 0 && m[k] !== a[k], `${k}: ${a[k]} ${m[k]} ${b[k]}`);
+  },
+
+  test_cruise_keeps_within_its_reach() {
+    const rand = rng(3);
+    for (let i = 0; i < 400; i++) {
+      const k = Koi.create(30, pool.x + 40 + rand() * (pool.w - 80), 19, rand() < 0.5 ? 0 : Math.PI);
+      const t = Koi.cruise(k, rand, pool, 110);
+      assert.ok(Math.abs(t.x - k.x) <= 110 + 1e-9, `${Math.abs(t.x - k.x)}`);
+    }
+  },
+
+  test_koi_at_night_gather_under_the_pad() {
+    const pad = pool.x + pool.w * 0.62, rand = rng(11), mood = Koi.nightMood(1, false);
+    const k = Koi.create(30, pool.x + 10, 19, 0);
+    const next = () => Koi.gather(Koi.cruise(k, rand, pool, mood.reach), pad, mood.spread);
+    let target = next(), far = 0;
+    for (let i = 0; i < 12000; i++) {
+      if (Math.hypot(k.x - target.x, k.y - target.y) < 8) target = next();
+      Koi.steer(k, dt, target.x, target.y, 13 * mood.speed);
+      Koi.keepIn(k, pool);
+      if (i > 6000 && Math.abs(k.x - pad) > 90) far++;
+    }
+    assert.ok(far < 300, `${far} ticks far from the pad`);
+  },
 };
 
 let failed = 0;

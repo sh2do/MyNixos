@@ -95,8 +95,9 @@ function wander(rand, pool) {
 
 // The next place to swim to: usually further on the way it is heading (the
 // pool is a thin strip, so a target behind means a tight U-turn), sometimes
-// back the other way, and always back when a wall is close ahead.
-function cruise(k, rand, pool) {
+// back the other way, and always back when a wall is close ahead. `reach`
+// (px, 300 if left out) is the furthest it goes in one leg.
+function cruise(k, rand, pool, reach) {
     var dir = Math.cos(k.a) >= 0 ? 1 : -1;
     if (rand() < 0.15)
         dir = -dir;
@@ -104,7 +105,7 @@ function cruise(k, rand, pool) {
     if ((dir > 0 ? hi - k.x : k.x - lo) < 60)
         dir = -dir;
     var room = dir > 0 ? hi - k.x : k.x - lo;
-    var d = 60 + rand() * Math.max(0, Math.min(room, 300) - 60);
+    var d = 60 + rand() * Math.max(0, Math.min(room, reach === undefined ? 300 : reach) - 60);
     return { x: k.x + dir * d, y: pool.y + rand() * pool.h };
 }
 
@@ -129,4 +130,25 @@ function flee(k, px, py, pool) {
 // distance from cx scaled by `spread` (1 leaves it, 0 puts it on cx).
 function gather(pt, cx, spread) {
     return { x: cx + (pt.x - cx) * spread, y: pt.y };
+}
+
+// How the pond swims at night `f` (0 day .. 1 night, Theme.night), with or
+// without music: a multiplier on each koi's speed, the chance it rests when
+// it picks a new place, how much longer its rests last (`lull`), how far one
+// leg of cruising goes, how much rarer its surface rises are (`kiss`), and
+// where it gathers: `spread` as in gather(), toward the middle (`toPad` 0) or
+// the lily pad (1). By day this is the day pond; by night they drift slowly
+// under the pad, and music still stirs them a little.
+function nightMood(f, musical) {
+    var n = Math.min(Math.max(+f || 0, 0), 1);
+    function mix(day, night) { return day + (night - day) * n; }
+    return {
+        speed: musical ? mix(1.35, 0.7) : mix(1, 0.45),
+        rest: musical ? mix(0.1, 0.4) : mix(0.3, 0.55),
+        lull: mix(1, 1.8),
+        reach: mix(300, 110),
+        kiss: mix(1, 2.5),
+        spread: musical ? mix(0.3, 0.4) : mix(1, 0.25),
+        toPad: musical ? n : 1
+    };
 }

@@ -3,7 +3,9 @@
 // come to look at a pointer held still, dart off from a fast one, rush to a
 // click on the water, and startle when a workspace or the volume changes.
 // While music plays they gather in the middle, under the top pill, flick
-// their tails to the bass and come up when the track changes.
+// their tails to the bass and come up when the track changes. At night
+// (Theme.night) they slow to a drift and gather under the lily pad, wander
+// less and come up less often; music still stirs them a little.
 // Motion comes from koi-motion.js; colours from the wallpaper (Theme).
 import QtQuick
 import QtQuick.Shapes
@@ -96,6 +98,14 @@ Item {
         m /= lv.length;
         const next = loud + (m - loud) * 0.08;
         if (Math.abs(next - loud) > 0.005) loud = next;
+    }
+
+    // How the pond swims now: the day's, the night's, or between in the fade.
+    readonly property var mood: Koi.nightMood(Theme.night, musical)
+    // The lily pad's middle, where they gather at night (pad.x, in a function
+    // so nothing rebinds every tick).
+    function padX() {
+        return width * (0.62 + 0.05 * Math.sin(t / 23000));
     }
 
     // Where heads may go: the middle band, clear of the rounded ends.
@@ -260,20 +270,20 @@ Item {
             return Math.hypot(k.x - k.target.x, k.y - k.target.y) < 6 ? 2 : 22;
         // Wandering, with rests.
         if (k.mode !== "wander" || Math.hypot(k.x - k.target.x, k.y - k.target.y) < 8 || t > k.until) {
-            if (k.mode === "wander" && Math.random() < (musical ? 0.1 : 0.3)) {
-                rest(k, 1500 + Math.random() * 2500);
+            if (k.mode === "wander" && Math.random() < mood.rest) {
+                rest(k, (1500 + Math.random() * 2500) * mood.lull);
                 return 2;
             }
             k.mode = "wander";
-            k.target = Koi.cruise(k, Math.random, pool);
-            if (musical)
-                k.target = Koi.gather(k.target, pool.x + pool.w / 2, 0.3);
+            // Toward the middle to music, under the pad at night.
+            const mid = pool.x + pool.w / 2;
+            k.target = Koi.gather(Koi.cruise(k, Math.random, pool, mood.reach), mid + (padX() - mid) * mood.toPad, mood.spread);
             k.until = t + 12000;
         }
         if (t > k.nextKiss)
             surface(k);
-        // Livelier to the music.
-        return musical ? k.kind.speed * 1.35 : k.kind.speed;
+        // Livelier to the music, drowsy at night.
+        return k.kind.speed * mood.speed;
     }
 
     // Up to the surface for a moment: a ring and a couple of bubbles.
@@ -281,7 +291,7 @@ Item {
         ripple(k.x + Math.cos(k.a) * 4, k.y + Math.sin(k.a) * 4, 12);
         bubble(k.x + Math.cos(k.a) * 5, k.y + Math.sin(k.a) * 5);
         bubble(k.x + Math.cos(k.a) * 3 + 2, k.y + Math.sin(k.a) * 3 - 1);
-        k.nextKiss = t + 12000 + Math.random() * 20000;
+        k.nextKiss = t + (12000 + Math.random() * 20000) * mood.kiss;
     }
 
     Timer {
@@ -346,7 +356,8 @@ Item {
             onWidthChanged: requestPaint()
             Connections {
                 target: Theme
-                function onColoursChanged() { caustic.requestPaint(); }
+                // The wallpaper's colours, and night's steps as they fade.
+                function onTextChanged() { caustic.requestPaint(); }
             }
             onPaint: {
                 const ctx = getContext("2d");
@@ -384,7 +395,7 @@ Item {
         readonly property real d: 13
         width: d
         height: d
-        x: root.width * (0.62 + 0.05 * Math.sin(root.t / 23000)) - d / 2
+        x: root.padX() - d / 2
         y: root.height / 2 - d / 2 + 4 * Math.sin(root.t / 17000)
         rotation: 25 * Math.sin(root.t / 31000)
 
