@@ -7,10 +7,28 @@ let
     pname = "rice-sddm-theme";
     version = "1.0";
     src = ./theme;
+    nativeBuildInputs = [ pkgs.librsvg ];
+    # The card's water (rofi's drips template, and the drops hanging under the
+    # card) in theme.conf's fixed colours: the greeter runs before login, so
+    # matugen's colours aren't there.
     installPhase = ''
-      mkdir -p $out/share/sddm/themes/rice
-      cp -r ./* $out/share/sddm/themes/rice/
-      cp ${./login.mp4} $out/share/sddm/themes/rice/login.mp4
+      dir=$out/share/sddm/themes/rice
+      mkdir -p $dir
+      cp Main.qml metadata.desktop theme.conf $dir/
+      cp ${./login.mp4} $dir/login.mp4
+      conf() { sed -n "s/^$1=//p" theme.conf; }
+      fill() {
+        sed -e "s/{{colors.primary.default.hex}}/$(conf primary)/g" \
+            -e "s/{{colors.surface.default.hex}}/$(conf surface)/g" \
+            -e "s/{{colors.on_surface.default.hex}}/$(conf text)/g" "$1"
+      }
+      fill ${../theme/templates/drips.svg} > drips.svg
+      fill hang.svg > hang-filled.svg
+      if grep -q '{{' drips.svg hang-filled.svg; then
+        echo "unfilled colour placeholder in the drips" >&2; exit 1
+      fi
+      rsvg-convert -z 2 drips.svg -o $dir/drips.png
+      rsvg-convert -z 2 hang-filled.svg -o $dir/hang.png
     '';
   };
 in

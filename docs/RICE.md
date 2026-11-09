@@ -172,7 +172,7 @@ Checks after switching and pairing:
 
 **If the lock ever breaks:** niri keeps the session locked even if the locker dies. Switch to a TTY (`Ctrl+Alt+F3`), log in and run `loginctl unlock-sessions` as root.
 
-**If the login screen breaks:** from a TTY, `sudo nixos-rebuild switch --rollback`.
+**If the login screen breaks:** from a TTY, `sudo nixos-rebuild switch --rollback`, or reboot and pick the previous generation in the systemd-boot menu.
 
 ## Terminal
 
@@ -194,6 +194,16 @@ Checks for the niri side, once, after `nh os switch` restarts `qs -c rice` and l
 - [ ] `RICE_MASCOT=raven` in the session environment (then log in again) gives the raven on the rim instead of the koi: near-black with dark slate edges, no caw at login.
 - [ ] `niri validate -c ~/.config/niri/config.kdl` says the config is valid.
 
+Boot splash and login (`modules/boot`, `modules/sddm`), on the next reboot:
+
+- [ ] The systemd-boot menu still shows for 5 s and lists the older generations.
+- [ ] The boot is quiet: no scrolling messages, then the **rice-pond** splash: a dark pond, two koi circling slowly, the raven perched on the rim at the upper right. Esc shows the boot messages; Esc again hides them.
+- [ ] Shutdown and reboot show the same splash.
+- [ ] The login: the train video plays behind a card of pond glass (frosted, lit top rim, water along the bottom, drops hanging under it). The avatar sits on the card's top edge.
+- [ ] Log in with the password and get the chosen session. Try a wrong password once: it shakes and says "wrong password". Left/Right (or a click) cycles niri and Umbriel. The power buttons at the bottom right suspend, reboot and power off.
+
+**If the login or boot breaks:** reboot, pick the previous generation in the systemd-boot menu (the one before this switch), then `sudo nixos-rebuild switch --rollback` or fix and switch again. If SDDM can't load the theme it falls back to its plain greeter, so the login still works. To boot without the splash once, press `e` on the entry and delete `quiet splash`.
+
 ## Rebuild and test
 
 ```sh
@@ -207,6 +217,7 @@ nix run nixpkgs#nodejs -- tests/raven-mood-test.js        # raven moods (niri ba
 nix run nixpkgs#nodejs -- tests/koi-motion-test.js        # koi swimming
 nix run nixpkgs#nodejs -- tests/beat-test.js              # koi beats in the bass
 python3 modules/theme/make-koi-svg.py                    # regenerate the fastfetch koi logo template
+python3 modules/boot/make-plymouth-art.py                # regenerate the boot splash art
 niri validate -c ~/.config/niri/config.kdl    # niri config check
 ```
 
