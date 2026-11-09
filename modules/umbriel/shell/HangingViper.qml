@@ -29,6 +29,11 @@
 // on the top edge of the highest window below them (UmbrielIpc.windows), or
 // fade out 300 px down; over a window's content they only sag and fade.
 //
+// At night (U.Palette.night) it coils up shorter, hanging about 30% higher,
+// sways at half speed, drips half as often, and its eye dims (venom.js
+// nightHang). It follows the palette's 2 s night steps smoothly on its own
+// clock, so night adds no ticks.
+//
 // It pulls up behind the pill (0.6 s) while a window is fullscreen, the
 // island is open or shows anything but the clock, and comes back down 2 s
 // after. For fullscreen it hisses first (300 ms); `holdsIsland` keeps the
@@ -146,14 +151,25 @@ Item {
         property real flickAt: 0
         property var drops: [null, null, null, null]
         property var sample: null
+        // The sway's own time, which runs slower at night.
+        property real swayT: 0
     }
 
+    // The viper's night, 0..1: eased toward the palette's on each tick.
+    property real hush: U.Palette.night
+    readonly property var hang: Venom.nightHang(hush)
+
     property real load: 0
-    readonly property int interval: Venom.dripInterval(load)
+    readonly property int interval: Venom.dripInterval(load, hush)
 
     function ease(u) {
         const t = Math.min(Math.max(u, 0), 1);
         return t * t * (3 - 2 * t);
+    }
+
+    // `c` at `e` of its brightness.
+    function dimmed(c, e) {
+        return Qt.rgba(c.r * e, c.g * e, c.b * e, c.a);
     }
 
     // dt: seconds since the last tick, already clamped by its clock.
@@ -181,8 +197,13 @@ Item {
             }
         }
 
+        if (hush !== U.Palette.night)
+            hush = Venom.toward(hush, U.Palette.night, dt);
+
         // A pendulum with a slow drift in its swing, and the coil.
-        sway = 3 * Math.sin(2 * Math.PI * t / 5.5) * (0.82 + 0.18 * Math.sin(2 * Math.PI * t / 17));
+        life.swayT += dt * hang.rate;
+        const st = life.swayT;
+        sway = 3 * Math.sin(2 * Math.PI * st / 5.5) * (0.82 + 0.18 * Math.sin(2 * Math.PI * st / 17));
         coil = 0.5 - 0.5 * Math.cos(2 * Math.PI * t / 14);
 
         // Straight while pulled up, so it slides into the island cleanly.
@@ -387,7 +408,9 @@ Item {
 
         // Pulled straight up by its full length when away.
         Item {
+            // At night it hangs `hang.lift` of its length higher.
             y: -root.clipTop - (1 - root.ease(root.out)) * (root.hangY + root.bodyLength - root.clipTop + 50)
+                - root.ease(root.out) * root.hang.lift * (root.hangY + root.bodyLength - root.clipTop)
             width: root.width
             height: root.height
 
@@ -800,9 +823,9 @@ Item {
                     fillGradient: RadialGradient {
                         centerX: 160; centerY: 66; centerRadius: 9.5
                         focalX: 160; focalY: 66
-                        GradientStop { position: 0.3; color: Qt.lighter(U.Palette.viperEye, 1.06) }
-                        GradientStop { position: 0.85; color: U.Palette.viperKeel }
-                        GradientStop { position: 1; color: Qt.darker(U.Palette.viperKeel, 1.5) }
+                        GradientStop { position: 0.3; color: root.dimmed(Qt.lighter(U.Palette.viperEye, 1.06), root.hang.eye) }
+                        GradientStop { position: 0.85; color: root.dimmed(U.Palette.viperKeel, root.hang.eye) }
+                        GradientStop { position: 1; color: root.dimmed(Qt.darker(U.Palette.viperKeel, 1.5), root.hang.eye) }
                     }
                     PathSvg { path: "M 150.5 66 a 9.5 9.5 0 1 0 19 0 a 9.5 9.5 0 1 0 -19 0" }
                 }
@@ -822,12 +845,12 @@ Item {
                     PathSvg { path: "M 150 59 Q 160 53.5 170 59" }
                 }
                 ShapePath {
-                    fillColor: U.Palette.bright
+                    fillColor: Qt.alpha(U.Palette.bright, root.hang.eye)
                     strokeColor: "transparent"
                     PathSvg { path: "M 153.4 61.6 a 2.3 2.3 0 1 0 4.6 0 a 2.3 2.3 0 1 0 -4.6 0" }
                 }
                 ShapePath {
-                    fillColor: Qt.alpha(U.Palette.bright, 0.5)
+                    fillColor: Qt.alpha(U.Palette.bright, 0.5 * root.hang.eye)
                     strokeColor: "transparent"
                     PathSvg { path: "M 163.6 70.6 a 1 1 0 1 0 2 0 a 1 1 0 1 0 -2 0" }
                 }

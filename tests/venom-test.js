@@ -182,7 +182,41 @@ const tests = {
     near(Venom.clockStep(1, 15), 2 / 15, 1e-12, "a stall at 15 Hz");
     near(Venom.clockStep(1, 144), 2 / 144, 1e-12, "a stall at 144 Hz");
     assert.strictEqual(Venom.clockStep(-1, 30), 0);
-  }
+  },
+
+  test_drips_at_half_the_rate_at_night() {
+    assert.strictEqual(Venom.dripInterval(0, 1), 8000);
+    assert.strictEqual(Venom.dripInterval(1, 1), 1200);
+    assert.strictEqual(Venom.dripInterval(0, 0), 4000, "day as before");
+    assert.strictEqual(Venom.dripInterval(0, 0.5), 6000, "between, in the fade");
+    assert.strictEqual(Venom.dripInterval(0, 7), 8000, "clamped");
+  },
+
+  test_night_hang_by_day_changes_nothing() {
+    const h = Venom.nightHang(0);
+    assert.deepStrictEqual({ rate: h.rate, lift: h.lift, eye: h.eye }, { rate: 1, lift: 0, eye: 1 });
+  },
+
+  test_at_night_it_hangs_higher_sways_slower_and_its_eye_dims() {
+    const h = Venom.nightHang(1);
+    assert.strictEqual(h.rate, 0.5, "half-speed sway");
+    near(h.lift, 0.3, 1e-9, "30% shorter");
+    assert.ok(h.eye < 0.8 && h.eye > 0.4, `eye ${h.eye}`);
+    const m = Venom.nightHang(0.5);
+    near(m.rate, 0.75, 1e-9, "eases");
+    assert.deepStrictEqual(Venom.nightHang(-2), Venom.nightHang(0));
+  },
+
+  test_night_hang_follows_the_night_smoothly() {
+    // The viper eases toward the shell's night factor on its own clock.
+    let h = 0;
+    h = Venom.toward(h, 1, 0.1);
+    near(h, 0.1 / Venom.HUSH_FOR, 1e-9, "one 10 Hz step");
+    for (let i = 0; i < 1000; i++) h = Venom.toward(h, 1, 0.1);
+    assert.strictEqual(h, 1);
+    assert.strictEqual(Venom.toward(0.5, 0.5, 0.1), 0.5);
+    assert.strictEqual(Venom.toward(0.6, 0.5, 5), 0.5, "no overshoot");
+  },
 };
 
 let failed = 0;

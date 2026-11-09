@@ -27,10 +27,27 @@ var THREAD_LEN = 9;      // px the bead sags before it snaps
 var SNAP_SPEED = 30;     // px/s, downward, as it lets go
 var BLOCKED_FALL = 22;   // px a drop over a window's content may sag
 
-// Milliseconds between drops: 4 s when calm, 0.6 s at full load.
-function dripInterval(load) {
+// Milliseconds between drops: 4 s when calm, 0.6 s at full load, and half
+// as often at night (`night`, 0..1, Palette.night).
+function dripInterval(load, night) {
     var l = Math.min(Math.max(+load || 0, 0), 1);
-    return Math.round(4000 - 3400 * l);
+    var n = Math.min(Math.max(+night || 0, 0), 1);
+    return Math.round((4000 - 3400 * l) * (1 + n));
+}
+
+// The viper at night `night` (0..1): its sway's speed, how much of its
+// hanging length it draws up (`lift`) and its eye's brightness.
+function nightHang(night) {
+    var n = Math.min(Math.max(+night || 0, 0), 1);
+    return { rate: 1 - 0.5 * n, lift: 0.3 * n, eye: 1 - 0.4 * n };
+}
+
+// The viper's own night, eased toward the shell's factor on its clock (the
+// shell's moves in 2 s steps): v moves at most dt / HUSH_FOR toward `to`.
+var HUSH_FOR = 2;
+function toward(v, to, dt) {
+    var step = Math.max(dt, 0) / HUSH_FOR;
+    return v < to ? Math.min(to, v + step) : Math.max(to, v - step);
 }
 
 // How long a bead may swell when drops come every `ms`: the full 1.2 s when
