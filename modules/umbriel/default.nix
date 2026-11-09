@@ -23,6 +23,11 @@ let
     "427owm.jpg" = "sha256-DtXHTWhP/CfnfpnUs1gZG6fpWoYqBm+M+P4rmUTk/tU="; # Tokyo Tower, cherry blossom
     "rdrqz7.jpg" = "sha256-/0Lx4CDp+sblsBZonwB0Gw7Gc4I/b12+pl+8x0qLgZc="; # Tokyo Tower, blue hour
     "vqv3p8.jpg" = "sha256-tBmpzwMMIuvko89wHdAYS4gJQBCAVbGksxr/1GoNTt8="; # dusk over Tokyo
+    "9568vx.jpg" = "sha256-2FMvWIjeTTtSmVzjQdBh6ImLVrJ6raSQaV+VvGiUNuQ="; # crow
+    "dgv8qo.png" = "sha256-l4+frb7yTY0ZlO+5R7eIY/K4L6/58+/0H4UozQknQF4="; # crow
+    "o3z85l.png" = "sha256-EgGWa2brBcfjA4/H4N80HpDaA/AHhntt3Rf7Iy06mII="; # dark forest under the moon
+    "weyjpp.jpg" = "sha256-NtJlTerF+TQ8E5zjQ93/ezYDwuM5JC2xS90nlrxxa10="; # snake
+    "wq9epq.png" = "sha256-rYJrV/mnvRvQvbhDM4H+5rBywNi5oDBzmt7BOaX1yw8="; # snake
   };
 
   umbriel-wall = pkgs.writeShellApplication {

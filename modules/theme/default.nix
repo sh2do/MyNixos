@@ -30,6 +30,11 @@ let
     "9ogj2d.jpg" = "sha256-s8y9xMK1BJpCumaQOyJctgo0uD423rtEadVYBzPopMA="; # swamp settlement
     "w5x266.jpg" = "sha256-+p1d5OPx1jOSBb7hss683zDJSKEIR1Cyzj/Mvn6oTRI="; # overgrown city
     "zpp6mw.jpg" = "sha256-Sy6ghUsDPQbFjVsMnA2E2C3G9n6KJGMpBgieQoL5tEQ="; # ruined city
+    "m39z39.jpg" = "sha256-r0rU4Wcbx/v7hGD0ncDch2R2MVLO2WyEYyWI22rHmcg="; # purple rain
+    "v9qy9l.jpg" = "sha256-3Yo3qdzMRQGh/C3Qo5gpS2V1D4u1MptmqsXb+QO9EsE="; # rainy street at night
+    "oxzo55.png" = "sha256-tUbJqyQdQaQuNQHz793RJxNIiI2tEuwu18rxfHIp3vA="; # rainy street at night
+    "m9rmw1.jpg" = "sha256-IaxvKKgAHRCJP1PvTsAU+igGMJ6SoLq5ZaYvSbHYFJM="; # hydrangeas
+    "nerwor.jpg" = "sha256-XSG1hPVkxbvwH1I9HROx7H9hzeIS46tWhxMKDfp0jxg="; # hydrangeas
   };
 
   wallFiles = dir: set: lib.mapAttrs' (name: hash:
