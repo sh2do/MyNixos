@@ -31,10 +31,18 @@ in
 {
   home.packages = [ rice-lock rice-dpms ];
 
-  xdg.configFile."quickshell/rice-lock".source = lib.cleanSourceWith {
-    src = ./.;
-    filter = path: type: type == "directory" || lib.hasSuffix ".qml" path || lib.hasSuffix ".mp4" path;
-  };
+  # The shell's media, phone and weather pieces are copied in, not duplicated.
+  xdg.configFile."quickshell/rice-lock".source = pkgs.runCommandLocal "rice-lock-config" { } ''
+    cp -r ${lib.cleanSourceWith {
+      src = ./.;
+      filter = path: type: type == "directory" || lib.hasSuffix ".qml" path
+        || lib.hasSuffix ".js" path || lib.hasSuffix ".mp4" path;
+    }} $out
+    chmod -R u+w $out
+    for f in Phone.qml phone.js Weather.qml weather.js media.js; do
+      cp ${../shell}/$f $out/$f
+    done
+  '';
 
   # -w (the default) waits for rice-lock, which returns once the lock is secure.
   services.swayidle = {

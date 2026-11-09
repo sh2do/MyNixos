@@ -170,6 +170,8 @@ Checks after switching and pairing:
 | 10 min idle | Screens off |
 | Before sleep | Lock |
 
+**Lock extras:** small pond-glass pills low on the lock screen, each shown only when it has something: now playing (art, title, artist, and previous / play-pause / next, nothing more), the paired phone's battery, and the weather. They share `media.js`, `phone.js`, `weather.js`, `Phone.qml` and `Weather.qml` with the shell (copied in by `modules/lock/default.nix`). `RICE_LOCK_PREVIEW=1 qs -c rice-lock` shows the screen in a normal window without locking.
+
 **If the lock ever breaks:** niri keeps the session locked even if the locker dies. Switch to a TTY (`Ctrl+Alt+F3`), log in and run `loginctl unlock-sessions` as root.
 
 **If the login screen breaks:** from a TTY, `sudo nixos-rebuild switch --rollback`, or reboot and pick the previous generation in the systemd-boot menu.

@@ -32,6 +32,12 @@ Item {
         precision: SystemClock.Minutes
     }
 
+    LockExtras {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 28
+    }
+
     Column {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
