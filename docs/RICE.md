@@ -150,6 +150,7 @@ The phone talks to the desktop over KDE Connect (an open protocol on the LAN, no
 2. Put the phone on the same Wi-Fi as this machine.
 3. Pair: on the phone, tap this machine in KDE Connect's list and "Request pairing", then accept the request on the desktop (`kdeconnect-app`, or `kdeconnect-cli --list-devices` for its id and `kdeconnect-cli --pair -d <id>`). Or start it from the desktop: `kdeconnect-cli --refresh; kdeconnect-cli --list-devices`, then `kdeconnect-cli --pair -d <id>` and accept on the phone.
 4. Test: `phone-alert "hello"` pops up on the phone. On the phone, allow KDE Connect's notification access ("Send notifications") so phone notifications reach the desktop.
+5. Phone buttons: the KDE Connect app's "Run command" lists lock, play/pause, next/previous, volume, mute, next wallpaper, screenshot to phone, sleep and shut down. Every switch sets them; after pairing a new phone, run `phone-commands`. Edit the list in `modules/shell/phone-commands.sh`, not in the app.
 
 Checks after switching and pairing:
 

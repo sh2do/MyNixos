@@ -11,11 +11,19 @@ let
     runtimeInputs = [ pkgs.coreutils ];
     text = builtins.readFile ./phone-alert.sh;
   };
+
+  # Fills KDE Connect's "Run command" list (lock, music, volume, wallpaper,
+  # screenshot, sleep) for each paired phone; kdeconnect-cli as above.
+  phone-commands = pkgs.writeShellApplication {
+    name = "phone-commands";
+    runtimeInputs = with pkgs; [ coreutils gnused jq procps ];
+    text = builtins.readFile ./phone-commands.sh;
+  };
 in
 {
   # The top pill's visualiser reads cava's raw output while music plays.
   # zenity: the phone chip's "send a file" picker.
-  home.packages = [ pkgs.cava pkgs.zenity phone-alert ];
+  home.packages = [ pkgs.cava pkgs.zenity phone-alert phone-commands ];
 
   # The raven (RICE_MASCOT=raven) is Umbriel's: its art, life and moods are
   # copied in from there, so both shells draw it from one source.
@@ -28,6 +36,11 @@ in
     cp ${../umbriel/shell/RavenBody.qml} $out/RavenBody.qml
     cp ${../umbriel/shell/RavenLife.qml} $out/RavenLife.qml
     cp ${../umbriel/shell/raven-mood.js} $out/raven-mood.js
+  '';
+
+  # Keep the phone's buttons in step with the list in phone-commands.sh.
+  home.activation.phoneCommands = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    PATH=/run/current-system/sw/bin:$PATH run ${phone-commands}/bin/phone-commands || true
   '';
 
   # A running bar keeps watching the old store path, so a switch never reaches it.

@@ -82,6 +82,7 @@ KDE Connect links an Android phone over the LAN (no cloud): phone notifications 
 2. Put the phone on the same Wi-Fi as this machine.
 3. On the phone, tap this machine in KDE Connect and request pairing, then accept on the desktop. Or from the desktop: `kdeconnect-cli --refresh; kdeconnect-cli --list-devices` for the phone's id, then `kdeconnect-cli --pair -d <id>` and accept on the phone.
 4. Test with `phone-alert "hello"`.
+5. Phone buttons: the KDE Connect app's "Run command" lists lock, play/pause, next/previous, volume, mute, next wallpaper, screenshot to phone, sleep and shut down. Every switch sets them; after pairing a new phone, run `phone-commands`. Edit the list in `modules/shell/phone-commands.sh`, not in the app.
 
 ## Rebuild
 
