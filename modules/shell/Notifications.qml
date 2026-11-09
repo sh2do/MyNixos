@@ -5,6 +5,9 @@
 // 5 s timeout; a new message from the app restarts it. Cards holding a
 // critical message stay until clicked. A click runs the latest message's
 // default action and dismisses the card.
+// While focused (Focus.qml) only critical ones show: the rest are kept in
+// `held`, silent, and summed up on one card when focus ends (focus.js),
+// which stays until clicked.
 // Clear them all with `qs -c rice ipc call notifications clear`.
 import QtQuick
 import Quickshell
@@ -14,6 +17,7 @@ import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import "notify-group.js" as Group
 import "phone.js" as PhoneLink
+import "focus.js" as F
 
 Scope {
     id: root
@@ -31,10 +35,22 @@ Scope {
         actionsSupported: true
         imageSupported: true
         onNotification: n => {
+            const urgency = n.urgency === NotificationUrgency.Critical ? "critical" : "normal";
+            root.forward(n);
+            // Held: copied, then let go (untracked) without a card or sound.
+            if (F.route(Focus.on, urgency) === "hold") {
+                root.held = F.hold(root.held, {
+                    app: n.appName || "unknown",
+                    icon: n.appIcon,
+                    summary: n.summary,
+                    body: n.body,
+                    time: Date.now()
+                });
+                return;
+            }
             root.stamps[n.id] = Date.now();
             n.tracked = true;
-            sound.play(n.urgency === NotificationUrgency.Critical ? "critical" : "notify");
-            root.forward(n);
+            sound.play(urgency === "critical" ? "critical" : "notify");
         }
     }
 
@@ -44,6 +60,20 @@ Scope {
         function clear(): void {
             for (const n of server.trackedNotifications.values.slice())
                 n.dismiss();
+            root.summary = null;
+        }
+    }
+
+    // ---- Focus: what it held, and the card summing it up once it ends.
+    property var held: []
+    property var summary: null
+    Connections {
+        target: Focus
+        function onOnChanged() {
+            if (Focus.on || root.held.length === 0)
+                return;
+            root.summary = F.summary(root.held);
+            root.held = [];
         }
     }
 
@@ -173,12 +203,123 @@ Scope {
         color: "transparent"
         implicitWidth: 360
         implicitHeight: Math.max(1, stack.implicitHeight)
-        visible: root.groups.length > 0
+        visible: root.groups.length > 0 || root.summary !== null
 
         Column {
             id: stack
             width: parent.width
             spacing: 8
+
+            // "N held while you focused": one line per app, as on a grouped
+            // card. A click puts it away.
+            Rectangle {
+                id: summaryCard
+                visible: root.summary !== null
+                width: stack.width
+                height: visible ? summaryContent.implicitHeight + 22 : 0
+                radius: Theme.radius
+                color: Qt.alpha(Theme.surface, 0.93)
+                border.width: 1
+                border.color: Qt.alpha(Theme.primary, 0.3)
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.summary = null
+                }
+
+                Column {
+                    id: summaryContent
+                    x: 12
+                    y: 11
+                    width: parent.width - 24
+                    spacing: 7
+
+                    Row {
+                        spacing: 8
+
+                        Text {
+                            text: "󰽥"
+                            color: Theme.primary
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 14
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.summary?.title ?? ""
+                            color: Theme.text
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSize
+                            font.bold: true
+                        }
+                    }
+
+                    Repeater {
+                        model: root.summary?.groups ?? []
+
+                        Item {
+                            id: line
+                            required property var modelData
+                            readonly property string iconUrl: root.iconUrl(modelData.icon)
+                            width: summaryContent.width
+                            height: 18
+
+                            IconImage {
+                                id: lineIcon
+                                x: 2
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: line.iconUrl.length > 0 && status !== Image.Error
+                                source: line.iconUrl
+                                implicitSize: 16
+                            }
+
+                            Text {
+                                visible: !lineIcon.visible
+                                x: 2
+                                width: 16
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: Group.GENERIC_ICON
+                                color: Theme.primary
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 13
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                id: lineApp
+                                x: 26
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: `${line.modelData.app} · ${line.modelData.count}`
+                                color: Theme.textMuted
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSize - 1
+                            }
+
+                            Text {
+                                x: lineApp.x + lineApp.implicitWidth + 10
+                                width: parent.width - x
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: line.modelData.latest.summary
+                                color: Theme.text
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSize - 1
+                                elide: Text.ElideRight
+                                textFormat: Text.PlainText
+                            }
+                        }
+                    }
+
+                    Text {
+                        x: 26
+                        visible: (root.summary?.more ?? 0) > 0
+                        text: `+${root.summary?.more ?? 0} more apps`
+                        color: Theme.outline
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize - 2
+                    }
+                }
+            }
 
             Repeater {
                 // Fixed slots, so a new message updates a card in place.

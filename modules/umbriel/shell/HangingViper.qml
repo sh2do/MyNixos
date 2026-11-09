@@ -34,6 +34,9 @@
 // nightHang). It follows the palette's 2 s night steps smoothly on its own
 // clock, so night adds no ticks.
 //
+// In focus mode (Focus.qml) it hangs still: no drip, no flick, and once it
+// hangs its clock stops (it still pulls up and comes down as above).
+//
 // It pulls up behind the pill (0.6 s) while a window is fullscreen, the
 // island is open or shows anything but the clock, and comes back down 2 s
 // after. For fullscreen it hisses first (300 ms); `holdsIsland` keeps the
@@ -116,7 +119,14 @@ Item {
 
     readonly property int fpsCap: parseInt(Quickshell.env("UMBRIEL_SERPENT_FPS") || "") || 0
     readonly property bool running: island.visible && !locked && !Cover.outputOff(UmbrielIpc.outputs, island.screen?.name ?? "")
-    readonly property bool active: running && (mode !== "away" || dropCount > 0)
+    // Focus mode: hanging, it stops; drops and a flick under way are cleared.
+    readonly property bool still: U.Focus.on
+    onStillChanged: if (still) {
+        clearDrops(false);
+        flicking = false;
+        tongue = 0;
+    }
+    readonly property bool active: running && (mode !== "away" || dropCount > 0) && !(still && mode === "out")
     onRunningChanged: if (!running) clearDrops(false)
 
     // Set by each tick: a drop in free fall, any other drop alive, how many.
@@ -214,7 +224,7 @@ Item {
             bendBody(bend);
 
         // The tongue: out and back in 250 ms, every 10-20 s while it hangs.
-        if (!flicking && mode === "out" && t >= life.nextFlick) {
+        if (!flicking && !still && mode === "out" && t >= life.nextFlick) {
             flicking = true;
             life.flickAt = t;
         }
@@ -299,7 +309,7 @@ Item {
             fallNow = fallNow || d.phase === "fall";
             dripNow = dripNow || d.phase !== "fall";
         }
-        if (mode === "out" && !onFang && life.t >= life.nextDrop) {
+        if (mode === "out" && !still && !onFang && life.t >= life.nextDrop) {
             const free = ds.indexOf(null);
             if (free >= 0) {
                 ds[free] = Venom.newDrop(tip.x, tip.y, Venom.beadTime(root.interval));

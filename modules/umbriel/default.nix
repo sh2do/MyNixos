@@ -52,6 +52,8 @@ let
     cp ${../shell/weather.js} $out/weather.js
     cp ${../shell/Sound.qml} $out/Sound.qml
     cp ${../shell/sound.js} $out/sound.js
+    cp ${../shell/Focus.qml} $out/Focus.qml
+    cp ${../shell/focus.js} $out/focus.js
     for f in $out/*.frag $out/*.vert; do
       qsb --qt6 -o "$f.qsb" "$f"
     done

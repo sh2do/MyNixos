@@ -8,6 +8,7 @@
 // less and come up less often; music still stirs them a little. In real
 // rain (Weather) drops ring the water, more the harder it rains, and fog
 // lays a soft veil over it; on a clear day the pond is as it always was.
+// `calm` (focus mode) gives them the night's drift and stills the music.
 // Motion comes from koi-motion.js; colours from the wallpaper (Theme).
 import QtQuick
 import QtQuick.Shapes
@@ -26,6 +27,8 @@ Item {
     // A player is playing, and its song (artist and title): set by the bar.
     property bool music: false
     property string song: ""
+    // Focus mode: the night's slow drift, whatever the hour, and no music.
+    property bool calm: false
 
     clip: true
 
@@ -33,9 +36,9 @@ Item {
     // made-up beat (a bass kick every 600 ms, a swelling loudness) so it can
     // be seen without a player.
     readonly property bool fakeBeat: Quickshell.env("RICE_FAKE_BEAT") === "1" || Quickshell.env("RICE_KOI_FAKE_BEAT") === "1"
-    readonly property bool musical: music || fakeBeat
+    readonly property bool musical: (music || fakeBeat) && !calm
     // The shared cava runs for us only while the bar is up and music plays.
-    readonly property bool listening: running && music && !fakeBeat
+    readonly property bool listening: running && music && !fakeBeat && !calm
     onListeningChanged: listening ? Cava.acquire() : Cava.release()
     Component.onDestruction: if (listening) Cava.release()
     property var beatState: null
@@ -61,7 +64,7 @@ Item {
     onSongChanged: {
         if (song === "" || song === lastSong) return;
         lastSong = song;
-        if (!running || !fish.length) return;
+        if (!running || calm || !fish.length) return;
         // The koi nearest the middle comes up to see.
         let near = fish[0];
         for (const k of fish)
@@ -104,7 +107,7 @@ Item {
     }
 
     // How the pond swims now: the day's, the night's, or between in the fade.
-    readonly property var mood: Koi.nightMood(Theme.night, musical)
+    readonly property var mood: Koi.nightMood(calm ? 1 : Theme.night, musical)
     // The lily pad's middle, where they gather at night (pad.x, in a function
     // so nothing rebinds every tick).
     function padX() {

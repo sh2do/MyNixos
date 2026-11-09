@@ -23,6 +23,7 @@ for id in $ids; do
     rice_voldn: {name: "Volume down",     command: "wpctl set-volume \($sink) 10%-"},
     rice_mute:  {name: "Mute",            command: "wpctl set-mute \($sink) toggle"},
     rice_wall:  {name: "Next wallpaper",  command: "rice-wall next"},
+    rice_focus: {name: "Focus",           command: "rice-focus toggle"},
     rice_shot:  {name: "Screenshot to phone",
                  command: "f=${XDG_RUNTIME_DIR:-/tmp}/phone-shot.png; grim \"$f\" && kdeconnect-cli -d \($id) --share \"$f\""},
     rice_sleep: {name: "Sleep",           command: "systemctl suspend"},

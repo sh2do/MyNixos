@@ -12,8 +12,15 @@ let
     text = builtins.readFile ./phone-alert.sh;
   };
 
+  # Focus mode for both shells (Focus.qml watches the file it writes).
+  rice-focus = pkgs.writeShellApplication {
+    name = "rice-focus";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = builtins.readFile ./rice-focus.sh;
+  };
+
   # Fills KDE Connect's "Run command" list (lock, music, volume, wallpaper,
-  # screenshot, sleep) for each paired phone; kdeconnect-cli as above.
+  # focus, screenshot, sleep) for each paired phone; kdeconnect-cli as above.
   phone-commands = pkgs.writeShellApplication {
     name = "phone-commands";
     runtimeInputs = with pkgs; [ coreutils gnused jq procps ];
@@ -25,7 +32,7 @@ in
 
   # The top pill's visualiser reads cava's raw output while music plays.
   # zenity: the phone chip's "send a file" picker.
-  home.packages = [ pkgs.cava pkgs.zenity phone-alert phone-commands ];
+  home.packages = [ pkgs.cava pkgs.zenity phone-alert phone-commands rice-focus ];
 
   # The raven (RICE_MASCOT=raven) is Umbriel's: its art, life and moods are
   # copied in from there, so both shells draw it from one source.

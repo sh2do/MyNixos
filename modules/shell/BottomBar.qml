@@ -155,6 +155,7 @@ PanelWindow {
             hoverX: barHover.hovered ? barHover.point.position.x - 1 : NaN
             hoverY: barHover.hovered ? barHover.point.position.y - 1 : NaN
             music: root.player !== null
+            calm: Focus.on
             song: root.player ? [root.player.trackArtist, root.player.trackTitle].join("\n") : ""
         }
 

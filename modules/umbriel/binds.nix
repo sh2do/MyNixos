@@ -30,6 +30,7 @@ workspaces // {
   "Mod+Alt+V" = once "spawn rice-menu clipboard";
   "Mod+Shift+Q" = once "spawn rice-menu power";
   "Mod+Ctrl+W" = once "spawn qs -c umbriel ipc call picker toggle";
+  "Mod+Alt+F" = once "spawn rice-focus toggle";
 
   # Programs
   "Mod+T" = once "spawn env STARSHIP_CONFIG=${term}/starship.toml kitty --class umbriel-term --config ${term}/kitty.conf";

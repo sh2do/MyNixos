@@ -23,6 +23,8 @@ test_writes_buttons_for_paired_phone() {
   json=$(commands_json)
   assert_eq "$(jq -r '.rice_lock.command' <<<"$json")" "rice-lock"
   assert_eq "$(jq -r '.rice_play.name' <<<"$json")" "Play / pause"
+  assert_eq "$(jq -r '.rice_focus.name' <<<"$json")" "Focus"
+  assert_eq "$(jq -r '.rice_focus.command' <<<"$json")" "rice-focus toggle"
   # The screenshot button sends to this phone.
   assert_contains "$(jq -r '.rice_shot.command' <<<"$json")" "kdeconnect-cli -d abc_1 --share"
 }

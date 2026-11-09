@@ -8,6 +8,9 @@
 // the values themselves. Hidden while a fullscreen window is focused, except
 // for a critical notification or the open launcher.
 //
+// While focused (Focus.qml) only critical notices show: the rest are kept,
+// silent, and summed up in one notice when focus ends (focus.js).
+//
 // openLauncher() / closeLauncher() / expanded: the pill grows down into the
 // launcher's panel (Launcher.qml), with the viper wound around it, and takes
 // the keyboard while open. anchorBottom is the underside centre in
@@ -22,6 +25,7 @@ import Quickshell.Services.Notifications
 import Quickshell.Services.Pipewire
 import "." as U
 import "IslandQueue.js" as Q
+import "focus.js" as F
 
 PanelWindow {
     id: root
@@ -126,8 +130,20 @@ PanelWindow {
         actionsSupported: true
         imageSupported: true
         onNotification: n => {
+            const critical = n.urgency === NotificationUrgency.Critical;
+            // Held: copied, then let go (untracked) without a notice or sound.
+            if (F.route(U.Focus.on, critical ? "critical" : "normal") === "hold") {
+                root.held = F.hold(root.held, {
+                    app: n.appName || "unknown",
+                    icon: n.appIcon,
+                    summary: n.summary,
+                    body: n.body,
+                    time: Date.now()
+                });
+                return;
+            }
             n.tracked = true;
-            sound.play(n.urgency === NotificationUrgency.Critical ? "critical" : "notify");
+            sound.play(critical ? "critical" : "notify");
             const id = n.id;
             const life = { closed: false };
             // Sent again on a replacement (replaces_id), which updates the
@@ -145,6 +161,31 @@ PanelWindow {
             n.imageChanged.connect(() => Qt.callLater(send));
             n.appIconChanged.connect(() => Qt.callLater(send));
             send();
+        }
+    }
+
+    // Focus: what it held, given as one notice when focus ends. It stands
+    // in for a notification (nothing to expire, no actions).
+    property var held: []
+    property int summaries: 0
+    Connections {
+        target: U.Focus
+        function onOnChanged() {
+            if (U.Focus.on || root.held.length === 0)
+                return;
+            const s = F.summary(root.held);
+            root.held = [];
+            const stub = { actions: [], expire() {}, dismiss() {} };
+            root.summaries++;
+            root.push("notify", {
+                id: "focus-" + root.summaries,
+                critical: false,
+                summary: s.title,
+                body: F.line(s),
+                icon: "",
+                notification: stub,
+                life: { closed: false }
+            });
         }
     }
 

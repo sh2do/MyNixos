@@ -1,4 +1,4 @@
-// Quick toggles. Left click acts, scroll adjusts, right click opens the
+// Quick toggles (focus mode first). Left click acts, scroll adjusts, right click opens the
 // matching rofi menu. Missing hardware shows as off (or hides, for battery).
 import QtQuick
 import Quickshell
@@ -16,6 +16,14 @@ Row {
 
     function menu(name) {
         Quickshell.execDetached(["rice-menu", name]);
+    }
+
+    // ---- focus mode (Focus.qml): the moon lit, and how long so far
+    Chip {
+        icon: "󰽥"
+        label: Focus.on ? "focus " + Focus.label : ""
+        active: Focus.on
+        onClicked: Focus.toggle()
     }
 
     // ---- wifi

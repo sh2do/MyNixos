@@ -19,6 +19,7 @@ binds {
     Mod+Shift+Q hotkey-overlay-title="Power menu" { spawn "rice-menu" "power"; }
     Mod+Alt+W hotkey-overlay-title="Next wallpaper" { spawn "rice-wall" "next"; }
     Mod+Ctrl+W hotkey-overlay-title="Pick a wallpaper" { spawn "qs" "-c" "rice" "ipc" "call" "picker" "toggle"; }
+    Mod+Alt+F hotkey-overlay-title="Focus mode" { spawn "rice-focus" "toggle"; }
 
     // Suggested binds for running programs: terminal, app launcher, screen locker.
     Mod+T hotkey-overlay-title="Open a Terminal: foot" { spawn "foot"; }

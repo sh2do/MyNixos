@@ -72,6 +72,7 @@ Use `lib.fakeHash` first; the build error prints the real hash. `rotation` image
 | `Mod+Alt+V` | Clipboard history |
 | `Mod+Shift+Q` | Power menu |
 | `Mod+Alt+W` | Next wallpaper |
+| `Mod+Alt+F` | Focus mode on / off (`rice-focus`; Umbriel too) |
 | `Mod+Ctrl+W` | Wallpaper picker: a carousel that slides up on a slab of pond glass, each card on a faint stone; the selected card rises with a glowing rim and the menus' drips along its bottom edge (plain beads until rice-wall has rendered them). It moves on its own clock under 60 Hz, only while the selection moves, and costs nothing closed |
 | `Super+Alt+L` | Lock |
 
@@ -134,6 +135,7 @@ All menus share the wallpaper-coloured rofi theme. Escape always does nothing.
 
 - **Cards:** one card per app, newest first, at most 4 on screen. A new message from the same app updates its card in place. A card shows the app icon, "app · count" and its age, the latest message with a 36 px avatar, and the app's own action buttons (such as Reply). Older messages peek out under it as stack edges; the chevron opens them. Clicking a card runs the latest message's default action and dismisses the group. After 5 s the card expires (a thin line runs down); a new message restarts it. Critical cards have an error-coloured border and stay until clicked.
 - **Water OSD:** the volume and brightness keys show a 56 x 168 glass capsule at the bottom centre, filled with water to the level. Each change sends ripples across the surface, and a held key makes a steady train. It hides after 1.5 s. It redraws at 20 Hz for 500 ms after a change, then 6 Hz for the slow drift.
+- **Focus mode** (`rice-focus [on|off|toggle|status]`, `Mod+Alt+F` on both desktops, the moon chip in the bar's toggles, or the phone's "Focus" button; `Focus.qml`, `focus.js`, shared by both shells): it writes `~/.cache/rice/focus`, which both shells watch. While on, notifications are held, with no card and no sound; critical ones still show with the caw, and still go to the phone. When it ends, one card says "N held while you focused", with a line per app, until clicked (on Umbriel, one island notice: "Discord 2 · Mail 1"). The raven sleeps, the koi drift as at night and ignore the music, and Umbriel's viper hangs still and stops dripping (its clock stops). The bar's chip shows "focus 25m", and Umbriel's status corner shows the same, stepped once a minute. Nothing else runs while it is on.
 - Cost: about 3% of a core while a card's timeout line runs, 0 with only critical cards; the OSD is about 1.4-2.8% while visible.
 
 ## Phone link
@@ -152,7 +154,7 @@ The phone talks to the desktop over KDE Connect (an open protocol on the LAN, no
 2. Put the phone on the same Wi-Fi as this machine.
 3. Pair: on the phone, tap this machine in KDE Connect's list and "Request pairing", then accept the request on the desktop (`kdeconnect-app`, or `kdeconnect-cli --list-devices` for its id and `kdeconnect-cli --pair -d <id>`). Or start it from the desktop: `kdeconnect-cli --refresh; kdeconnect-cli --list-devices`, then `kdeconnect-cli --pair -d <id>` and accept on the phone.
 4. Test: `phone-alert "hello"` pops up on the phone. On the phone, allow KDE Connect's notification access ("Send notifications") so phone notifications reach the desktop.
-5. Phone buttons: the KDE Connect app's "Run command" lists lock, play/pause, next/previous, volume, mute, next wallpaper, screenshot to phone, sleep and shut down. Every switch sets them; after pairing a new phone, run `phone-commands`. Edit the list in `modules/shell/phone-commands.sh`, not in the app.
+5. Phone buttons: the KDE Connect app's "Run command" lists lock, play/pause, next/previous, volume, mute, next wallpaper, focus, screenshot to phone, sleep and shut down. Every switch sets them; after pairing a new phone, run `phone-commands`. Edit the list in `modules/shell/phone-commands.sh`, not in the app.
 
 Checks after switching and pairing:
 
