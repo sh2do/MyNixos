@@ -34,7 +34,7 @@
 // nightHang). It follows the palette's 2 s night steps smoothly on its own
 // clock, so night adds no ticks.
 //
-// In focus mode (Focus.qml) it hangs still: no drip, no flick, and once it
+// In focus mode, or while a game runs (Focus.qml `calm`), it hangs still: no drip, no flick, and once it
 // hangs its clock stops (it still pulls up and comes down as above).
 //
 // It pulls up behind the pill (0.6 s) while a window is fullscreen, the
@@ -119,8 +119,8 @@ Item {
 
     readonly property int fpsCap: parseInt(Quickshell.env("UMBRIEL_SERPENT_FPS") || "") || 0
     readonly property bool running: island.visible && !locked && !Cover.outputOff(UmbrielIpc.outputs, island.screen?.name ?? "")
-    // Focus mode: hanging, it stops; drops and a flick under way are cleared.
-    readonly property bool still: U.Focus.on
+    // Focus mode or a game: hanging, it stops; drops and a flick under way are cleared.
+    readonly property bool still: U.Focus.calm
     onStillChanged: if (still) {
         clearDrops(false);
         flicking = false;

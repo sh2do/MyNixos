@@ -3,7 +3,9 @@
 // Focus mode, pure (tests/focus-test.js). Focus.qml reads rice-focus's
 // state file with `parse`; the notification servers (Notifications.qml,
 // Umbriel's Island.qml) ask `route` and keep what it holds with `hold`, and
-// show `summary` once focus ends. Shared by both shells.
+// show `summary` once focus ends. A running game (Game.qml) calms the
+// desktop the same way; `why` says which of the two it was. Shared by both
+// shells.
 
 // The most notifications kept while focused; past it the oldest go.
 var MAX_HELD = 200;
@@ -23,6 +25,11 @@ function route(on, urgency) {
     return on && urgency !== "critical" ? "hold" : "show";
 }
 
+// Why the desktop is calm: "focus" (chosen, so it wins), "game" or "".
+function why(focusOn, gameOn) {
+    return focusOn ? "focus" : gameOn ? "game" : "";
+}
+
 // The held list with `entry` ({app, icon, summary, body, time}) added;
 // a new array, at most MAX_HELD long.
 function hold(list, entry) {
@@ -30,10 +37,11 @@ function hold(list, entry) {
     return out.length > MAX_HELD ? out.slice(out.length - MAX_HELD) : out;
 }
 
-// The card for the held list, or null when nothing was held:
+// The card for the held list, or null when nothing was held; `why` "game"
+// says "played" instead of "focused":
 // {count, title, groups: [{app, icon, count, latest}] newest first (at most
 // MAX_LINES), more: how many apps are left off}.
-function summary(list) {
+function summary(list, why) {
     if (!list || !list.length)
         return null;
     var groups = [], byApp = {};
@@ -51,7 +59,7 @@ function summary(list) {
     }
     return {
         count: list.length,
-        title: list.length + " held while you focused",
+        title: list.length + " held while you " + (why === "game" ? "played" : "focused"),
         groups: groups.slice(0, MAX_LINES),
         more: Math.max(0, groups.length - MAX_LINES)
     };

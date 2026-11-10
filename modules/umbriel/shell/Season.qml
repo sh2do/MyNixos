@@ -1,7 +1,7 @@
 pragma Singleton
 
 // The season (season.js): what it is, and what it touches given the night,
-// the real weather (Weather.qml) and focus mode (Focus.qml). The date is
+// the real weather (Weather.qml) and focus mode or a game (Focus.qml `calm`). The date is
 // stepped by Weather's minute clock, so it has no timer of its own.
 // RICE_SEASON=spring (summer, october, december, none) forces one. Shared by
 // both shells: the niri bar copies it in with season.js, SeasonField.qml and
@@ -17,6 +17,6 @@ Singleton {
     // {sprite, count, trinkets, flicker}; `night` is the caller's own
     // (Theme.night on niri, Palette.night on Umbriel).
     function touch(night) {
-        return S.touches(name, { night: night, weather: Weather.kind, focus: Focus.on });
+        return S.touches(name, { night: night, weather: Weather.kind, focus: Focus.calm });
     }
 }

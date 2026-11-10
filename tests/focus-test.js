@@ -59,6 +59,18 @@ const tests = {
     assert.strictEqual(s.count, 3);
     assert.strictEqual(s.title, "3 held while you focused");
   },
+  test_summary_title_names_the_game() {
+    const s = F.summary([note("a", "1", 1), note("b", "2", 2)], "game");
+    assert.strictEqual(s.title, "2 held while you played");
+    assert.strictEqual(F.summary([note("a", "1", 1)], "focus").title, "1 held while you focused");
+  },
+
+  test_why_focus_wins_then_game_then_nothing() {
+    assert.strictEqual(F.why(true, false), "focus");
+    assert.strictEqual(F.why(true, true), "focus");
+    assert.strictEqual(F.why(false, true), "game");
+    assert.strictEqual(F.why(false, false), "");
+  },
   test_summary_groups_by_app_newest_first() {
     const s = plain(F.summary([note("Discord", "hi", 1), note("Mail", "inbox", 5), note("Discord", "yo", 9)]));
     assert.deepStrictEqual(s.groups.map(g => [g.app, g.count, g.latest.summary]),

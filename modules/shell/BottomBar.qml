@@ -155,7 +155,7 @@ PanelWindow {
             hoverX: barHover.hovered ? barHover.point.position.x - 1 : NaN
             hoverY: barHover.hovered ? barHover.point.position.y - 1 : NaN
             music: root.player !== null
-            calm: Focus.on
+            calm: Focus.calm
             song: root.player ? [root.player.trackArtist, root.player.trackTitle].join("\n") : ""
         }
 
@@ -231,6 +231,20 @@ PanelWindow {
                     Clock {
                         id: clock
                         anchors.centerIn: parent
+                    }
+                }
+
+                // A game in GameMode (Game.qml): the desktop is calm for it.
+                Stone {
+                    visible: Game.on
+                    width: gameChip.implicitWidth + 4
+
+                    Chip {
+                        id: gameChip
+                        anchors.centerIn: parent
+                        icon: "󰊗"
+                        label: Game.label
+                        active: true
                     }
                 }
 

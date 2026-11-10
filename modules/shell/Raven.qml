@@ -70,8 +70,8 @@ Item {
         id: life
 
         fastHz: 60
-        // Focus mode puts it to sleep too.
-        night: root.night || Focus.on
+        // Focus mode, or a game, puts it to sleep too.
+        night: root.night || Focus.calm
         debug: root.debug
         k: body.k
         homeX: root.homeX

@@ -137,7 +137,7 @@ All menus share the wallpaper-coloured rofi theme. Escape always does nothing.
 
 - **Cards:** one card per app, newest first, at most 4 on screen. A new message from the same app updates its card in place. A card shows the app icon, "app · count" and its age, the latest message with a 36 px avatar, and the app's own action buttons (such as Reply). Older messages peek out under it as stack edges; the chevron opens them. Clicking a card runs the latest message's default action and dismisses the group. After 5 s the card expires (a thin line runs down); a new message restarts it. Critical cards have an error-coloured border and stay until clicked.
 - **Water OSD:** the volume and brightness keys show a 56 x 168 glass capsule at the bottom centre, filled with water to the level. Each change sends ripples across the surface, and a held key makes a steady train. It hides after 1.5 s. It redraws at 20 Hz for 500 ms after a change, then 6 Hz for the slow drift.
-- **Focus mode** (`rice-focus [on|off|toggle|status]`, `Mod+Alt+F` on both desktops, the moon chip in the bar's toggles, or the phone's "Focus" button; `Focus.qml`, `focus.js`, shared by both shells): it writes `~/.cache/rice/focus`, which both shells watch. While on, notifications are held, with no card and no sound; critical ones still show with the caw, and still go to the phone. When it ends, one card says "N held while you focused", with a line per app, until clicked (on Umbriel, one island notice: "Discord 2 · Mail 1"). The raven sleeps, the koi drift as at night and ignore the music, and Umbriel's viper hangs still and stops dripping (its clock stops). The bar's chip shows "focus 25m", and Umbriel's status corner shows the same, stepped once a minute. Nothing else runs while it is on.
+- **Focus mode** (`rice-focus [on|off|toggle|status]`, `Mod+Alt+F` on both desktops, the moon chip in the bar's toggles, or the phone's "Focus" button; `Focus.qml`, `focus.js`, shared by both shells): it writes `~/.cache/rice/focus`, which both shells watch. While on, notifications are held, with no card and no sound; critical ones still show with the caw, and still go to the phone. When it ends, one card says "N held while you focused", with a line per app, until clicked (on Umbriel, one island notice: "Discord 2 · Mail 1"). The raven sleeps, the koi drift as at night and ignore the music, and Umbriel's viper hangs still and stops dripping (its clock stops). The bar's chip shows "focus 25m", and Umbriel's status corner shows the same, stepped once a minute. Nothing else runs while it is on. A game in gamemode calms the desktop the same way (see Gaming).
 - Cost: about 3% of a core while a card's timeout line runs, 0 with only critical cards; the OSD is about 1.4-2.8% while visible.
 
 ## Phone link
@@ -244,6 +244,29 @@ Checks after switching and **rebooting** (the NVIDIA module option and the udev 
 - [ ] Unplug: `powerprofilesctl get` says `power-saver` within a second and the bar glyph changes. Plug in: back to what it was. Set performance by hand on battery and plug in: it stays performance.
 - [ ] `ls -l /sys/class/hwmon/*/pwm1_enable` shows group `wheel`, mode `rw-rw-r--`. `rice-fan max`: the fans spin up within a few seconds, the bar shows the boost chip, and `rice-fan` reports about 5800 rpm. `rice-fan auto` (or a click on the chip) brings them back down.
 
+## Gaming
+
+`modules/gaming/` (NixOS) holds Steam, gamemode, MangoHud and gamescope; the NVIDIA driver and PRIME offload stay with the graphics in `configuration.nix`.
+
+- **Which GPU:** PRIME offload, so the desktop and every app run on the Intel GPU and the NVIDIA one sleeps (runtime D3, under "Power and fans"). Steam starts with `MESA_VK_DEVICE_SELECT=discrete` and `MESA_VK_DEVICE_SELECT_FORCE_DEFAULT_DEVICE=1`, and every game inherits them: Vulkan, which means all Proton games (DXVK, VKD3D) and native Vulkan games, sees only the NVIDIA GPU. OpenGL is not switched, so Steam's own window stays on the iGPU and doesn't keep the dGPU awake while Steam idles in the tray. A native OpenGL game needs `nvidia-offload` in front (below). Outside Steam: `nvidia-offload <app>`.
+- **Launch options** (Steam: right click a game, Properties, Launch options). Steam has no global launch options, so set this per game:
+
+  ```
+  gamemoderun mangohud %command%
+  ```
+
+  For a native OpenGL game: `nvidia-offload gamemoderun mangohud %command%`. Setting gamemode or MangoHud in Steam's own environment instead would apply them to Steam itself, keeping the performance profile on whenever Steam is open.
+- **gamemode** (`/etc/gamemode.ini`): the game runs at nice -10 and the screensaver is inhibited. On start `rice-game-power start` notes the power profile and asks power-profiles-daemon for `performance`; on end `rice-game-power end` puts the noted one back, unless the profile was changed away from performance during the game (by you, or by `rice-power-auto`), in which case that choice stands. It only uses `powerprofilesctl`; gamemode's own CPU governor switch is set to intel_pstate's normal `powersave`, which leaves the governor as it is. The note is `$XDG_RUNTIME_DIR/rice-game/profile`, which `rice-power-auto` reads to keep its hands off while a game runs. `gamemoded -s` says whether it is active.
+- **MangoHud:** a small overlay at the top left: FPS, frame time and its graph, CPU and GPU load and temperature, VRAM. **Shift+F12** (left Shift) shows and hides it. Its colours come from the wallpaper: matugen writes `~/.config/MangoHud/MangoHud.conf` from `modules/theme/templates/MangoHud.conf`, and MangoHud rereads it while a game runs.
+- **The desktop goes calm** while gamemode has a game (`Game.qml`, `game.js`, shared by both shells): the same as focus mode (`Focus.qml`'s `calm`), without touching `rice-focus`. Notifications are held (critical ones still show), and when the game ends one card says "N held while you played". The raven sleeps, the koi drift, Umbriel's viper hangs still and the season's sprites stop. A 󰊗 "game" chip shows in the niri bar, right of the clock, and in Umbriel's status corner. The shells check every 10 s: one `busctl` call asking whether gamemoded is on the session bus (which never starts it), and the client count only if it is.
+- **gamescope** (optional): a nested compositor for a fixed resolution or frame cap. Launch options: `gamescope -W 1920 -H 1200 -r 144 -f --mangoapp -- gamemoderun %command%` (`--mangoapp` replaces `mangohud` inside gamescope). Not tried on this hybrid GPU setup; if it shows a black window, leave it out.
+
+Checks after switching:
+
+- [ ] A Proton game with `gamemoderun mangohud %command%`: MangoHud shows the NVIDIA GPU (its name in the GPU line, or `nvidia-smi` lists the game), in the wallpaper's colours. Shift+F12 hides and shows it.
+- [ ] While it runs: `gamemoded -s` says active, `powerprofilesctl get` says `performance`, the bar (or Umbriel's corner) shows the game chip within 10 s, the koi drift (or the raven sleeps), and a `notify-send hi` shows no card. After quitting: the profile is back to what it was, the chip goes, and one card says "1 held while you played".
+- [ ] With Steam open and no game running, the dGPU still suspends (`cat /sys/bus/pci/devices/0000:01:00.0/power/runtime_status` says `suspended` after a minute).
+
 ## After switching
 
 Checks for the niri side, once, after `nh os switch` restarts `qs -c rice` and loads the new niri config.
@@ -314,6 +337,7 @@ modules/
   look/              polkit agent, cursor, icon, GTK and qt5ct/qt6ct themes (colours come from matugen)
   backup/            rice-backup (restic) and its daily timer
   power/             NixOS: rice-power-auto (profile follows the charger), rice-fan (fan boost) and their udev rules
+  gaming/            NixOS: Steam (Vulkan on the dGPU), gamemode with rice-game-power, gamescope, MangoHud
 tests/               bash tests with stubbed commands (tests/lib.sh)
 docs/superpowers/    design specs and implementation plans
 ```

@@ -8,7 +8,7 @@
 // the values themselves. Hidden while a fullscreen window is focused, except
 // for a critical notification or the open launcher.
 //
-// While focused (Focus.qml) only critical notices show: the rest are kept,
+// While focused or gaming (Focus.qml `calm`) only critical notices show: the rest are kept,
 // silent, and summed up in one notice when focus ends (focus.js).
 //
 // openLauncher() / closeLauncher() / expanded: the pill grows down into the
@@ -132,7 +132,8 @@ PanelWindow {
         onNotification: n => {
             const critical = n.urgency === NotificationUrgency.Critical;
             // Held: copied, then let go (untracked) without a notice or sound.
-            if (F.route(U.Focus.on, critical ? "critical" : "normal") === "hold") {
+            if (F.route(U.Focus.calm, critical ? "critical" : "normal") === "hold") {
+                root.heldWhy = U.Focus.why;
                 root.held = F.hold(root.held, {
                     app: n.appName || "unknown",
                     icon: n.appIcon,
@@ -167,13 +168,14 @@ PanelWindow {
     // Focus: what it held, given as one notice when focus ends. It stands
     // in for a notification (nothing to expire, no actions).
     property var held: []
+    property string heldWhy: ""
     property int summaries: 0
     Connections {
         target: U.Focus
-        function onOnChanged() {
-            if (U.Focus.on || root.held.length === 0)
+        function onCalmChanged() {
+            if (U.Focus.calm || root.held.length === 0)
                 return;
-            const s = F.summary(root.held);
+            const s = F.summary(root.held, root.heldWhy);
             root.held = [];
             const stub = { actions: [], expire() {}, dismiss() {} };
             root.summaries++;

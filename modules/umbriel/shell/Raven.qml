@@ -119,8 +119,8 @@ PanelWindow {
 
         fastHz: 1000
         moving: flight !== null || drop !== null
-        // Focus mode (Focus.qml) puts it to sleep too.
-        night: root.night || U.Focus.on
+        // Focus mode, or a game (Focus.qml `calm`), puts it to sleep too.
+        night: root.night || U.Focus.calm
         debug: root.debug
         k: body.k
         homeX: root.homeX

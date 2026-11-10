@@ -3,8 +3,10 @@ pragma Singleton
 // Focus mode, as rice-focus leaves it in $RICE_STATE_DIR/focus (focus.js
 // reads it). The file is watched, so a toggle shows at once; a 60 s re-read
 // covers a file made after start (nothing to watch yet). `label` is the
-// elapsed time, stepped once a minute only while focused. Shared by both
-// shells (modules/umbriel copies it in). RICE_FOCUS_FILE points it elsewhere.
+// elapsed time, stepped once a minute only while focused. `calm` is what the
+// desktop follows: focus, or a game running (Game.qml), and `why` says
+// which. Shared by both shells (modules/umbriel copies it in).
+// RICE_FOCUS_FILE points it elsewhere.
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -22,6 +24,9 @@ Singleton {
     readonly property real since: state.since
     property real now: Date.now()
     readonly property string label: F.elapsed(now, since)
+    // Hold notifications, hush the pond and the raven, still the viper.
+    readonly property bool calm: on || Game.on
+    readonly property string why: F.why(on, Game.on)
 
     function toggle() {
         Quickshell.execDetached(["rice-focus", "toggle"]);

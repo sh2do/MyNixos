@@ -9,6 +9,7 @@ in
     ./modules/desktop.nix
     ./modules/sddm
     ./modules/boot # Plymouth splash and quiet boot
+    ./modules/gaming # Steam, gamemode, MangoHud, gamescope
     ./modules/power # auto power profile, fan boost (rice-fan)
     inputs.home-manager.nixosModules.default
     inputs.umbriel.nixosModules.default
@@ -186,20 +187,8 @@ in
   };
 
   # --------------------------------------------------
-  # Gaming and graphics
+  # Graphics (Steam, gamemode and the rest: modules/gaming)
   # --------------------------------------------------
-
-  programs.steam = {
-    enable = true;
-
-    extraCompatPackages = with pkgs; [
-      dwproton-bin
-      proton-ge-bin
-    ];
-  };
-
-  programs.gamemode.enable = true;
-  hardware.graphics.enable32Bit = true;
 
   services.xserver.videoDrivers = [ "nvidia" ];
 
@@ -325,10 +314,6 @@ in
     nautilus
     file-roller # archive support in Nautilus
     ffmpegthumbnailer # video thumbnails
-
-    # Gaming utilities
-    mangohud
-    protonup-qt
 
     # Audio and device controls
     pwvucontrol

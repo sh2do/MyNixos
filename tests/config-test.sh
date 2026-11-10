@@ -114,9 +114,31 @@ test_apps_follow_the_wallpaper() {
   assert_contains "$kitty" "include colors.conf"
 }
 
+# Gaming (modules/gaming): Vulkan games on the NVIDIA GPU through Steam's
+# environment, gamemode's power scripts, MangoHud themed by matugen.
+test_gaming_is_wired() {
+  local steam profile ini mg templates
+  steam=$(nix build --no-link --print-out-paths "$FLAKE#nixosConfigurations.nixos.config.programs.steam.package")
+  profile=$(nix-store -qR "$steam" | grep -- '-fhsenv-profile$')
+  assert_contains "$(cat "$profile/etc/profile")" "MESA_VK_DEVICE_SELECT=discrete"
+  assert_contains "$(cat "$profile/etc/profile")" "MESA_VK_DEVICE_SELECT_FORCE_DEFAULT_DEVICE=1"
+  ini=$(cat "$(sys_eval 'environment.etc."gamemode.ini".source' | jq -r .)")
+  assert_contains "$ini" "renice=10"
+  assert_contains "$ini" "rice-game-power start"
+  assert_contains "$ini" "rice-game-power end"
+  assert_eq "$(sys_eval hardware.nvidia.prime.offload.enable)" 'true'
+  assert_eq "$(sys_eval programs.gamescope.enable)" 'true'
+  mg=$(cat "$(hm_eval 'xdg.configFile."matugen/config.toml".source' | jq -r .)")
+  assert_contains "$mg" "[templates.mangohud]"
+  assert_contains "$mg" '~/.config/MangoHud/MangoHud.conf'
+  templates=$(hm_eval 'xdg.configFile."matugen/templates".source' | jq -r .)
+  assert_contains "$(cat "$templates/MangoHud.conf")" "toggle_hud=Shift_L+F12"
+}
+
 for t in test_polkit_agent_runs_in_every_graphical_session test_look_is_declared test_leftovers_are_gone \
   test_umbriel_starship_only_on_its_own_terminals test_umbriel_terminal_floats_like_foot test_umbriel_windows_bleed_like_ink test_umbriel_keeps_clipboard_history test_umbriel_shell_restarts_on_switch \
   test_menus_are_dripping_glass test_apps_follow_the_wallpaper; do
   run_test "$t"
 done
+run_test test_gaming_is_wired
 finish

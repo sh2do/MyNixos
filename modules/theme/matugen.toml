@@ -95,3 +95,8 @@ output_path = "~/.config/Vencord/themes/rice.css"
 input_path = "~/.config/matugen/templates/kitty-colors.conf"
 output_path = "~/.config/kitty/colors.conf"
 post_hook = "pkill -USR1 -x kitty || true"
+
+# MangoHud's overlay (games launched with `mangohud`); reread while running.
+[templates.mangohud]
+input_path = "~/.config/matugen/templates/MangoHud.conf"
+output_path = "~/.config/MangoHud/MangoHud.conf"

@@ -5,7 +5,7 @@
 // 5 s timeout; a new message from the app restarts it. Cards holding a
 // critical message stay until clicked. A click runs the latest message's
 // default action and dismisses the card.
-// While focused (Focus.qml) only critical ones show: the rest are kept in
+// While focused or gaming (Focus.qml `calm`) only critical ones show: the rest are kept in
 // `held`, silent, and summed up on one card when focus ends (focus.js),
 // which stays until clicked.
 // Clear them all with `qs -c rice ipc call notifications clear`.
@@ -38,7 +38,8 @@ Scope {
             const urgency = n.urgency === NotificationUrgency.Critical ? "critical" : "normal";
             root.forward(n);
             // Held: copied, then let go (untracked) without a card or sound.
-            if (F.route(Focus.on, urgency) === "hold") {
+            if (F.route(Focus.calm, urgency) === "hold") {
+                root.heldWhy = Focus.why;
                 root.held = F.hold(root.held, {
                     app: n.appName || "unknown",
                     icon: n.appIcon,
@@ -66,13 +67,14 @@ Scope {
 
     // ---- Focus: what it held, and the card summing it up once it ends.
     property var held: []
+    property string heldWhy: ""
     property var summary: null
     Connections {
         target: Focus
-        function onOnChanged() {
-            if (Focus.on || root.held.length === 0)
+        function onCalmChanged() {
+            if (Focus.calm || root.held.length === 0)
                 return;
-            root.summary = F.summary(root.held);
+            root.summary = F.summary(root.held, root.heldWhy);
             root.held = [];
         }
     }

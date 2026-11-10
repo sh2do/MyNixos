@@ -1,5 +1,5 @@
 // Bottom-right corner: focus mode's moon and how long so far (while on,
-// Focus.qml), faint phone (when one is paired, Phone.qml), wifi,
+// Focus.qml), a controller while a game runs in GameMode (Game.qml), faint phone (when one is paired, Phone.qml), wifi,
 // bluetooth, fan boost (while on), the power profile and battery. Small and
 // low in contrast on purpose; it mostly reports (the profile glyph cycles on
 // a click). The raven perches on its left edge, so it moves with the phone.
@@ -59,6 +59,14 @@ PanelWindow {
         Text {
             visible: U.Focus.on
             text: "󰽥 focus " + U.Focus.label
+            color: U.Palette.text
+            opacity: 0.85
+            font { family: U.Palette.font; pixelSize: 11 }
+        }
+        // A game in GameMode: the desktop is calm for it, like focus.
+        Text {
+            visible: U.Game.on
+            text: "󰊗 " + U.Game.label
             color: U.Palette.text
             opacity: 0.85
             font { family: U.Palette.font; pixelSize: 11 }

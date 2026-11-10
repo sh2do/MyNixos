@@ -57,6 +57,9 @@ let
     # The power profile glyph and fan boost (modules/power).
     cp ${../shell/Fan.qml} $out/Fan.qml
     cp ${../shell/power.js} $out/power.js
+    # A game in GameMode calms both shells like focus does.
+    cp ${../shell/Game.qml} $out/Game.qml
+    cp ${../shell/game.js} $out/game.js
     for f in $out/*.frag $out/*.vert; do
       qsb --qt6 -o "$f.qsb" "$f"
     done
