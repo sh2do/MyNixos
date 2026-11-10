@@ -20,6 +20,7 @@ modules/
   lock/                       Quickshell video lock screen, rice-lock, swayidle
   sddm/                       SDDM video login theme
   look/                       polkit agent, cursor, icon and GTK themes (every session)
+  backup/                     rice-backup (restic) and its daily timer
   umbriel/                    the Umbriel session: config, keybinds, effect shaders, umbriel-wall,
                               slate terminal stack, shell/ (Quickshell "umbriel": island, chain,
                               launcher, live wallpapers)
@@ -83,6 +84,16 @@ KDE Connect links an Android phone over the LAN (no cloud): phone notifications 
 3. On the phone, tap this machine in KDE Connect and request pairing, then accept on the desktop. Or from the desktop: `kdeconnect-cli --refresh; kdeconnect-cli --list-devices` for the phone's id, then `kdeconnect-cli --pair -d <id>` and accept on the phone.
 4. Test with `phone-alert "hello"`.
 5. Phone buttons: the KDE Connect app's "Run command" lists lock, play/pause, next/previous, volume, mute, next wallpaper, screenshot to phone, sleep and shut down. Every switch sets them; after pairing a new phone, run `phone-commands`. Edit the list in `modules/shell/phone-commands.sh`, not in the app.
+
+## Backups
+
+`rice-backup` backs up `$HOME` with restic (encrypted, deduplicated) once a day from a user timer, at idle priority and only on mains power. It skips caches, Steam, the Trash, `node_modules`, `.direnv`, nix `result` links, VM images and ISOs in Downloads, and keeps 7 daily, 4 weekly and 6 monthly snapshots. Nothing is backed up until you choose where to:
+
+1. Plug in a USB drive (it mounts at `/run/media/Zaion/<label>`) and run `rice-backup init /run/media/Zaion/<label>/restic`. Or, for off-site, a Backblaze B2 bucket: put `B2_ACCOUNT_ID=...` and `B2_ACCOUNT_KEY=...` in `~/.config/rice-backup/env` (mode 600), then `rice-backup init b2:<bucket>:laptop`. Any restic repository works (`sftp:`, `rclone:`, ...).
+2. Copy `~/.config/rice-backup/password` into a password manager. Without it the backups can't be read.
+3. `rice-backup now` for the first one; `rice-backup status` shows the last snapshot; `rice-backup restore <path> [snapshot]` restores into `~/restore/<date>/`, never over the original.
+
+With the drive unplugged the daily run just skips. After 7 days without a backup you get one warning a day on the phone and the desktop; a failed backup goes to the phone. More in [docs/RICE.md](docs/RICE.md#backups).
 
 ## Rebuild
 

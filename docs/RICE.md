@@ -186,6 +186,22 @@ Checks after switching and pairing:
 - **fastfetch** runs only in the first terminal of a session. Type `ff` to show it again.
 - **starship** uses a two-line prompt, also matugen-coloured.
 
+## Backups
+
+`rice-backup` (`modules/backup/`) backs up `$HOME` with restic. Nothing runs until a destination is chosen: plug in a USB drive and run `rice-backup init /run/media/Zaion/<label>/restic`, or for off-site use a Backblaze B2 bucket (`B2_ACCOUNT_ID` / `B2_ACCOUNT_KEY` in `~/.config/rice-backup/env`, mode 600, then `rice-backup init b2:<bucket>:laptop`). Any restic repository string works (`sftp:host:/path`, `rclone:remote:path` with rclone installed).
+
+- **init** saves the repository in `~/.config/rice-backup/repo` and generates `~/.config/rice-backup/password` (mode 600) if missing. **Keep a copy of the password off this machine**: a lost laptop takes the only copy with it. A repository the password already opens is adopted, not re-created; a failed init saves nothing.
+- **now** backs up `$HOME` (one file system, tag `rice-backup`), then `forget --prune` keeping 7 daily, 4 weekly and 6 monthly. Excluded: `~/.cache`, CACHEDIR.TAG folders, `~/.local/share/Steam`, `~/.steam`, the Trash, containers, `node_modules`, `.direnv`, nix `result*` links, VM images (`*.qcow2`, `*.vdi`, `*.vmdk`, `*.vhd*`, libvirt and Boxes images), `~/Downloads/*.iso`, `~/restore` and a repository inside `$HOME`. Two runs never overlap.
+- **status** shows the repository, the last success and the last snapshot with its age.
+- **restore `<path>` [snapshot]** restores the path (default: the latest snapshot) into `~/restore/<date>/<full path>`, never in place.
+- **Timer:** `rice-backup.timer`, daily with up to an hour's random delay, `Persistent` (a day missed while off or asleep runs soon after boot), `Nice=19` and idle CPU and IO scheduling; on battery the day's run is skipped (`ConditionACPower`). `journalctl --user -u rice-backup` has the log.
+- **When it can't:** not set up, or a local repository whose drive is unplugged: it says so and exits 0. Once the last success is over 7 days old (or 7 days pass after init with none), it warns with `phone-alert` and `notify-send`, at most once a day. A failed backup or prune sends a critical `phone-alert` and desktop notification. State lives in `~/.local/state/rice-backup`.
+
+Checks after switching:
+
+- [ ] `systemctl --user list-timers rice-backup` shows the timer; `rice-backup status` says it is not set up.
+- [ ] After `rice-backup init <repo>` and `rice-backup now`, `rice-backup status` shows a snapshot from just now, and `rice-backup restore ~/.bashrc` (or any file) puts a copy under `~/restore/<date>/`.
+
 ## After switching
 
 Checks for the niri side, once, after `nh os switch` restarts `qs -c rice` and loads the new niri config.
@@ -254,6 +270,7 @@ modules/
   lock/              Quickshell lock + rice-lock + swayidle
   sddm/              login theme (Qt6, video)
   look/              polkit agent, cursor, icon and GTK themes (GTK colours come from matugen)
+  backup/            rice-backup (restic) and its daily timer
 tests/               bash tests with stubbed commands (tests/lib.sh)
 docs/superpowers/    design specs and implementation plans
 ```

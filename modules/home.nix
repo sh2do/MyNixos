@@ -10,5 +10,6 @@
     ./look
     ./umbriel
     ./weather
+    ./backup
   ];
 }
