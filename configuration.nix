@@ -263,7 +263,29 @@ in
     # Existing applications (firefox comes from programs.firefox above)
     # Discord with the Vencord client mod, for the matugen theme
     # (~/.config/Vencord/themes/rice.css). Still `discord` for Super+Z.
-    (discord.override { withVencord = true; })
+    # Vencord is pinned past nixpkgs' 1.15.11, which broke against Discord
+    # 1.0.161 ("i.A is not a constructor") and left it stuck on the updater.
+    # Drop the override once nixpkgs catches up.
+    (discord.override {
+      withVencord = true;
+      vencord = vencord.overrideAttrs (old: rec {
+        version = "1.15.17";
+        src = fetchFromGitHub {
+          owner = "Vendicated";
+          repo = "Vencord";
+          tag = "v${version}";
+          hash = "sha256-+dN4wAFNmYVDiEe0QStqrFBRFHBBRkApqbmhuvsLZZM=";
+        };
+        # Upstream now pins the React types the old patch fixed.
+        patches = [ ];
+        postPatch = "";
+        env = old.env // { VENCORD_HASH = version; };
+        pnpmDeps = old.pnpmDeps.overrideAttrs (_: {
+          inherit src patches postPatch;
+          outputHash = "sha256-/BoLLeKsftWv1bjWuND8967YGhqWEaCZZU6z/oa+0oM=";
+        });
+      });
+    })
     ghostty
     foot
     git
