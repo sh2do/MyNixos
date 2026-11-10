@@ -49,3 +49,10 @@ cursor {
     xcursor-size 24
     hide-when-typing
 }
+
+// Leave the RTX 5070 alone so it can sleep: games still reach it through
+// PRIME offload, but a screen on a dGPU-wired port (often HDMI) goes dark.
+debug {
+    ignore-drm-device "/dev/dri/by-path/pci-0000:01:00.0-card"
+    ignore-drm-device "/dev/dri/by-path/pci-0000:01:00.0-render"
+}
