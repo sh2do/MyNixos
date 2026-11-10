@@ -55,3 +55,43 @@ output_path = "~/.config/gtk-3.0/gtk.css"
 [templates.gtk4]
 input_path = "~/.config/matugen/templates/gtk.css"
 output_path = "~/.config/gtk-4.0/gtk.css"
+
+# Qt 5 and 6 (qt5ct/qt6ct palettes; QT_QPA_PLATFORMTHEME=qt5ct, configuration.nix).
+# KDE apps read KColorScheme from kdeglobals as well, so write the scheme there
+# too. Running Qt apps keep their old palette until restarted.
+[templates.qt5ct]
+input_path = "~/.config/matugen/templates/qtct-colors.conf"
+output_path = "~/.config/qt5ct/colors/rice.conf"
+
+[templates.qt6ct]
+input_path = "~/.config/matugen/templates/qtct-colors.conf"
+output_path = "~/.config/qt6ct/colors/rice.conf"
+
+[templates.kde-scheme]
+input_path = "~/.config/matugen/templates/kde-colors.colors"
+output_path = "~/.local/share/color-schemes/Rice.colors"
+
+[templates.kdeglobals]
+input_path = "~/.config/matugen/templates/kde-colors.colors"
+output_path = "~/.config/kdeglobals"
+
+# Firefox: the profile name is random, so these land in the cache and rice-wall
+# copies them into every profile in profiles.ini. Read at Firefox start only.
+[templates.firefox-chrome]
+input_path = "~/.config/matugen/templates/firefox-userChrome.css"
+output_path = "~/.cache/rice/firefox/userChrome.css"
+
+[templates.firefox-content]
+input_path = "~/.config/matugen/templates/firefox-userContent.css"
+output_path = "~/.cache/rice/firefox/userContent.css"
+
+# Discord (with Vencord): a local theme, reloaded live. rice-wall switches it on once.
+[templates.vencord]
+input_path = "~/.config/matugen/templates/vencord.css"
+output_path = "~/.config/Vencord/themes/rice.css"
+
+# kitty outside Umbriel; SIGUSR1 makes running kittys reload their config.
+[templates.kitty]
+input_path = "~/.config/matugen/templates/kitty-colors.conf"
+output_path = "~/.config/kitty/colors.conf"
+post_hook = "pkill -USR1 -x kitty || true"

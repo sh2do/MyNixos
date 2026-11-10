@@ -43,7 +43,7 @@ let
 
   rice-wall = pkgs.writeShellApplication {
     name = "rice-wall";
-    runtimeInputs = with pkgs; [ awww matugen coreutils findutils librsvg ];
+    runtimeInputs = with pkgs; [ awww matugen coreutils findutils librsvg gnugrep jq procps ];
     text = builtins.readFile ./rice-wall.sh;
   };
 
@@ -114,9 +114,15 @@ in
     Install.WantedBy = [ "niri.service" ];
   };
 
-  # Generate colours on the first switch so everything starts themed.
+  # Generate colours on the first switch so everything starts themed, and again
+  # whenever the templates change, so newly themed apps (Qt, Firefox, Vencord,
+  # kitty) get their files without waiting for the next wallpaper.
   home.activation.riceColours = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    if [ ! -s "${config.xdg.cacheHome}/rice/current" ]; then
+    old=$(readlink -f "''${oldGenPath:-/nonexistent}/home-files/.config/matugen/templates" || true)
+    new=$(readlink -f "$newGenPath/home-files/.config/matugen/templates")
+    oldConf=$(readlink -f "''${oldGenPath:-/nonexistent}/home-files/.config/matugen/config.toml" || true)
+    newConf=$(readlink -f "$newGenPath/home-files/.config/matugen/config.toml")
+    if [ ! -s "${config.xdg.cacheHome}/rice/current" ] || [ "$old" != "$new" ] || [ "$oldConf" != "$newConf" ]; then
       run ${rice-wall}/bin/rice-wall init || true
     fi
   '';

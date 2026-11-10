@@ -93,9 +93,30 @@ test_menus_are_dripping_glass() {
   assert_contains "$(tr -s ' \n' ' ' < "$rules")" 'match namespace="^rofi$" geometry-corner-radius 16 background-effect { blur true }'
 }
 
+# App colours: Qt, Firefox, Discord (Vencord) and kitty follow the wallpaper.
+test_apps_follow_the_wallpaper() {
+  local mg qt6 kitty
+  mg=$(cat "$(hm_eval 'xdg.configFile."matugen/config.toml".source' | jq -r .)")
+  local name
+  for name in qt5ct qt6ct kdeglobals firefox-chrome firefox-content vencord kitty; do
+    assert_contains "$mg" "[templates.$name]"
+  done
+  assert_eq "$(sys_eval environment.sessionVariables.QT_QPA_PLATFORMTHEME)" '"qt5ct"'
+  assert_eq "$(sys_eval qt.platformTheme)" '"qt5ct"'
+  qt6=$(hm_eval 'xdg.configFile."qt6ct/qt6ct.conf".text' | jq -r .)
+  assert_contains "$qt6" "color_scheme_path=/home/Zaion/.config/qt6ct/colors/rice.conf"
+  assert_contains "$qt6" "custom_palette=true"
+  assert_eq "$(sys_eval 'programs.firefox.preferences."toolkit.legacyUserProfileCustomizations.stylesheets"')" 'true'
+  local discord
+  discord=$(nix eval --impure --expr "let c = (builtins.getFlake \"$FLAKE\").nixosConfigurations.nixos; p = builtins.head (builtins.filter (p: (p.pname or \"\") == \"discord\") c.config.environment.systemPackages); in p.drvPath == (c.pkgs.discord.override { withVencord = true; }).drvPath")
+  assert_eq "$discord" 'true'
+  kitty=$(hm_eval 'xdg.configFile."kitty/kitty.conf".source' | jq -r . | xargs cat)
+  assert_contains "$kitty" "include colors.conf"
+}
+
 for t in test_polkit_agent_runs_in_every_graphical_session test_look_is_declared test_leftovers_are_gone \
   test_umbriel_starship_only_on_its_own_terminals test_umbriel_terminal_floats_like_foot test_umbriel_windows_bleed_like_ink test_umbriel_keeps_clipboard_history test_umbriel_shell_restarts_on_switch \
-  test_menus_are_dripping_glass; do
+  test_menus_are_dripping_glass test_apps_follow_the_wallpaper; do
   run_test "$t"
 done
 finish

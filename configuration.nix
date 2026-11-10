@@ -243,13 +243,35 @@ in
   ];
 
   # --------------------------------------------------
+  # App colours (rice-wall/matugen writes the files; see docs/RICE.md)
+  # --------------------------------------------------
+
+  # Qt 5 and 6 apps take qt5ct/qt6ct's palette (modules/look). Set through PAM
+  # (sessionVariables) as well as the shell profile, so the niri and Umbriel
+  # sessions both see it, whatever starts them.
+  qt = {
+    enable = true;
+    platformTheme = "qt5ct"; # installs qt5ct and qt6ct; qt6ct answers to qt5ct too
+  };
+  environment.sessionVariables.QT_QPA_PLATFORMTHEME = "qt5ct";
+
+  # Firefox loads the matugen userChrome/userContent that rice-wall copies into
+  # each profile only with this preference on. "default", not locked.
+  programs.firefox = {
+    enable = true;
+    preferences."toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+    preferencesStatus = "default";
+  };
+
+  # --------------------------------------------------
   # Packages
   # --------------------------------------------------
 
   environment.systemPackages = with pkgs; [
-    # Existing applications
-    firefox
-    discord
+    # Existing applications (firefox comes from programs.firefox above)
+    # Discord with the Vencord client mod, for the matugen theme
+    # (~/.config/Vencord/themes/rice.css). Still `discord` for Super+Z.
+    (discord.override { withVencord = true; })
     ghostty
     foot
     git

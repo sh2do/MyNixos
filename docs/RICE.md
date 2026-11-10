@@ -186,6 +186,23 @@ Checks after switching and pairing:
 - **fastfetch** runs only in the first terminal of a session. Type `ff` to show it again.
 - **starship** uses a two-line prompt, also matugen-coloured.
 
+## App colours
+
+matugen also colours apps outside the shell (templates in `modules/theme/templates`):
+
+- **Qt 5 and 6** (Kate, kdeconnect-app, Dolphin if installed): `QT_QPA_PLATFORMTHEME=qt5ct` is set for every session (`configuration.nix`), qt5ct and qt6ct use Fusion with matugen's palette (`~/.config/qt{5,6}ct/colors/rice.conf`), and KDE apps also read the scheme from `~/.config/kdeglobals`, which matugen rewrites on each wallpaper change. Running Qt apps keep the old palette until restarted.
+- **Firefox**: matugen writes `userChrome.css` and `userContent.css` to `~/.cache/rice/firefox/`, and `rice-wall` copies them into `chrome/` of every profile in `profiles.ini` (under `~/.config/mozilla/firefox` or `~/.mozilla/firefox`). Only the toolbar, tabs, urlbar and panels change, plus a faint glass rim on the urlbar and the open tab; websites keep their look (`userContent.css` touches only the new tab and blank pages). A `userChrome.css` that rice-wall didn't write is left alone. The policy `toolkit.legacyUserProfileCustomizations.stylesheets` turns loading on. **Restart Firefox** to see new colours.
+- **Discord** is the official client with Vencord (`discord.override { withVencord = true; }`). Vencord is a client mod, against Discord's terms in theory. matugen writes `~/.config/Vencord/themes/rice.css`, which Vencord reloads live; `rice-wall` turns it on once in Vencord's settings, so switching it off in Settings → Vencord → Themes sticks.
+- **kitty** outside Umbriel reads `~/.config/kitty/colors.conf` and reloads on each wallpaper change. Umbriel's kitty keeps its slate palette.
+- Spotify is installed but not themed (that would need spicetify).
+
+Checks after switching (the switch regenerates the colours once, since the templates changed):
+
+- [ ] `echo $QT_QPA_PLATFORMTHEME` says `qt5ct` in a new login, and `kate` or `kdeconnect-app` uses the wallpaper's colours.
+- [ ] Quit and reopen Firefox: the toolbar and tabs match the wallpaper. If not, check `about:config` → `toolkit.legacyUserProfileCustomizations.stylesheets` is true and the profile's `chrome/` has both files.
+- [ ] Quit Discord fully and reopen it: Settings shows a Vencord section, and Themes has **Rice** ticked (tick it if not).
+- [ ] `rice-wall next`: Discord and kitty change colour without a restart.
+
 ## Backups
 
 `rice-backup` (`modules/backup/`) backs up `$HOME` with restic. Nothing runs until a destination is chosen: plug in a USB drive and run `rice-backup init /run/media/Zaion/<label>/restic`, or for off-site use a Backblaze B2 bucket (`B2_ACCOUNT_ID` / `B2_ACCOUNT_KEY` in `~/.config/rice-backup/env`, mode 600, then `rice-backup init b2:<bucket>:laptop`). Any restic repository string works (`sftp:host:/path`, `rclone:remote:path` with rclone installed).
@@ -263,13 +280,13 @@ modules/
   desktop.nix        NixOS: rice packages, lock PAM service
   home.nix           Home Manager entry, imports the folders below
   niri/              KDL split by block (input, layout, binds, rules incl. the rofi blur, misc) + generated colors.kdl
-  theme/             rice-wall, matugen config and templates (incl. glass colours and the menu drips), wallpaper list, 45-min timer
-  terminal/          foot, fastfetch, first-terminal fish hook
+  theme/             rice-wall, matugen config and templates (incl. glass colours, the menu drips and app colours: Qt, Firefox, Vencord, kitty), wallpaper list, 45-min timer
+  terminal/          foot, kitty (outside Umbriel), fastfetch, first-terminal fish hook
   rofi/              glass theme + rice-menu
   shell/             Quickshell: TopPill (+ media.js), BottomBar, Koi (+ koi-motion.js), Raven (art and moods from umbriel/shell), Osd, Notifications (+ notify-group.js), wallpaper picker, clipboard and emoji panel (ClipPicker + clip.js, emoji.js, rice-clip)
   lock/              Quickshell lock + rice-lock + swayidle
   sddm/              login theme (Qt6, video)
-  look/              polkit agent, cursor, icon and GTK themes (GTK colours come from matugen)
+  look/              polkit agent, cursor, icon, GTK and qt5ct/qt6ct themes (colours come from matugen)
   backup/            rice-backup (restic) and its daily timer
 tests/               bash tests with stubbed commands (tests/lib.sh)
 docs/superpowers/    design specs and implementation plans
