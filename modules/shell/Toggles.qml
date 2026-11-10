@@ -6,6 +6,7 @@ import Quickshell.Bluetooth
 import Quickshell.Networking
 import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
+import "power.js" as Pw
 
 Row {
     id: root
@@ -80,22 +81,37 @@ Row {
         onScrolled: dir => Brightness.change(dir)
     }
 
-    // ---- power profile
+    // ---- power profile: a glyph by the battery (power.js); click cycles,
+    // right click opens the profile menu (with fan boost). Unplugging switches
+    // to power-saver by itself (rice-power-auto, modules/power).
     readonly property var profileNames: ({
-        [PowerProfile.PowerSaver]: "saver",
+        [PowerProfile.PowerSaver]: "power-saver",
         [PowerProfile.Balanced]: "balanced",
         [PowerProfile.Performance]: "performance"
     })
+    readonly property var profileValues: ({
+        "power-saver": PowerProfile.PowerSaver,
+        "balanced": PowerProfile.Balanced,
+        "performance": PowerProfile.Performance
+    })
 
     Chip {
-        icon: PowerProfiles.profile === PowerProfile.Performance ? "󰓅" : (PowerProfiles.profile === PowerProfile.PowerSaver ? "󰾆" : "󰾅")
-        label: root.profileNames[PowerProfiles.profile] ?? ""
-        onClicked: {
-            const order = [PowerProfile.PowerSaver, PowerProfile.Balanced];
-            if (PowerProfiles.hasPerformanceProfile)
-                order.push(PowerProfile.Performance);
-            PowerProfiles.profile = order[(order.indexOf(PowerProfiles.profile) + 1) % order.length];
-        }
+        readonly property string profile: root.profileNames[PowerProfiles.profile] ?? ""
+        icon: Pw.glyph(profile)
+        // Lit off the middle road: saving, or flat out.
+        active: profile === "power-saver" || profile === "performance"
+        onClicked: PowerProfiles.profile = root.profileValues[Pw.next(profile, PowerProfiles.hasPerformanceProfile)]
+        onRightClicked: root.menu("profile")
+    }
+
+    // ---- fan boost (Fan.qml): only while the fans are held at max; a click
+    // hands them back to the firmware.
+    Chip {
+        visible: Fan.boost
+        icon: "󰈐"
+        label: "boost"
+        active: true
+        onClicked: Fan.toggle()
         onRightClicked: root.menu("profile")
     }
 

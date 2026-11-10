@@ -13,7 +13,7 @@ A from-scratch niri desktop on NixOS: rotating rainy wallpapers that recolour th
 | Compositor | niri 26.04, scrolling columns, rounded floating terminals, eased open/close animations | `modules/niri/` |
 | Wallpapers and colours | a curated rainy/purple rotation that changes every 45 min, with a fade; every colour in the desktop follows it | `modules/theme/` |
 | Bar | a top pill (a living media pill while music plays, otherwise the focused window title) and an auto-hide pond-glass bottom bar (workspaces, toggles, clock, power), with koi or a raven in it | `modules/shell/` |
-| Menus | glassy rofi menus with static water drips: a launcher with a wallpaper image panel, plus wifi, bluetooth, audio, power-profile, power and clipboard menus | `modules/rofi/` |
+| Menus | glassy rofi menus with static water drips: a launcher with a wallpaper image panel, plus wifi, bluetooth, audio, power-profile (with fan boost), power and clipboard menus | `modules/rofi/` |
 | Terminal | foot, starship two-line prompt, fastfetch (a koi pond logo) only in the first terminal | `modules/terminal/` |
 | OSD and notifications | a water-capsule volume and brightness OSD, and notification cards grouped by app (critical ones stay) | `modules/shell/` |
 | Lock | Quickshell lock with a Tokyo-rain video, locks after 5 min idle and before sleep | `modules/lock/` |
@@ -219,6 +219,31 @@ Checks after switching:
 - [ ] `systemctl --user list-timers rice-backup` shows the timer; `rice-backup status` says it is not set up.
 - [ ] After `rice-backup init <repo>` and `rice-backup now`, `rice-backup status` shows a snapshot from just now, and `rice-backup restore ~/.bashrc` (or any file) puts a copy under `~/restore/<date>/`.
 
+## Power and fans
+
+`modules/power/` plus the NVIDIA block in `configuration.nix`. This is what the OMEN 16-an0xxx (board 8D40) lets Linux control:
+
+| What | Where | Controllable |
+| --- | --- | --- |
+| Power profiles | power-profiles-daemon | yes, but only the CPU (intel_pstate's energy preference). The patched hp-wmi has no thermal profile for board 8D40, so there is no `platform_profile` and the firmware's own fan curve and power limits don't change with the profile |
+| Fans | hp-wmi hwmon (`name` = `hp`): `pwm1_enable`, `fan1_input`/`fan2_input` (CPU/GPU, about 6000 and 5800 rpm max) | yes: max (0), manual (1), auto (2). The driver keeps max mode alive on its own |
+| dGPU power | NVIDIA runtime D3 | yes, with fine-grained power management (below) |
+| Charge limit | `BAT0` | no: HP has no charge thresholds on Linux (see the battery note below) |
+| GPU mux | hp-wmi `gpu_mux_mode` | readable (0 = hybrid); not touched here |
+
+- **Auto profile** (`rice-power-auto`, a system service): pulling the charger switches to power-saver; plugging it back in returns to the profile you had on AC. udev starts it when a charger comes or goes (ADP1 or a USB-C charger), and it also runs at boot and after resume for a charger that changed while the laptop was off or asleep. It only acts on a real change, so a profile you pick by hand stays. If you pick another profile on battery, plugging in keeps your pick. While a game runs (gamemode's `rice-game-power`, `modules/gaming`) or something holds a profile (`powerprofilesctl launch`), it changes nothing, and the profile the game replaced is remembered as the AC profile. State lives in `/var/lib/rice-power`, and `journalctl -u rice-power-auto` has the log. Known gap: if you plug in during a game started on battery, the game puts power-saver back when it ends; pick the profile again.
+- **Fan boost** (`rice-fan max | auto | toggle | status`): holds both fans at max until `rice-fan auto` or a reboot. A udev rule gives the wheel group write access to `pwm1_enable`, so no sudo is needed. It is also in the profile menu (`rice-menu profile`, or right click the profile glyph) as "fan boost". While boost is on, the niri bar shows a lit 󰈐 boost chip and Umbriel's corner shows 󰈐; a click on either turns it off. Both shells check every 30 s.
+- **Bar:** the niri bar's profile chip is now a glyph next to the battery (󰾆 power-saver, 󰾅 balanced, 󰓅 performance, with the dot lit off balanced). Click to cycle and right click for the menu. Umbriel's corner shows the same glyph before the battery, and a click cycles it there too.
+- **NVIDIA runtime D3:** `hardware.nvidia.powerManagement.finegrained = true` (PRIME offload, which it needs, is already on). It sets `NVreg_DynamicPowerManagement=0x02` and udev rules that set the dGPU's `power/control` to `auto`. Before this it was `on`, so the dGPU never slept and drew about 7 W idle at P8. `nvidiaBusId` was also corrected from `PCI:0:1:0` (the PCIe bridge) to `PCI:1:0:0`; that only matters to an Xorg session. The lock screen's video now decodes on the Intel GPU (`QT_FFMPEG_DECODING_HW_DEVICE_TYPES=vaapi`), so locking doesn't wake the dGPU. niri still opens the dGPU because the HDMI port (and the muxed panel output `eDP-2`) are wired to it. With fine-grained mode an idle dGPU can still suspend while it's open; if it never does, see the checks.
+- **Battery note:** HP firmware has no charge limit that Linux can set (`BAT0` has no `charge_control_*` files). The BIOS has one: **Adaptive Battery Optimizer** (press F10 at power-on to open BIOS setup; it is usually under Configuration, set it to Enabled). It watches how the laptop is used, and when it is kept plugged in most of the time it stops the battery sitting at a full charge, which slows wear. Turn it on if the laptop lives on the charger. Linux sees the effect only as a battery that stops short of 100%.
+
+Checks after switching and **rebooting** (the NVIDIA module option and the udev rules need a fresh boot):
+
+- [ ] `cat /sys/bus/pci/devices/0000:01:00.0/power/control` says `auto`. After a minute idle with nothing on the dGPU, `cat /sys/bus/pci/devices/0000:01:00.0/power/runtime_status` says `suspended`, and `/proc/driver/nvidia/gpus/0000:01:00.0/power` shows "Runtime D3 status: Enabled (fine-grained)". (Don't use `nvidia-smi` to check: it wakes the GPU.) If it stays `active`, look for what has `/dev/nvidia0` open. niri drives HDMI from it. niri's debug option for ignoring a DRM device would free the dGPU, but HDMI would stop working.
+- [ ] A Steam game (or `nvidia-offload <app>`) still runs on the NVIDIA GPU, and the dGPU suspends again a little after it closes.
+- [ ] Unplug: `powerprofilesctl get` says `power-saver` within a second and the bar glyph changes. Plug in: back to what it was. Set performance by hand on battery and plug in: it stays performance.
+- [ ] `ls -l /sys/class/hwmon/*/pwm1_enable` shows group `wheel`, mode `rw-rw-r--`. `rice-fan max`: the fans spin up within a few seconds, the bar shows the boost chip, and `rice-fan` reports about 5800 rpm. `rice-fan auto` (or a click on the chip) brings them back down.
+
 ## After switching
 
 Checks for the niri side, once, after `nh os switch` restarts `qs -c rice` and loads the new niri config.
@@ -288,6 +313,7 @@ modules/
   sddm/              login theme (Qt6, video)
   look/              polkit agent, cursor, icon, GTK and qt5ct/qt6ct themes (colours come from matugen)
   backup/            rice-backup (restic) and its daily timer
+  power/             NixOS: rice-power-auto (profile follows the charger), rice-fan (fan boost) and their udev rules
 tests/               bash tests with stubbed commands (tests/lib.sh)
 docs/superpowers/    design specs and implementation plans
 ```

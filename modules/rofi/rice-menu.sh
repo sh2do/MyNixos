@@ -56,14 +56,27 @@ power() {
   esac
 }
 
+# The power profiles, then fan boost (rice-fan, modules/power) where the fans
+# can be driven; ● marks what's on.
 profile() {
-  local now choice p
+  local now fan choice p
   now=$(powerprofilesctl get 2>/dev/null || true)
-  choice=$(for p in power-saver balanced performance; do
-    if [ "$p" = "$now" ]; then echo "● $p"; else echo "  $p"; fi
-  done | pick "power profile")
+  fan=$(rice-fan status 2>/dev/null || true)
+  choice=$({
+    for p in power-saver balanced performance; do
+      if [ "$p" = "$now" ]; then echo "● $p"; else echo "  $p"; fi
+    done
+    case $fan in
+      "fan max"*) echo "● 󰈐 fan boost" ;;
+      fan*) echo "  󰈐 fan boost" ;;
+    esac
+  } | pick "power profile")
   choice=${choice#??}
-  [ -n "$choice" ] && powerprofilesctl set "$choice"
+  case $choice in
+    "") ;;
+    *"fan boost") rice-fan toggle ;;
+    *) powerprofilesctl set "$choice" ;;
+  esac
 }
 
 wifi() {

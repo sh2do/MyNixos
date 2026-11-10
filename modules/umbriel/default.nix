@@ -54,6 +54,9 @@ let
     cp ${../shell/sound.js} $out/sound.js
     cp ${../shell/Focus.qml} $out/Focus.qml
     cp ${../shell/focus.js} $out/focus.js
+    # The power profile glyph and fan boost (modules/power).
+    cp ${../shell/Fan.qml} $out/Fan.qml
+    cp ${../shell/power.js} $out/power.js
     for f in $out/*.frag $out/*.vert; do
       qsb --qt6 -o "$f.qsb" "$f"
     done

@@ -85,7 +85,52 @@ test_unknown_mode() {
   assert_eq "$code" "2"
 }
 
+# rice-fan stub: `status` prints a status for $RICE_TEST_FAN (fails when empty,
+# like a machine without fan control); other commands are just logged.
+stub_fan() {
+  cat > "$TMP/bin/rice-fan" <<EOF
+#!/usr/bin/env bash
+echo "rice-fan \$*" >> "$TMP/calls"
+[ "\$1" = status ] || exit 0
+[ -n "\${RICE_TEST_FAN:-}" ] || exit 1
+echo "fan \$RICE_TEST_FAN  cpu 1 rpm  gpu 1 rpm"
+EOF
+  chmod +x "$TMP/bin/rice-fan"
+}
+
+# A rofi that keeps the rows it was offered in $TMP/rows and picks nothing.
+stub_rofi_rows() {
+  printf '#!/usr/bin/env bash\ncat > "%s/rows"\n' "$TMP" > "$TMP/bin/rofi"
+  chmod +x "$TMP/bin/rofi"
+}
+
+test_profile_fan_boost_toggles() {
+  stubs; stub_fan
+  RICE_TEST_FAN=auto RICE_TEST_CHOICE="  󰈐 fan boost" bash "$RICE_MENU" profile
+  grep -qx 'rice-fan toggle' "$TMP/calls"
+  ! grep -q '^powerprofilesctl set' "$TMP/calls"
+  : > "$TMP/calls"
+  RICE_TEST_FAN=max RICE_TEST_CHOICE="● 󰈐 fan boost" bash "$RICE_MENU" profile
+  grep -qx 'rice-fan toggle' "$TMP/calls"
+}
+
+test_profile_fan_boost_row_marks_max() {
+  stubs; stub_fan; stub_rofi_rows
+  RICE_TEST_FAN=max bash "$RICE_MENU" profile
+  grep -qx '● 󰈐 fan boost' "$TMP/rows"
+  RICE_TEST_FAN=auto bash "$RICE_MENU" profile
+  grep -qx '  󰈐 fan boost' "$TMP/rows"
+}
+
+test_profile_without_fan_control_has_no_row() {
+  stubs; stub_fan; stub_rofi_rows
+  RICE_TEST_FAN="" bash "$RICE_MENU" profile
+  grep -q 'balanced' "$TMP/rows"
+  ! grep -q 'fan boost' "$TMP/rows"
+}
+
 for t in test_power_shutdown test_power_lock test_logout_niri test_logout_umbriel test_profile_sets test_wallpaper_sets \
+  test_profile_fan_boost_toggles test_profile_fan_boost_row_marks_max test_profile_without_fan_control_has_no_row \
   test_selected_row_without_drips_is_plain test_selected_row_with_drips_uses_them \
   test_cancel_does_nothing test_unknown_mode; do
   run_test "$t"

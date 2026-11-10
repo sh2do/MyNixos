@@ -16,6 +16,9 @@ let
       QML_IMPORT_PATH = "${qtmultimedia}/lib/qt-6/qml";
       QT_PLUGIN_PATH = "${qtmultimedia}/lib/qt-6/plugins";
       QT_DISABLE_HW_TEXTURES_CONVERSION = "1";
+      # Decode on the Intel GPU (VA-API) only: CUDA decoding would wake the
+      # NVIDIA dGPU and keep it out of runtime D3 for as long as it's locked.
+      QT_FFMPEG_DECODING_HW_DEVICE_TYPES = "vaapi";
     };
     text = builtins.readFile ./rice-lock.sh;
   };

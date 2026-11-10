@@ -9,6 +9,7 @@ in
     ./modules/desktop.nix
     ./modules/sddm
     ./modules/boot # Plymouth splash and quiet boot
+    ./modules/power # auto power profile, fan boost (rice-fan)
     inputs.home-manager.nixosModules.default
     inputs.umbriel.nixosModules.default
   ];
@@ -206,6 +207,8 @@ in
     modesetting.enable = true;
     open = true;
     powerManagement.enable = true;
+    # Runtime D3: the dGPU powers off when nothing uses it (needs PRIME offload).
+    powerManagement.finegrained = true;
     nvidiaSettings = true;
     # "latest" = newest driver branch; switch back to .stable if anything breaks
     package = config.boot.kernelPackages.nvidiaPackages.latest;
@@ -217,7 +220,7 @@ in
       };
 
       intelBusId = "PCI:0:2:0";
-      nvidiaBusId = "PCI:0:1:0";
+      nvidiaBusId = "PCI:1:0:0"; # 01:00.0; 00:01.0 is the PCIe bridge above it
     };
   };
 

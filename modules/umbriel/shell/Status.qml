@@ -1,7 +1,8 @@
 // Bottom-right corner: focus mode's moon and how long so far (while on,
 // Focus.qml), faint phone (when one is paired, Phone.qml), wifi,
-// bluetooth and battery. Small and low in contrast on purpose; it only
-// reports. The raven perches on its left edge, so it moves with the phone.
+// bluetooth, fan boost (while on), the power profile and battery. Small and
+// low in contrast on purpose; it mostly reports (the profile glyph cycles on
+// a click). The raven perches on its left edge, so it moves with the phone.
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
@@ -9,6 +10,7 @@ import Quickshell.Bluetooth
 import Quickshell.Networking
 import Quickshell.Services.UPower
 import "." as U
+import "power.js" as Pw
 
 PanelWindow {
     id: root
@@ -36,6 +38,16 @@ PanelWindow {
     readonly property bool hasBattery: battery?.isLaptopBattery ?? false
     readonly property real pct: (battery?.percentage ?? 0) * 100
     readonly property bool charging: battery?.state === UPowerDeviceState.Charging
+    readonly property var profileNames: ({
+        [PowerProfile.PowerSaver]: "power-saver",
+        [PowerProfile.Balanced]: "balanced",
+        [PowerProfile.Performance]: "performance"
+    })
+    readonly property var profileValues: ({
+        "power-saver": PowerProfile.PowerSaver,
+        "balanced": PowerProfile.Balanced,
+        "performance": PowerProfile.Performance
+    })
 
     Row {
         id: row
@@ -71,6 +83,33 @@ PanelWindow {
             color: U.Palette.muted
             opacity: 0.7
             font { family: U.Palette.font; pixelSize: 11 }
+        }
+        // Fan boost (Fan.qml), only while the fans are held at max; a click
+        // hands them back to the firmware.
+        Text {
+            visible: U.Fan.boost
+            text: "󰈐"
+            color: U.Palette.text
+            opacity: 0.85
+            font { family: U.Palette.font; pixelSize: 11 }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: U.Fan.toggle()
+            }
+        }
+        // The power profile (power.js); a click cycles it.
+        Text {
+            readonly property string profile: root.profileNames[PowerProfiles.profile] ?? ""
+            text: Pw.glyph(profile)
+            color: U.Palette.muted
+            opacity: 0.7
+            font { family: U.Palette.font; pixelSize: 11 }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: PowerProfiles.profile = root.profileValues[Pw.next(parent.profile, PowerProfiles.hasPerformanceProfile)]
+            }
         }
         Text {
             visible: root.hasBattery
